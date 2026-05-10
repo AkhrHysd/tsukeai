@@ -5,10 +5,17 @@
   "type": "module",
   "scripts": {
     "check": "pnpm run lint",
+    "dev": "wrangler dev",
     "lint": "pnpm --workspace-root exec biome check .",
-    "typecheck": "pnpm --workspace-root exec tsc --noEmit"
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tanka-reply-sns/shared": "workspace:*"
+    "@tanka-reply-sns/shared": "workspace:*",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250411.0",
+    "typescript": "^5.8.0",
+    "wrangler": "^4.10.0"
   }
 }

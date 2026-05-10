@@ -1,0 +1,6 @@
+name = "tanka-reply-sns-api"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+[vars]
+API_ALLOWED_ORIGINS = "http://localhost:3000"
