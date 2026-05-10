@@ -8,7 +8,9 @@
     "check": "pnpm run build",
     "dev": "next dev",
     "lint": "pnpm --workspace-root exec biome check .",
+    "smoke:read": "node scripts/read-smoke.mjs",
     "start": "next start",
+    "test": "pnpm run smoke:read",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -10,7 +10,8 @@
     "biome": "biome check .",
     "format": "biome format --write .",
     "lint": "biome lint .",
-    "check": "turbo run check"
+    "check": "turbo run check",
+    "test": "pnpm --filter @tanka-reply-sns/web test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",

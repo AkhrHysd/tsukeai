@@ -61,9 +61,9 @@ export default async function Home() {
           まだ公開句はありません。
         </p>
       ) : (
-        <div className="timeline-list" aria-label="公開タイムライン">
+        <div className="timeline-list" role="list" aria-label="公開タイムライン">
           {timelineResult.timeline.items.map((item) => (
-            <article className="post-card" key={item.post.id}>
+            <article className="post-card" key={item.post.id} role="listitem">
               <div className="post-card__header">
                 <strong>{item.post.author.displayName}</strong>
                 {item.post.author.handle ? (
