@@ -1,0 +1,7 @@
+interface:
+  display_name: "Solo Dev Discovery"
+  short_description: "Coverage-driven solo-dev idea discovery."
+  default_prompt: "Use $discovery to run Discovery for a rough solo-development idea."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,36 @@
+{
+  "tasksDir": "tasks",
+  "runner": {
+    "command": "codex",
+    "args": [
+      "exec",
+      "--skip-git-repo-check"
+    ]
+  },
+  "reviewer": {
+    "command": "codex",
+    "args": [
+      "exec",
+      "--skip-git-repo-check"
+    ]
+  },
+  "validator": {
+    "typecheck": [
+      {
+        "command": "npm",
+        "args": [
+          "run",
+          "typecheck"
+        ]
+      }
+    ],
+    "test": [
+      {
+        "command": "npm",
+        "args": [
+          "test"
+        ]
+      }
+    ]
+  }
+}

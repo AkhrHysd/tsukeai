@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DiscoveryCoverageModel",
+  "description": "Coverage model bundled with the file-based Discovery Skill. The authoritative process is skills/discovery/SKILL.md.",
+  "type": "object",
+  "required": ["phase", "coverageMaxScore", "topics"],
+  "properties": {
+    "phase": { "const": "discovery" },
+    "coverageMaxScore": { "type": "integer", "const": 100 },
+    "topics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "required", "weight"],
+        "properties": {
+          "id": { "type": "string" },
+          "required": { "type": "boolean" },
+          "weight": { "type": "integer" },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  },
+  "phase": "discovery",
+  "coverageMaxScore": 100,
+  "topics": [
+    {
+      "id": "idea_summary",
+      "required": true,
+      "weight": 10,
+      "description": "What the user wants to make."
+    },
+    {
+      "id": "trigger_context",
+      "required": true,
+      "weight": 10,
+      "description": "The direct trigger that produced the idea."
+    },
+    {
+      "id": "target_user_candidate",
+      "required": true,
+      "weight": 10,
+      "description": "Who the idea is for."
+    },
+    {
+      "id": "pain_candidates",
+      "required": true,
+      "weight": 10,
+      "description": "Candidate pains inside the idea."
+    },
+    {
+      "id": "strongest_pain",
+      "required": true,
+      "weight": 10,
+      "description": "The currently most important pain."
+    },
+    {
+      "id": "current_workaround",
+      "required": true,
+      "weight": 10,
+      "description": "How the user handles the pain now."
+    },
+    {
+      "id": "existing_alternatives",
+      "required": true,
+      "weight": 10,
+      "description": "Existing similar or substitute options."
+    },
+    {
+      "id": "dissatisfaction_with_alternatives",
+      "required": true,
+      "weight": 10,
+      "description": "What alternatives fail to satisfy."
+    },
+    {
+      "id": "success_signal",
+      "required": false,
+      "weight": 4,
+      "description": "Signs that the problem is solved."
+    },
+    {
+      "id": "non_goals_seed",
+      "required": false,
+      "weight": 4,
+      "description": "Early seeds for what not to do."
+    },
+    {
+      "id": "constraints",
+      "required": false,
+      "weight": 4,
+      "description": "Time, technical, operational, or maintenance constraints."
+    },
+    {
+      "id": "emotional_motivation",
+      "required": false,
+      "weight": 4,
+      "description": "Why the user is drawn to the idea."
+    },
+    {
+      "id": "continuation_reason",
+      "required": false,
+      "weight": 4,
+      "description": "What could keep the user building it."
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "phase": "direction",
+  "coverageScore": 10,
+  "coverageMaxScore": 10,
+  "coverageReady": true,
+  "userApprovedArtifactOutput": true,
+  "readyForArtifact": true,
+  "topics": {
+    "source_discovery": {
+      "status": "confirmed",
+      "evidence": "Discovery artifact を Direction の入力として用い、本セッションで Source Discovery を前提に対話した。"
+    },
+    "chosen_problem_angle": {
+      "status": "confirmed",
+      "evidence": "ユーザーは A/B/C の比較のうち B（表現実験）を選び、上の句番号「2. B」で回答した。"
+    },
+    "first_target_user": {
+      "status": "confirmed",
+      "evidence": "一次ユーザー定義の確認「A」に対し、ユーザーは「A はい」と回答した。"
+    },
+    "desired_outcome": {
+      "status": "confirmed",
+      "evidence": "上の句の納得感・センスを成功シグナルに据えた。コミュニケーション側の成功定義は「いまのところは3」で Scope 送り。返信ルールは「見直していい」に合意。"
+    },
+    "value_hypothesis": {
+      "status": "confirmed",
+      "evidence": "価値仮説案と constraints・scope_boundary_seed の三つまとまりを「三つのまとまりでいいです」で一括承認した。"
+    },
+    "non_goals": {
+      "status": "confirmed",
+      "evidence": "「3. なしでいいです」で non-goals への追加がないと回答した。"
+    },
+    "decision_rationale": {
+      "status": "confirmed",
+      "evidence": "B を選んだことと、提示した A/B/C のトレードオフ説明に基づく判断として確定した。"
+    },
+    "scope_boundary_seed": {
+      "status": "confirmed",
+      "evidence": "Must 寄りの種と Scope で決める種の三つのまとまりを「三つのまとまりでいいです」で承認した。"
+    },
+    "project_identity": {
+      "status": "confirmed",
+      "evidence": "「1. AIインターフェースによる短歌コミュニケーターの実験」として方向の同一性を述べた。"
+    },
+    "constraints": {
+      "status": "confirmed",
+      "evidence": "公開は変換後の上の句に限定、返信経路は Scope、ソロ開発を足すことに「足していいです」と回答した。"
+    }
+  },
+  "blockingTopics": [],
+  "deferredTopics": [],
+  "validationWarnings": [
+    "コミュニケーション成功指標の詳細は Scope で定義予定。返信に AI を絡めうる方針は未確定。"
+  ]
+}

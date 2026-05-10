@@ -1,0 +1,14 @@
+{
+  "phase": "discovery",
+  "name": "Discovery Skill",
+  "version": "1.0.0",
+  "primarySkill": "SKILL.md",
+  "description": "File-based Discovery Skill package. SKILL.md is the authoritative Skill body; JSON files are supporting resources only.",
+  "files": {
+    "skill": "SKILL.md",
+    "coverageModel": "coverage.model.json",
+    "outputTemplate": "output.template.md",
+    "validationCriteria": "validation.criteria.md",
+    "manifest": "manifest.json"
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrator Workflow"
+  short_description: "Use solo-dev-orchestrator CLI workflows reliably."
+  default_prompt: "Use the orchestrator workflow skill to choose and run the correct solo-dev-orchestrator commands for the current phase."

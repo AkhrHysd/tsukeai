@@ -1,0 +1,49 @@
+{
+  "phase": "scope",
+  "coverageScore": 9,
+  "coverageMaxScore": 9,
+  "coverageReady": true,
+  "userApprovedArtifactOutput": true,
+  "readyForArtifact": true,
+  "topics": {
+    "source_direction": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「Scope の唯一の上位入力はこのセッションの Direction 成果物でよい。」との確認に対し「よいです」と回答した。"
+    },
+    "mvp_outcome": {
+      "status": "confirmed",
+      "evidence": "ユーザーは outcome のたたき台で「十分」と答え、続けて GT 必須・対称型返信の議論の後に MVP を「確定」とした。"
+    },
+    "first_target_user": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「一次ユーザーは Direction で確めた定義のままで、この Scope でも確定でよい。」との確認に対し「よいです」と回答した。"
+    },
+    "mvp_scope": {
+      "status": "confirmed",
+      "evidence": "ユーザーは返信を対称型 AI 変換とし GT を必須寄せとする案に沿って議論し、M1〜M5 と GT を「確定」と回答した。最小識別を Must に含めることに「はい」と答えた。続いてユーザーは「本人削除（M6）を MVP の Must に含めることに、このタイミングで Scope として確定する」と明示し、M6 を含む修正に同意した。"
+    },
+    "deferred_scope": {
+      "status": "confirmed",
+      "evidence": "形式オプションは Deferred とする旨をユーザーが述べ、Deferred 一覧の整理に合意した。"
+    },
+    "rejected": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「Rejected に列べた項目でよい。」との確認に対し「よいです　もんだいないです」と回答した。"
+    },
+    "cut_rationale": {
+      "status": "confirmed",
+      "evidence": "GT と対称返信を Must に置く理由は対話で説明され、ユーザーは MVP 境界の確定に「確定」と回答した。"
+    },
+    "scope_expansion_risks": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「scope.md の Scope Expansion Risks に書いたリスク列挙でよい。」との確認に対し「よいです」と回答した。"
+    },
+    "do_not_cross": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「scope.md の Do Not Cross に書いた境界でよい。」との確認に対し「よいです」と回答した。"
+    }
+  },
+  "blockingTopics": [],
+  "deferredTopics": [],
+  "validationWarnings": []
+}
