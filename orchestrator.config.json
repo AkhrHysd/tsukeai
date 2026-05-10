@@ -4,14 +4,16 @@
     "command": "codex",
     "args": [
       "exec",
-      "--skip-git-repo-check"
+      "--skip-git-repo-check",
+      "--full-auto"
     ]
   },
   "reviewer": {
     "command": "codex",
     "args": [
       "exec",
-      "--skip-git-repo-check"
+      "--skip-git-repo-check",
+      "--full-auto"
     ]
   },
   "validator": {

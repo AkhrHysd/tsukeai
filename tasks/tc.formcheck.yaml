@@ -1,14 +1,14 @@
 id: tc.formcheck
-title: FormCheck（非 LLM）
-description: 受理／却下の機械検証。Design の規則確度により粒度調整。
+title: "FormCheck（非 LLM）"
+description: "受理／却下の機械検証。Design の規則確度により粒度調整。"
 dependsOn:
   - tc.transform-contract
 allowedPaths:
   - packages/shared
   - apps/api
 acceptanceCriteria:
-  - 規則外は公開フローに進まない。
-status: queued
+  - "規則外は公開フローに進まない。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

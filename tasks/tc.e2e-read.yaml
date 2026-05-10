@@ -1,14 +1,14 @@
 id: tc.e2e-read
-title: Playwright 読み取りスモーク
-description: GT クリティカルパス。LLM 実呼び出しに CI を依存させない。
+title: "Playwright 読み取りスモーク"
+description: "GT クリティカルパス。LLM 実呼び出しに CI を依存させない。"
 dependsOn:
   - tc.gtssr
 allowedPaths:
   - apps/web
   - .
 acceptanceCriteria:
-  - 読み取りスモークがパスする。
-status: queued
+  - "読み取りスモークがパスする。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

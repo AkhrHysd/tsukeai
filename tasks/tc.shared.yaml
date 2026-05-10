@@ -1,13 +1,13 @@
 id: tc.shared
-title: packages/shared の REST 契約たたき台
-description: DTO・エラー形の命名とエクスポート。フロントは DB に直接依存しない。
+title: "packages/shared の REST 契約たたき台"
+description: "DTO・エラー形の命名とエクスポート。フロントは DB に直接依存しない。"
 dependsOn:
   - tc.monorepo
 allowedPaths:
   - packages/shared
 acceptanceCriteria:
-  - 共有パッケージから境界型がインポートできる。
-status: queued
+  - "共有パッケージから境界型がインポートできる。"
+status: ready
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

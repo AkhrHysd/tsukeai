@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrator Config"
+  short_description: "Generate orchestrator.config.json safely."
+  default_prompt: "Use $orchestrator-config-authoring to draft an orchestrator.config.json for this repository."

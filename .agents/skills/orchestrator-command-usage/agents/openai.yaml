@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrator Commands"
+  short_description: "Run and recover llm-task-orchestrator CLI workflows."
+  default_prompt: "Use $orchestrator-command-usage to choose safe llm-task-orchestrator commands and recovery steps."

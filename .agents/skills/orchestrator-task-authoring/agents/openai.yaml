@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrator Tasks"
+  short_description: "Generate task YAML for this orchestrator."
+  default_prompt: "Use $orchestrator-task-authoring to draft a task YAML that matches this repository schema."

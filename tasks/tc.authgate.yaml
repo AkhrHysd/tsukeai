@@ -1,13 +1,13 @@
 id: tc.authgate
-title: 認証方式の決定ゲート
-description: パスワード／パスキー／TOTP の組み合わせを記録。SMS 従量依存は避ける（Design）。
+title: "認証方式の決定ゲート"
+description: "パスワード／パスキー／TOTP の組み合わせを記録。SMS 従量依存は避ける（Design）。"
 dependsOn:
   - tc.shared
 allowedPaths:
   - docs/orchestration
 acceptanceCriteria:
-  - 認証方式が orchestration 文書に記録される。
-status: queued
+  - "認証方式が orchestration 文書に記録される。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

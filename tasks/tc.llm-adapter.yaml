@@ -1,13 +1,13 @@
 id: tc.llm-adapter
-title: Workers 上の LLM アダプタ
-description: タイムアウト・上限・Secrets。ゲートで決めた契約に従う。
+title: "Workers 上の LLM アダプタ"
+description: "タイムアウト・上限・Secrets。ゲートで決めた契約に従う。"
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - ADR の呼び出し契約に適合するアダプタが説明できる。
-status: queued
+  - "ADR の呼び出し契約に適合するアダプタが説明できる。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

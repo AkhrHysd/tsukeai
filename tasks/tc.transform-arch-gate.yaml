@@ -1,7 +1,6 @@
 id: tc.transform-arch-gate
-title: 変換アーキ ADR（Milestone 3.5）
-description: docs/orchestration/transform-architecture.md に、同期／非同期、失敗時
-  UX、再試行・冪等性、コスト上限を ADR で記録。コードは書かない。
+title: "変換アーキ ADR（Milestone 3.5）"
+description: "docs/orchestration/transform-architecture.md に、同期／非同期、失敗時 UX、再試行・冪等性、コスト上限を ADR で記録。コードは書かない。"
 dependsOn:
   - tc.session
   - tc.schema
@@ -9,8 +8,8 @@ allowedPaths:
   - docs/orchestration
   - docs/orchestration/transform-architecture.md
 acceptanceCriteria:
-  - transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。
-status: queued
+  - "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

@@ -1,14 +1,14 @@
 id: tc.session
-title: セッション／Cookie と書き込み境界
-description: 投稿・返信・削除はログイン後のみ。Workers 側で検証。
+title: "セッション／Cookie と書き込み境界"
+description: "投稿・返信・削除はログイン後のみ。Workers 側で検証。"
 dependsOn:
   - tc.authgate
   - tc.hono
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - 書き込み API が未認証で拒否される。
-status: queued
+  - "書き込み API が未認証で拒否される。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

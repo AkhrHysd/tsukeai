@@ -1,14 +1,14 @@
 id: tc.prompting-safety
-title: プロンプト方針と注入緩和の実装候補
-description: サーバ責務でインジェクション緩和。ログに素を残さない運用。
+title: "プロンプト方針と注入緩和の実装候補"
+description: "サーバ責務でインジェクション緩和。ログに素を残さない運用。"
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - apps/api
   - docs/orchestration
 acceptanceCriteria:
-  - 注入緩和とログ方針が ADR と運用に一致する。
-status: queued
+  - "注入緩和とログ方針が ADR と運用に一致する。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1

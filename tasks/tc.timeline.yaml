@@ -1,14 +1,14 @@
 id: tc.timeline
-title: 公開タイムライン GET API
-description: 未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。
+title: "公開タイムライン GET API"
+description: "未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。"
 dependsOn:
   - tc.schema
 allowedPaths:
   - apps/api
   - packages/shared
 acceptanceCriteria:
-  - 未認証でタイムライン JSON が取得できる。
-status: queued
+  - "未認証でタイムライン JSON が取得できる。"
+status: blocked
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
