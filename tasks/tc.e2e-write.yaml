@@ -1,0 +1,16 @@
+id: tc.e2e-write
+title: Playwright 書き込みスモーク
+description: 投稿・返信・削除のクリティカルパス。変換経路確定後。
+dependsOn:
+  - tc.transform-reply-flow
+  - tc.delete
+  - tc.formcheck
+allowedPaths:
+  - apps/web
+  - .
+acceptanceCriteria:
+  - 書き込みスモークがパスし CI が LLM に依存しない。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

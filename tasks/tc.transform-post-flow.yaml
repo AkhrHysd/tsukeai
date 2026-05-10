@@ -1,0 +1,14 @@
+id: tc.transform-post-flow
+title: 投稿変換フロー実装候補
+description: 素→5-7-5。パイプライン詳細は ADR へ合わせる。
+dependsOn:
+  - tc.llm-adapter
+  - tc.transform-contract
+allowedPaths:
+  - apps/api
+acceptanceCriteria:
+  - 投稿パイプラインが ADR とポリシーに一致する。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

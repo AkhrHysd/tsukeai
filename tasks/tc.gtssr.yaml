@@ -1,0 +1,15 @@
+id: tc.gtssr
+title: GT の SSR 一覧・スレッド
+description: 公開 API と整合。変換句のみ表示し素を出さない。
+dependsOn:
+  - tc.nextshell
+  - tc.timeline
+allowedPaths:
+  - apps/web
+  - packages/shared
+acceptanceCriteria:
+  - GT が SSR で変換句のみを表示する。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

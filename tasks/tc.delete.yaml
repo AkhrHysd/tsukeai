@@ -1,0 +1,14 @@
+id: tc.delete
+title: 本人削除（M6）
+description: 公開句の削除または非表示。管理者削除は MVP 外。
+dependsOn:
+  - tc.session
+  - tc.transform-contract
+allowedPaths:
+  - apps/api
+acceptanceCriteria:
+  - 本人削除後に一覧／スレッドが一貫する。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

@@ -1,0 +1,14 @@
+id: tc.neon
+title: Neon と Hyperdrive の接続方針
+description: 東京 Postgres へ Hyperdrive。秘密はリポジトリ外。
+dependsOn:
+  - tc.hono
+allowedPaths:
+  - apps/api
+  - docs/orchestration
+acceptanceCriteria:
+  - Hyperdrive 経由で Neon 接続を再現できる。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

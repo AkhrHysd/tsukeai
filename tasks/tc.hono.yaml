@@ -1,0 +1,13 @@
+id: tc.hono
+title: apps/api の Hono on Workers 入口
+description: ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。
+dependsOn:
+  - tc.shared
+allowedPaths:
+  - apps/api
+acceptanceCriteria:
+  - Workers API がヘルス応答を返す。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

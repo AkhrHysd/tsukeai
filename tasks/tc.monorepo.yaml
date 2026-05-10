@@ -1,0 +1,12 @@
+id: tc.monorepo
+title: モノレポと Biome のルート整備
+description: pnpm workspaces・Turborepo・Biome 単一。apps と packages の依存方向を Design どおり一方向に固定する。
+dependsOn: []
+allowedPaths:
+  - .
+acceptanceCriteria:
+  - ルートで Biome が実行できワークスペースが解決する。
+status: ready
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

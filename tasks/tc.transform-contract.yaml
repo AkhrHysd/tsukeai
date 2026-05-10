@@ -1,0 +1,14 @@
+id: tc.transform-contract
+title: 変換ジョブの契約（状態・冪等・エラー）
+description: ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。
+dependsOn:
+  - tc.transform-arch-gate
+allowedPaths:
+  - packages/shared
+  - docs/orchestration
+acceptanceCriteria:
+  - 変換ジョブの状態・冪等・エラーが共有契約で説明できる。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

@@ -1,0 +1,15 @@
+id: tc.transform-reply-flow
+title: 返信変換フロー実装候補
+description: 対称型 7-7。投稿フローと独立レビュー可能なら分割維持。
+dependsOn:
+  - tc.llm-adapter
+  - tc.transform-contract
+  - tc.transform-post-flow
+allowedPaths:
+  - apps/api
+acceptanceCriteria:
+  - 返信パイプラインが対称型方針と一致する。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1

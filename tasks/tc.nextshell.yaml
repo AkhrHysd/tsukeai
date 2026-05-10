@@ -1,0 +1,13 @@
+id: tc.nextshell
+title: apps/web の Next App Router シェル
+description: レイアウトと API ベース URL の読み方。SSR 前提。
+dependsOn:
+  - tc.monorepo
+allowedPaths:
+  - apps/web
+acceptanceCriteria:
+  - Next がビルドしレイアウトが載る。
+status: queued
+retryCount: 0
+maxRunRetries: 1
+maxReviewRetries: 1
