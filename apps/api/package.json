@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@tanka-reply-sns/shared": "workspace:*",
-    "hono": "^4.7.0"
+    "hono": "^4.7.0",
+    "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250411.0",

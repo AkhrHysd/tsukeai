@@ -1,6 +1,13 @@
 name = "tanka-reply-sns-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
 API_ALLOWED_ORIGINS = "http://localhost:3000"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+# Keep the real Cloudflare resource ID outside git and substitute it at deploy
+# time. See docs/orchestration/neon-hyperdrive.md for the exact command.
+id = "<hyperdrive-id>"
