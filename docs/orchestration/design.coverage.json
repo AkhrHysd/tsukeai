@@ -1,0 +1,49 @@
+{
+  "phase": "design",
+  "coverageScore": 9,
+  "coverageMaxScore": 9,
+  "coverageReady": true,
+  "userApprovedArtifactOutput": true,
+  "readyForArtifact": true,
+  "topics": {
+    "source_scope": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Scope を Design の入力とする前提で対話を進めた。M6 本人削除については後続で「本人削除（M6）を MVP の Must に含めることに、このタイミングで Scope として確定する」と回答し、scope 成果物の整合が取れた。"
+    },
+    "architecture_policy": {
+      "status": "confirmed",
+      "evidence": "ユーザーはマネージド寄り構成として「Bがよさそう」と述べ、「NeonはOK」とデータ層を認めた。Next+Hono の分割・REST・公開 Web・東京優先・実験規模は同一セッションの対話で前提化された。"
+    },
+    "core_concepts": {
+      "status": "confirmed",
+      "evidence": "ユーザーは認証・認可について「読めるでいい」「必須」「含める」「含めない」と回答し、Account・公開変換句・スレッド・削除権限に関する前提を明示した。"
+    },
+    "storage_model": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「NeonはOK」と回答した。素データはパイプライン短期・成功後削除／ハッシュ寄りとする方針は同一対話で合意済みである。"
+    },
+    "integration_boundaries": {
+      "status": "confirmed",
+      "evidence": "ユーザーは「RESTでよさそう」「どうせならNextに全依存するよりHono Nextスタックでいい気もします」「NeonはOK」と発言し、分割とデータ接続の前提を明示した。"
+    },
+    "llm_task_orchestrator_boundary": {
+      "status": "confirmed",
+      "evidence": "ユーザーは llm-task-orchestrator を実装実行に使う前提について「3. はい」と回答した。"
+    },
+    "operational_boundaries": {
+      "status": "confirmed",
+      "evidence": "ユーザーは運用境界として「A1 B1 C2」と回答し、障害時の挙動について「はい」と回答した。認証では無料前提・パスキー／2FA クラスの志向を述べた。"
+    },
+    "design_risks": {
+      "status": "confirmed",
+      "evidence": "ユーザーは追加リスクとして「なし」と回答した一方、モデレーションやインジェクション等の論点は対話で扱った。"
+    },
+    "do_not_cross": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Design 成果物の生成・提出について「OK」と明示し、Plan 領域との分界を確認した。"
+    }
+  },
+  "blockingTopics": [],
+  "deferredTopics": [],
+  "validationWarnings": []
+}

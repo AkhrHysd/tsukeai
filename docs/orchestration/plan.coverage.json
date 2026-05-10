@@ -1,0 +1,57 @@
+{
+  "phase": "planning",
+  "coverageScore": 11,
+  "coverageMaxScore": 11,
+  "coverageReady": true,
+  "userApprovedArtifactOutput": true,
+  "readyForArtifact": true,
+  "topics": {
+    "source_design": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは「セッション tanka-reply-sns の plan.md、plan.coverage.json、intermediate-plan.json の内容に異議はなく、このセットで確定してよい」と述べた（design.md を上流入力とする前提はこれまでの Plan 対話どおり）。"
+    },
+    "planning_boundary": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは三ファイルのセット確定に異議なしと述べた。あわせてユーザーは当初「Milestone5が荒すぎる気がします」とゲート化を求めた。"
+    },
+    "milestones": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは三ファイル確定に異議なしと述べた。あわせてユーザーは「OKです　Confirm」「3.5」「OK」でマイルストーン順と Milestone 3.5 を確定していた。"
+    },
+    "task_candidates": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは intermediate-plan.json を含むセットに異議なしと述べた。あわせてユーザーは楽観分割への懸念から再分割を受け容れていた。"
+    },
+    "allowed_path_candidates": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは plan セット確定に異議なしと述べた（パス候補は intermediate-plan に記載）。あわせて Bootstrap 先と ADR パスについてユーザーは別途 Yes で合意済み。"
+    },
+    "dependencies": {
+      "status": "confirmed",
+      "evidence": "Final Coverage Review でユーザーは intermediate-plan.json を含むセット確定に異議なしと述べた。あわせてユーザーは「依存関係がスムーズな方がいいです」「OKです　Confirm」「3.5」「OK」と依存順を確定していた。"
+    },
+    "acceptance_criteria": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Final Coverage Review として「plan.md（Acceptance Criteria を含む）に異議はなく、このセットで確定してよい」と述べた。"
+    },
+    "validation_focus": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Final Coverage Review として「plan.md（Validation Focus を含む）に異議はなく、このセットで確定してよい」と述べた。"
+    },
+    "review_focus": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Final Coverage Review として「plan.md（Review Focus を含む）に異議はなく、このセットで確定してよい」と述べた。"
+    },
+    "export_readiness": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Final Coverage Review として「plan.md（Export Readiness を含む）に異議はなく、このセットで確定してよい」と述べた。"
+    },
+    "do_not_cross": {
+      "status": "confirmed",
+      "evidence": "ユーザーは Final Coverage Review として「plan.md（Do Not Cross を含む）に異議はなく、このセットで確定してよい」と述べた。"
+    }
+  },
+  "blockingTopics": [],
+  "deferredTopics": [],
+  "validationWarnings": []
+}

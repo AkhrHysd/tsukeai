@@ -1,0 +1,365 @@
+{
+  "schemaVersion": "intermediate-plan/v1",
+  "metadata": {
+    "planId": "tanka-reply-sns.plan.v2",
+    "title": "tanka-reply-sns MVP 実装計画（タスク候補）",
+    "summary": "Design 入力に基づき、Milestone 3.5 の変換アーキ ADR ゲートを挟み、未確定のまま変換実装を分割しない。",
+    "sourcePhase": "planning",
+    "createdAt": "2026-05-10T23:00:00.000+09:00",
+    "updatedAt": "2026-05-10T23:00:00.000+09:00",
+    "sourceArtifacts": ["design.md", "design.coverage.json"],
+    "constraints": [
+      "Bootstrap targetDir: /Users/akyrhysd/work/tanka-reply-sns。",
+      "変換アーキの正本は docs/orchestration/transform-architecture.md（ADR）。",
+      "tc.transform-arch-gate 完了まで tc.llm-adapter 等の変換系は blocked。",
+      "CI は LLM 実呼び出しに依存しない（Design Testing Strategy）。"
+    ]
+  },
+  "milestones": [
+    {
+      "id": "ms.foundation",
+      "title": "Foundation",
+      "description": "pnpm workspaces／Turborepo／Biome と packages/shared。",
+      "taskCandidateIds": ["tc.monorepo", "tc.shared"]
+    },
+    {
+      "id": "ms.data",
+      "title": "Data & API core",
+      "description": "Hono、Neon／Hyperdrive、スキーマ運用、公開 GET タイムライン。",
+      "taskCandidateIds": ["tc.hono", "tc.neon", "tc.schema", "tc.timeline"]
+    },
+    {
+      "id": "ms.auth",
+      "title": "Auth boundary",
+      "description": "認証方式決定ゲートとセッション境界。",
+      "taskCandidateIds": ["tc.authgate", "tc.session"]
+    },
+    {
+      "id": "ms.transformGate",
+      "title": "3.5 Transform architecture gate",
+      "description": "docs/orchestration/transform-architecture.md に ADR で変換アーキを確定。",
+      "taskCandidateIds": ["tc.transform-arch-gate"]
+    },
+    {
+      "id": "ms.gt",
+      "title": "GT read UI",
+      "description": "Next シェル、GT SSR、読み取り E2E スモーク。",
+      "taskCandidateIds": ["tc.nextshell", "tc.gtssr", "tc.e2e-read"]
+    },
+    {
+      "id": "ms.writes",
+      "title": "Writes, contracts, delete, smoke",
+      "description": "変換契約・LLM アダプタ・フロー・FormCheck・削除・書き込み E2E。ゲート前は blocked。",
+      "taskCandidateIds": ["tc.llm-adapter", "tc.transform-contract", "tc.transform-post-flow", "tc.transform-reply-flow", "tc.prompting-safety", "tc.formcheck", "tc.delete", "tc.e2e-write"]
+    }
+  ],
+  "taskCandidates": [
+    {
+      "id": "tc.monorepo",
+      "title": "モノレポと Biome のルート整備",
+      "description": "pnpm workspaces・Turborepo・Biome 単一。apps と packages の依存方向を Design どおり一方向に固定する。",
+      "milestoneId": "ms.foundation",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.root"],
+      "acceptanceCriteriaIds": ["ac.tc.monorepo"],
+      "validationFocusIds": ["vf.biome"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.shared",
+      "title": "packages/shared の REST 契約たたき台",
+      "description": "DTO・エラー形の命名とエクスポート。フロントは DB に直接依存しない。",
+      "milestoneId": "ms.foundation",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.packages.shared"],
+      "acceptanceCriteriaIds": ["ac.tc.shared"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.hono",
+      "title": "apps/api の Hono on Workers 入口",
+      "description": "ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。",
+      "milestoneId": "ms.data",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.hono"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.auth"]
+    },
+    {
+      "id": "tc.neon",
+      "title": "Neon と Hyperdrive の接続方針",
+      "description": "東京 Postgres へ Hyperdrive。秘密はリポジトリ外。",
+      "milestoneId": "ms.data",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.api", "ap.docs.orch"],
+      "acceptanceCriteriaIds": ["ac.tc.neon"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.privacy"]
+    },
+    {
+      "id": "tc.schema",
+      "title": "最小エンティティとマイグレーション運用",
+      "description": "Account・公開変換・スレッドの最小列と適用手順（DDL 全文は実装フェーズ）。",
+      "milestoneId": "ms.data",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.api", "ap.packages.shared"],
+      "acceptanceCriteriaIds": ["ac.tc.schema"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.privacy"]
+    },
+    {
+      "id": "tc.timeline",
+      "title": "公開タイムライン GET API",
+      "description": "未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。",
+      "milestoneId": "ms.data",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.api", "ap.packages.shared"],
+      "acceptanceCriteriaIds": ["ac.tc.timeline"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.authgate",
+      "title": "認証方式の決定ゲート",
+      "description": "パスワード／パスキー／TOTP の組み合わせを記録。SMS 従量依存は避ける（Design）。",
+      "milestoneId": "ms.auth",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.docs.orch"],
+      "acceptanceCriteriaIds": ["ac.tc.authgate"],
+      "validationFocusIds": ["vf.biome"],
+      "reviewFocusIds": ["rf.auth"]
+    },
+    {
+      "id": "tc.session",
+      "title": "セッション／Cookie と書き込み境界",
+      "description": "投稿・返信・削除はログイン後のみ。Workers 側で検証。",
+      "milestoneId": "ms.auth",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.session"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.auth"]
+    },
+    {
+      "id": "tc.transform-arch-gate",
+      "title": "変換アーキ ADR（Milestone 3.5）",
+      "description": "docs/orchestration/transform-architecture.md に、同期／非同期、失敗時 UX、再試行・冪等性、コスト上限を ADR で記録。コードは書かない。",
+      "milestoneId": "ms.transformGate",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.docs.orch", "ap.transform.adr"],
+      "acceptanceCriteriaIds": ["ac.tc.transform-arch-gate"],
+      "validationFocusIds": ["vf.biome"],
+      "reviewFocusIds": ["rf.transform"]
+    },
+    {
+      "id": "tc.nextshell",
+      "title": "apps/web の Next App Router シェル",
+      "description": "レイアウトと API ベース URL の読み方。SSR 前提。",
+      "milestoneId": "ms.gt",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.web"],
+      "acceptanceCriteriaIds": ["ac.tc.nextshell"],
+      "validationFocusIds": ["vf.biome"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.gtssr",
+      "title": "GT の SSR 一覧・スレッド",
+      "description": "公開 API と整合。変換句のみ表示し素を出さない。",
+      "milestoneId": "ms.gt",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.web", "ap.packages.shared"],
+      "acceptanceCriteriaIds": ["ac.tc.gtssr"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.llm-adapter",
+      "title": "Workers 上の LLM アダプタ",
+      "description": "タイムアウト・上限・Secrets。ゲートで決めた契約に従う。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.llm-adapter"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.transform"],
+      "exportNotes": "tc.transform-arch-gate 完了まで blocked。"
+    },
+    {
+      "id": "tc.transform-contract",
+      "title": "変換ジョブの契約（状態・冪等・エラー）",
+      "description": "ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.packages.shared", "ap.docs.orch"],
+      "acceptanceCriteriaIds": ["ac.tc.transform-contract"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.transform"],
+      "exportNotes": "ゲートなしでは意味が固定できない。"
+    },
+    {
+      "id": "tc.transform-post-flow",
+      "title": "投稿変換フロー実装候補",
+      "description": "素→5-7-5。パイプライン詳細は ADR へ合わせる。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.transform-post-flow"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.privacy"],
+      "exportNotes": "契約とアダプタ後。"
+    },
+    {
+      "id": "tc.transform-reply-flow",
+      "title": "返信変換フロー実装候補",
+      "description": "対称型 7-7。投稿フローと独立レビュー可能なら分割維持。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.transform-reply-flow"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.privacy"],
+      "exportNotes": "投稿フローと並列だがスレッド整合が必要。"
+    },
+    {
+      "id": "tc.prompting-safety",
+      "title": "プロンプト方針と注入緩和の実装候補",
+      "description": "サーバ責務でインジェクション緩和。ログに素を残さない運用。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.api", "ap.docs.orch"],
+      "acceptanceCriteriaIds": ["ac.tc.prompting-safety"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.privacy"],
+      "exportNotes": "ADR のプロンプト境界に依存。"
+    },
+    {
+      "id": "tc.formcheck",
+      "title": "FormCheck（非 LLM）",
+      "description": "受理／却下の機械検証。Design の規則確度により粒度調整。",
+      "milestoneId": "ms.writes",
+      "status": "needs-refinement",
+      "allowedPathCandidateIds": ["ap.packages.shared", "ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.formcheck"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.scope"],
+      "exportNotes": "変換契約と部分的に独立しうる。"
+    },
+    {
+      "id": "tc.delete",
+      "title": "本人削除（M6）",
+      "description": "公開句の削除または非表示。管理者削除は MVP 外。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.api"],
+      "acceptanceCriteriaIds": ["ac.tc.delete"],
+      "validationFocusIds": ["vf.contract"],
+      "reviewFocusIds": ["rf.auth"],
+      "exportNotes": "ライフサイクルが ADR と整合するまで blocked。"
+    },
+    {
+      "id": "tc.e2e-read",
+      "title": "Playwright 読み取りスモーク",
+      "description": "GT クリティカルパス。LLM 実呼び出しに CI を依存させない。",
+      "milestoneId": "ms.gt",
+      "status": "candidate",
+      "allowedPathCandidateIds": ["ap.apps.web", "ap.root"],
+      "acceptanceCriteriaIds": ["ac.tc.e2e-read"],
+      "validationFocusIds": ["vf.e2e"],
+      "reviewFocusIds": ["rf.scope"]
+    },
+    {
+      "id": "tc.e2e-write",
+      "title": "Playwright 書き込みスモーク",
+      "description": "投稿・返信・削除のクリティカルパス。変換経路確定後。",
+      "milestoneId": "ms.writes",
+      "status": "blocked",
+      "allowedPathCandidateIds": ["ap.apps.web", "ap.root"],
+      "acceptanceCriteriaIds": ["ac.tc.e2e-write"],
+      "validationFocusIds": ["vf.e2e"],
+      "reviewFocusIds": ["rf.auth"],
+      "exportNotes": "変換フローと削除が ready になるまで blocked。"
+    }
+  ],
+  "taskDependencies": [
+    { "id": "dep.01", "fromTaskCandidateId": "tc.shared", "toTaskCandidateId": "tc.monorepo", "reason": "共有はワークスペース解決後。" },
+    { "id": "dep.02", "fromTaskCandidateId": "tc.hono", "toTaskCandidateId": "tc.shared", "reason": "API 契約を共有に合わせる。" },
+    { "id": "dep.03", "fromTaskCandidateId": "tc.neon", "toTaskCandidateId": "tc.hono", "reason": "接続は API ワーカー前提。" },
+    { "id": "dep.04", "fromTaskCandidateId": "tc.schema", "toTaskCandidateId": "tc.neon", "reason": "スキーマは接続後。" },
+    { "id": "dep.05", "fromTaskCandidateId": "tc.timeline", "toTaskCandidateId": "tc.schema", "reason": "公開読み取りは保存モデル依存。" },
+    { "id": "dep.06", "fromTaskCandidateId": "tc.authgate", "toTaskCandidateId": "tc.shared", "reason": "決定を型・ドキュメントに残す。" },
+    { "id": "dep.07", "fromTaskCandidateId": "tc.session", "toTaskCandidateId": "tc.authgate", "reason": "境界は認証方針後。" },
+    { "id": "dep.08", "fromTaskCandidateId": "tc.session", "toTaskCandidateId": "tc.hono", "reason": "セッションは API に載る。" },
+    { "id": "dep.09", "fromTaskCandidateId": "tc.transform-arch-gate", "toTaskCandidateId": "tc.session", "reason": "認可境界の後に変換方針を固定。" },
+    { "id": "dep.10", "fromTaskCandidateId": "tc.transform-arch-gate", "toTaskCandidateId": "tc.schema", "reason": "保持と状態はデータモデルと整合。" },
+    { "id": "dep.11", "fromTaskCandidateId": "tc.nextshell", "toTaskCandidateId": "tc.monorepo", "reason": "フロントはツールチェーン後。" },
+    { "id": "dep.12", "fromTaskCandidateId": "tc.gtssr", "toTaskCandidateId": "tc.nextshell", "reason": "ページはシェル上。" },
+    { "id": "dep.13", "fromTaskCandidateId": "tc.gtssr", "toTaskCandidateId": "tc.timeline", "reason": "SSR は公開 API 契約依存。" },
+    { "id": "dep.14", "fromTaskCandidateId": "tc.llm-adapter", "toTaskCandidateId": "tc.transform-arch-gate", "reason": "ADR 確定後に適合実装。" },
+    { "id": "dep.15", "fromTaskCandidateId": "tc.transform-contract", "toTaskCandidateId": "tc.transform-arch-gate", "reason": "契約は ADR から。" },
+    { "id": "dep.16", "fromTaskCandidateId": "tc.transform-post-flow", "toTaskCandidateId": "tc.llm-adapter", "reason": "アダプタと契約後。" },
+    { "id": "dep.17", "fromTaskCandidateId": "tc.transform-post-flow", "toTaskCandidateId": "tc.transform-contract", "reason": "状態機械合意後。" },
+    { "id": "dep.18", "fromTaskCandidateId": "tc.transform-reply-flow", "toTaskCandidateId": "tc.llm-adapter", "reason": "同上。" },
+    { "id": "dep.19", "fromTaskCandidateId": "tc.transform-reply-flow", "toTaskCandidateId": "tc.transform-contract", "reason": "同上。" },
+    { "id": "dep.20", "fromTaskCandidateId": "tc.transform-reply-flow", "toTaskCandidateId": "tc.transform-post-flow", "reason": "スレッド親子と整合。" },
+    { "id": "dep.21", "fromTaskCandidateId": "tc.prompting-safety", "toTaskCandidateId": "tc.transform-arch-gate", "reason": "プロンプト境界は ADR で固定。" },
+    { "id": "dep.22", "fromTaskCandidateId": "tc.formcheck", "toTaskCandidateId": "tc.transform-contract", "reason": "受理規則は契約と共有。" },
+    { "id": "dep.23", "fromTaskCandidateId": "tc.delete", "toTaskCandidateId": "tc.session", "reason": "削除は認証後。" },
+    { "id": "dep.24", "fromTaskCandidateId": "tc.delete", "toTaskCandidateId": "tc.transform-contract", "reason": "公開句ライフサイクルと整合。" },
+    { "id": "dep.25", "fromTaskCandidateId": "tc.e2e-read", "toTaskCandidateId": "tc.gtssr", "reason": "閲覧スモークは GT 後。" },
+    { "id": "dep.26", "fromTaskCandidateId": "tc.e2e-write", "toTaskCandidateId": "tc.transform-reply-flow", "reason": "書き込み経路が必要。" },
+    { "id": "dep.27", "fromTaskCandidateId": "tc.e2e-write", "toTaskCandidateId": "tc.delete", "reason": "削除経路を含む。" },
+    { "id": "dep.28", "fromTaskCandidateId": "tc.e2e-write", "toTaskCandidateId": "tc.formcheck", "reason": "却下パス検証。" }
+  ],
+  "allowedPathCandidates": [
+    { "id": "ap.root", "path": ".", "kind": "directory", "reason": "ワークスペースルート・Biome・CI。", "source": "plan" },
+    { "id": "ap.apps.web", "path": "apps/web", "kind": "directory", "reason": "Next.js（Design）。", "source": "plan" },
+    { "id": "ap.apps.api", "path": "apps/api", "kind": "directory", "reason": "Hono on Workers。", "source": "plan" },
+    { "id": "ap.packages.shared", "path": "packages/shared", "kind": "directory", "reason": "共有契約。", "source": "plan" },
+    { "id": "ap.docs.orch", "path": "docs/orchestration", "kind": "directory", "reason": "Bootstrap orchestration と ADR。", "source": "user" },
+    { "id": "ap.transform.adr", "path": "docs/orchestration/transform-architecture.md", "kind": "file", "reason": "変換アーキ ADR（ユーザー Yes）。", "source": "user" },
+    { "id": "ap.tasks", "path": "tasks", "kind": "directory", "reason": "Exporter 出力先。", "source": "plan" }
+  ],
+  "acceptanceCriteria": [
+    { "id": "ac.tc.monorepo", "description": "ルートで Biome が実行できワークスペースが解決する。", "source": "plan", "taskCandidateIds": ["tc.monorepo"] },
+    { "id": "ac.tc.shared", "description": "共有パッケージから境界型がインポートできる。", "source": "plan", "taskCandidateIds": ["tc.shared"] },
+    { "id": "ac.tc.hono", "description": "Workers API がヘルス応答を返す。", "source": "plan", "taskCandidateIds": ["tc.hono"] },
+    { "id": "ac.tc.neon", "description": "Hyperdrive 経由で Neon 接続を再現できる。", "source": "plan", "taskCandidateIds": ["tc.neon"] },
+    { "id": "ac.tc.schema", "description": "最小エンティティのマイグレーション適用が手順どおり再現できる。", "source": "plan", "taskCandidateIds": ["tc.schema"] },
+    { "id": "ac.tc.timeline", "description": "未認証でタイムライン JSON が取得できる。", "source": "plan", "taskCandidateIds": ["tc.timeline"] },
+    { "id": "ac.tc.authgate", "description": "認証方式が orchestration 文書に記録される。", "source": "plan", "taskCandidateIds": ["tc.authgate"] },
+    { "id": "ac.tc.session", "description": "書き込み API が未認証で拒否される。", "source": "plan", "taskCandidateIds": ["tc.session"] },
+    { "id": "ac.tc.transform-arch-gate", "description": "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。", "source": "plan", "taskCandidateIds": ["tc.transform-arch-gate"] },
+    { "id": "ac.tc.nextshell", "description": "Next がビルドしレイアウトが載る。", "source": "plan", "taskCandidateIds": ["tc.nextshell"] },
+    { "id": "ac.tc.gtssr", "description": "GT が SSR で変換句のみを表示する。", "source": "plan", "taskCandidateIds": ["tc.gtssr"] },
+    { "id": "ac.tc.llm-adapter", "description": "ADR の呼び出し契約に適合するアダプタが説明できる。", "source": "plan", "taskCandidateIds": ["tc.llm-adapter"] },
+    { "id": "ac.tc.transform-contract", "description": "変換ジョブの状態・冪等・エラーが共有契約で説明できる。", "source": "plan", "taskCandidateIds": ["tc.transform-contract"] },
+    { "id": "ac.tc.transform-post-flow", "description": "投稿パイプラインが ADR とポリシーに一致する。", "source": "plan", "taskCandidateIds": ["tc.transform-post-flow"] },
+    { "id": "ac.tc.transform-reply-flow", "description": "返信パイプラインが対称型方針と一致する。", "source": "plan", "taskCandidateIds": ["tc.transform-reply-flow"] },
+    { "id": "ac.tc.prompting-safety", "description": "注入緩和とログ方針が ADR と運用に一致する。", "source": "plan", "taskCandidateIds": ["tc.prompting-safety"] },
+    { "id": "ac.tc.formcheck", "description": "規則外は公開フローに進まない。", "source": "plan", "taskCandidateIds": ["tc.formcheck"] },
+    { "id": "ac.tc.delete", "description": "本人削除後に一覧／スレッドが一貫する。", "source": "plan", "taskCandidateIds": ["tc.delete"] },
+    { "id": "ac.tc.e2e-read", "description": "読み取りスモークがパスする。", "source": "plan", "taskCandidateIds": ["tc.e2e-read"] },
+    { "id": "ac.tc.e2e-write", "description": "書き込みスモークがパスし CI が LLM に依存しない。", "source": "plan", "taskCandidateIds": ["tc.e2e-write"] }
+  ],
+  "validationFocus": [
+    { "id": "vf.biome", "description": "Biome とルート規約。", "taskCandidateIds": ["tc.monorepo", "tc.authgate", "tc.transform-arch-gate", "tc.nextshell"], "acceptanceCriteriaIds": ["ac.tc.monorepo"] },
+    { "id": "vf.contract", "description": "REST 契約と Vitest 等。", "taskCandidateIds": ["tc.shared", "tc.hono", "tc.neon", "tc.schema", "tc.timeline", "tc.session", "tc.gtssr", "tc.llm-adapter", "tc.transform-contract", "tc.transform-post-flow", "tc.transform-reply-flow", "tc.prompting-safety", "tc.formcheck", "tc.delete"], "acceptanceCriteriaIds": ["ac.tc.timeline"] },
+    { "id": "vf.e2e", "description": "Playwright スモーク。", "taskCandidateIds": ["tc.e2e-read", "tc.e2e-write"], "acceptanceCriteriaIds": ["ac.tc.e2e-read"] }
+  ],
+  "reviewFocus": [
+    { "id": "rf.auth", "description": "セッション・Cookie・削除の認可。", "taskCandidateIds": ["tc.hono", "tc.authgate", "tc.session", "tc.delete", "tc.e2e-write"], "acceptanceCriteriaIds": ["ac.tc.session"] },
+    { "id": "rf.privacy", "description": "素の短期保持とログ抑止。", "taskCandidateIds": ["tc.neon", "tc.schema", "tc.transform-post-flow", "tc.transform-reply-flow", "tc.prompting-safety"], "acceptanceCriteriaIds": ["ac.tc.transform-post-flow"] },
+    { "id": "rf.scope", "description": "Scope／Design の境界。", "taskCandidateIds": ["tc.monorepo", "tc.shared", "tc.timeline", "tc.gtssr", "tc.formcheck", "tc.e2e-read"], "acceptanceCriteriaIds": ["ac.tc.gtssr"] },
+    { "id": "rf.transform", "description": "ADR なしに変換実装を進めない。", "taskCandidateIds": ["tc.transform-arch-gate", "tc.llm-adapter", "tc.transform-contract"], "acceptanceCriteriaIds": ["ac.tc.transform-arch-gate"] }
+  ],
+  "exportReadiness": {
+    "status": "not-ready",
+    "readyTaskCandidateIds": [],
+    "blockedTaskCandidateIds": ["tc.llm-adapter", "tc.transform-contract", "tc.transform-post-flow", "tc.transform-reply-flow", "tc.prompting-safety", "tc.delete", "tc.e2e-write"],
+    "blockers": ["tc.transform-arch-gate 未完了のため変換系タスクは blocked。", "認証 ADR 後の実装順は Exporter 前に再レビュー。"],
+    "notes": ["tc.formcheck は needs-refinement のままExporterで取り扱い注意。"]
+  }
+}
