@@ -8,7 +8,37 @@ allowedPaths:
   - .
 acceptanceCriteria:
   - "読み取りスモークがパスする。"
-status: blocked
-retryCount: 0
+status: done
+retryCount: 1
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tanka-reply-sns@0.0.0 test
+    > pnpm --filter @tanka-reply-sns/web test
+    
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-read/apps/web
+    > pnpm run smoke:read
+    
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-read/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "読み取りスモークは npm test 経由でパスしており、追加された test/smoke:read スクリプトとアクセシビリティ用 role 付与は受け入れ条件に合っています。"
+  requiredFixes: []
+  riskNotes: []
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.e2e-read-2026-05-10T18-06-52-244Z.md

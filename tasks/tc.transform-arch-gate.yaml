@@ -9,7 +9,9 @@ allowedPaths:
   - docs/orchestration/transform-architecture.md
 acceptanceCriteria:
   - "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。"
-status: blocked
+status: running
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+workspacePath: /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate
+currentBranch: task/tc.transform-arch-gate-adr-milestone-3-5

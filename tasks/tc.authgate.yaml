@@ -7,7 +7,26 @@ allowedPaths:
   - docs/orchestration
 acceptanceCriteria:
   - "認証方式が orchestration 文書に記録される。"
-status: blocked
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    skipped:
+    npm error Missing script: "test"
+    npm error
+    npm error To see a list of scripts, run:
+    npm error   npm run
+    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_01_00_143Z-debug-0.log
+lastReview:
+  decision: accept
+  summary: "認証方式が orchestration 文書に記録され、SMS 不採用も明記されているため acceptance criteria を満たしています。"
+  requiredFixes: []
+  riskNotes: []
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.authgate-2026-05-10T17-01-00-183Z.md
