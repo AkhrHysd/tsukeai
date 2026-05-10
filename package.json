@@ -1,0 +1,20 @@
+{
+  "name": "tanka-reply-sns",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "biome": "biome check .",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "check": "turbo run check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}

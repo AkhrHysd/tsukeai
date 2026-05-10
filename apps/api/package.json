@@ -1,0 +1,14 @@
+{
+  "name": "@tanka-reply-sns/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "pnpm run lint",
+    "lint": "pnpm --workspace-root exec biome check .",
+    "typecheck": "pnpm --workspace-root exec tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanka-reply-sns/shared": "workspace:*"
+  }
+}

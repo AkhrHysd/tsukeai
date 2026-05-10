@@ -1,0 +1,17 @@
+{
+  "name": "@tanka-reply-sns/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "check": "pnpm run lint",
+    "lint": "pnpm --workspace-root exec biome check .",
+    "typecheck": "pnpm --workspace-root exec tsc --noEmit"
+  }
+}
