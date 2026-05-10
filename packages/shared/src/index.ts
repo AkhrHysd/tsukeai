@@ -1,4 +1,5 @@
 export type TankaText = string;
+export type PublicTankaText = TankaText;
 
 export type EntityId = string;
 export type IsoDateTimeString = string;
@@ -38,7 +39,7 @@ export type AuthorDto = {
 export type PostDto = {
   id: EntityId;
   author: AuthorDto;
-  body: TankaText;
+  body: PublicTankaText;
   createdAt: IsoDateTimeString;
 };
 
@@ -46,7 +47,7 @@ export type ReplyDto = {
   id: EntityId;
   postId: EntityId;
   author: AuthorDto;
-  body: TankaText;
+  body: PublicTankaText;
   createdAt: IsoDateTimeString;
 };
 
