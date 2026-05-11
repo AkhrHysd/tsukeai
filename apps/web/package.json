@@ -9,8 +9,9 @@
     "dev": "next dev",
     "lint": "pnpm --workspace-root exec biome check .",
     "smoke:read": "node scripts/read-smoke.mjs",
+    "smoke:write": "node scripts/write-smoke.mjs",
     "start": "next start",
-    "test": "pnpm run smoke:read",
+    "test": "WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {

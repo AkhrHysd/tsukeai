@@ -17,13 +17,18 @@ assert.equal(
 );
 assert.equal(
   webPackageJson.scripts?.test,
-  "pnpm run smoke:read",
-  "web test must run the read smoke",
+  "WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write",
+  "web test must run read and write smokes",
 );
 assert.equal(
   webPackageJson.scripts?.["smoke:read"],
   "node scripts/read-smoke.mjs",
   "read smoke must stay dependency-free",
+);
+assert.equal(
+  webPackageJson.scripts?.["smoke:write"],
+  "node scripts/write-smoke.mjs",
+  "write smoke must stay dependency-free",
 );
 
 assertIncludes(

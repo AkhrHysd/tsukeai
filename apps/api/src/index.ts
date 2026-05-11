@@ -2,19 +2,21 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { getCookie } from "hono/cookie";
 import { cors } from "hono/cors";
-import type {
-  ApiErrorCode,
-  ReplyDto,
-  TimelineItemDto,
-  TimelineResponseDto,
-  TransformFailureReason,
-  TransformJobDto,
-  TransformJobKind,
-  TransformJobResponseDto,
-  TransformJobState,
-  TransformPublicErrorCode,
-  TransformRetryPolicy,
-  TransformUserAction,
+import {
+  checkTransformForm,
+  type ApiErrorCode,
+  type PostDto,
+  type ReplyDto,
+  type TimelineItemDto,
+  type TimelineResponseDto,
+  type TransformFailureReason,
+  type TransformJobDto,
+  type TransformJobKind,
+  type TransformJobResponseDto,
+  type TransformJobState,
+  type TransformPublicErrorCode,
+  type TransformRetryPolicy,
+  type TransformUserAction,
 } from "@tanka-reply-sns/shared";
 import postgres from "postgres";
 import {
@@ -30,6 +32,7 @@ type Bindings = LlmAdapterBindings & {
   HYPERDRIVE: Hyperdrive;
   SESSION_COOKIE_NAME?: string;
   SESSION_SECRET?: string;
+  WRITE_SMOKE_FIXED_PUBLIC_TEXT?: string;
 };
 
 type AppContext = Context<{ Bindings: Bindings }>;
@@ -79,6 +82,19 @@ type DeletePublicConversionResult = {
   deleted_count: number;
 };
 
+type PublishedPostRow = {
+  id: string;
+  author_id: string;
+  author_display_name: string;
+  author_handle: string | null;
+  body: string;
+  created_at: string;
+};
+
+type PublishedReplyRow = PublishedPostRow & {
+  post_id: string;
+};
+
 type TransformJobRow = {
   id: string;
   account_id: string;
@@ -104,6 +120,7 @@ type TransformJobRequestBody = {
   kind?: unknown;
   input?: unknown;
   body?: unknown;
+  publicText?: unknown;
   parentPostId?: unknown;
   clientKey?: unknown;
 };
@@ -111,6 +128,13 @@ type TransformJobRequestBody = {
 type TransformJobCreateInput = {
   kind: TransformJobKind;
   input: string;
+  clientKey: string;
+  parentPostId?: string;
+};
+
+type PublicTextCreateInput = {
+  kind: TransformJobKind;
+  publicText: string;
   clientKey: string;
   parentPostId?: string;
 };
@@ -456,6 +480,33 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
     ...(hasNext && lastPostCursor
       ? { nextCursor: encodeTimelineCursor(lastPostCursor) }
       : {}),
+  };
+}
+
+function toPostDto(row: PublishedPostRow): PostDto {
+  return {
+    id: row.id,
+    author: {
+      id: row.author_id,
+      displayName: row.author_display_name,
+      ...(row.author_handle ? { handle: row.author_handle } : {}),
+    },
+    body: row.body,
+    createdAt: row.created_at,
+  };
+}
+
+function toReplyDto(row: PublishedReplyRow): ReplyDto {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    author: {
+      id: row.author_id,
+      displayName: row.author_display_name,
+      ...(row.author_handle ? { handle: row.author_handle } : {}),
+    },
+    body: row.body,
+    createdAt: row.created_at,
   };
 }
 
@@ -1151,6 +1202,266 @@ function parseTransformJobInput(
   };
 }
 
+function parsePublicTextInput(
+  body: TransformJobRequestBody,
+  forcedInput: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
+  headerClientKey: string | undefined,
+): PublicTextCreateInput | undefined {
+  const publicText = body.publicText;
+  const clientKey = parseClientKey(body.clientKey, headerClientKey);
+  const parentPostId =
+    forcedInput.parentPostId ??
+    (typeof body.parentPostId === "string"
+      ? body.parentPostId.trim()
+      : undefined);
+
+  if (typeof publicText !== "string" || !clientKey) {
+    return undefined;
+  }
+
+  if (
+    forcedInput.kind === "reply_77" &&
+    (!parentPostId || !UUID_PATTERN.test(parentPostId))
+  ) {
+    return undefined;
+  }
+
+  if (forcedInput.kind === "post_575" && parentPostId !== undefined) {
+    return undefined;
+  }
+
+  const formCheck = checkTransformForm(forcedInput.kind, publicText);
+
+  if (!formCheck.accepted) {
+    return undefined;
+  }
+
+  return {
+    kind: forcedInput.kind,
+    publicText: formCheck.normalizedText,
+    clientKey,
+    ...(parentPostId ? { parentPostId } : {}),
+  };
+}
+
+async function publishPublicTextPost(
+  sql: ReturnType<typeof createSql>,
+  accountId: string,
+  input: PublicTextCreateInput,
+): Promise<PostDto> {
+  const publicConversionId = crypto.randomUUID();
+  const threadId = crypto.randomUUID();
+  const sourceHash = await sha256Hex(input.publicText);
+
+  const row = await sql.begin(async (transaction) => {
+    await transaction`
+      insert into threads (id)
+      values (${threadId}::uuid)
+    `;
+
+    const [inserted] = await transaction<PublishedPostRow[]>`
+      insert into public_conversions (
+        id,
+        account_id,
+        thread_id,
+        parent_public_conversion_id,
+        kind,
+        public_text,
+        source_sha256
+      )
+      values (
+        ${publicConversionId}::uuid,
+        ${accountId}::uuid,
+        ${threadId}::uuid,
+        null,
+        'post',
+        ${input.publicText},
+        ${sourceHash}
+      )
+      returning
+        id::text,
+        account_id::text as author_id,
+        (
+          select display_name
+          from accounts
+          where id = ${accountId}::uuid and deleted_at is null
+        ) as author_display_name,
+        (
+          select handle
+          from accounts
+          where id = ${accountId}::uuid and deleted_at is null
+        ) as author_handle,
+        public_text as body,
+        to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as created_at
+    `;
+
+    return inserted;
+  });
+
+  if (!row?.author_display_name) {
+    throw new Error("Post author not found.");
+  }
+
+  return toPostDto(row);
+}
+
+async function publishPublicTextReply(
+  sql: ReturnType<typeof createSql>,
+  accountId: string,
+  input: PublicTextCreateInput,
+): Promise<ReplyDto | undefined> {
+  if (!input.parentPostId) {
+    return undefined;
+  }
+
+  const publicConversionId = crypto.randomUUID();
+  const sourceHash = await sha256Hex(input.publicText);
+
+  const row = await sql.begin(async (transaction) => {
+    const [parentPost] = await transaction<ReplyParentPostRow[]>`
+      select
+        p.id::text,
+        p.thread_id::text
+      from public_conversions p
+      join threads t on t.id = p.thread_id
+      where
+        p.id = ${input.parentPostId}::uuid
+        and p.kind = 'post'
+        and p.is_published = true
+        and p.deleted_at is null
+        and t.deleted_at is null
+    `;
+
+    if (!parentPost) {
+      return undefined;
+    }
+
+    const [inserted] = await transaction<PublishedReplyRow[]>`
+      insert into public_conversions (
+        id,
+        account_id,
+        thread_id,
+        parent_public_conversion_id,
+        kind,
+        public_text,
+        source_sha256
+      )
+      values (
+        ${publicConversionId}::uuid,
+        ${accountId}::uuid,
+        ${parentPost.thread_id}::uuid,
+        ${parentPost.id}::uuid,
+        'reply',
+        ${input.publicText},
+        ${sourceHash}
+      )
+      returning
+        id::text,
+        ${parentPost.id}::text as post_id,
+        account_id::text as author_id,
+        (
+          select display_name
+          from accounts
+          where id = ${accountId}::uuid and deleted_at is null
+        ) as author_display_name,
+        (
+          select handle
+          from accounts
+          where id = ${accountId}::uuid and deleted_at is null
+        ) as author_handle,
+        public_text as body,
+        to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as created_at
+    `;
+
+    return inserted;
+  });
+
+  if (!row?.author_display_name) {
+    throw new Error("Reply author not found.");
+  }
+
+  return toReplyDto(row);
+}
+
+async function handleCreatePublicText(
+  c: AppContext,
+  forcedInput: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
+  body: TransformJobRequestBody,
+  accountId: string,
+) {
+  const parsed = parsePublicTextInput(
+    body,
+    forcedInput,
+    c.req.header("Idempotency-Key"),
+  );
+
+  if (!parsed) {
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message:
+            "Published write requests require valid publicText and an idempotency key.",
+        },
+      },
+      400,
+    );
+  }
+
+  let sql: ReturnType<typeof createSql> | undefined;
+
+  try {
+    sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+    if (parsed.kind === "reply_77") {
+      const reply = await publishPublicTextReply(sql, accountId, parsed);
+
+      if (!reply) {
+        return c.json(
+          {
+            error: {
+              code: "not_found" satisfies ApiErrorCode,
+              message: "Parent post not found.",
+            },
+          },
+          404,
+        );
+      }
+
+      c.header("Cache-Control", "no-store");
+
+      return c.json({ reply }, 201);
+    }
+
+    const post = await publishPublicTextPost(sql, accountId, parsed);
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json({ post }, 201);
+  } catch (error) {
+    console.error("Published write request failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "service_unavailable" satisfies ApiErrorCode,
+          message: "Published text could not be saved.",
+        },
+      },
+      503,
+    );
+  } finally {
+    try {
+      await sql?.end({ timeout: 5 });
+    } catch (error) {
+      console.error(
+        "Failed to close published write database client",
+        toSafeLogError(error),
+      );
+    }
+  }
+}
+
 async function handleCreateTransformJob(
   c: AppContext,
   forcedInput?: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
@@ -1181,6 +1492,22 @@ async function handleCreateTransformJob(
         error: {
           code: "bad_request" satisfies ApiErrorCode,
           message: "Request body must be a JSON object.",
+        },
+      },
+      400,
+    );
+  }
+
+  if (body.publicText !== undefined) {
+    if (forcedInput?.kind && c.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1") {
+      return handleCreatePublicText(c, forcedInput, body, accountId);
+    }
+
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message: "Published text writes are disabled.",
         },
       },
       400,

@@ -127,6 +127,44 @@ h1 {
   gap: 16px;
 }
 
+.composer {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.composer label,
+.reply-form label {
+  font-weight: 700;
+}
+
+.composer textarea,
+.reply-form input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--foreground);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.composer button,
+.reply-form button {
+  justify-self: start;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .post-card {
   padding: 22px;
   border: 1px solid var(--line);
@@ -146,9 +184,23 @@ h1 {
   font-size: 14px;
 }
 
+.post-card__header form,
+.reply__header form {
+  margin-left: auto;
+}
+
 .post-card__header strong,
 .reply__header strong {
   color: var(--foreground);
+}
+
+.link-button {
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .post-card__body,
@@ -173,6 +225,18 @@ h1 {
   gap: 8px;
   padding-left: 14px;
   border-left: 3px solid #b7d4d0;
+}
+
+.reply-form {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.reply-form div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
 }
 
 .timeline-status {
@@ -204,5 +268,9 @@ h1 {
   h1 {
     font-size: 38px;
     line-height: 1.05;
+  }
+
+  .reply-form div {
+    grid-template-columns: 1fr;
   }
 }
