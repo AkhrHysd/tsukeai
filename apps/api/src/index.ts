@@ -213,6 +213,7 @@ function parseTimelineLimit(value: string | undefined): number | undefined {
   if (value === undefined) {
     return DEFAULT_TIMELINE_LIMIT;
   }
+  
 
   const limit = Number(value);
 
