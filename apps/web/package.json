@@ -8,6 +8,8 @@
     "check": "pnpm run build",
     "dev": "next dev",
     "lint": "pnpm --workspace-root exec biome check .",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "smoke:read": "node scripts/read-smoke.mjs",
     "smoke:write": "node scripts/write-smoke.mjs",
     "start": "next start",
@@ -15,6 +17,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.19.9",
     "@tsukeai/shared": "workspace:*",
     "next": "^15.0.0",
     "react": "^19.0.0",

@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 dist/
 .next/
+.open-next/
 .turbo/
 
 # Cloudflare Workers
