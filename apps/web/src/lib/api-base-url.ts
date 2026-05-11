@@ -2,6 +2,7 @@ const DEFAULT_API_BASE_URL = "http://localhost:8787";
 
 export function getApiBaseUrl(): URL {
   const value = process.env.API_BASE_URL ?? DEFAULT_API_BASE_URL;
+  console.error("API_BASE_URL resolved", { value });
 
   try {
     return new URL(value);

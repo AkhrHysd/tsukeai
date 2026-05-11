@@ -97,6 +97,10 @@ async function requestApi(path: string, init: RequestInit) {
   });
 
   if (!response.ok) {
+    console.error("API request failed", {
+      url: url.toString(),
+      status: response.status,
+    });
     let message = `API request failed with ${response.status}`;
 
     try {

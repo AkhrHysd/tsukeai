@@ -202,7 +202,7 @@ function allowedOrigins(value: string | undefined): string[] {
 
 function isProtectedWrite(method: string, path: string): boolean {
   return (
-    (method === "POST" || method === "DELETE") &&
+    method === "DELETE" &&
     path.startsWith("/api/") &&
     !/^\/api\/(?:auth|sessions)(?:\/|$)/.test(path)
   );
@@ -1389,19 +1389,9 @@ async function handleCreateTransformJob(
   forcedInput?: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
 ) {
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
-
-  if (!accountId) {
-    return c.json(
-      {
-        error: {
-          code: "unauthorized" satisfies ApiErrorCode,
-          message: "Authentication is required for this write operation.",
-        },
-      },
-      401,
-    );
-  }
+  const existingAccountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  const accountId = existingAccountId ?? crypto.randomUUID();
+  const shouldEnsureAccount = existingAccountId === undefined;
 
   const body = await readTransformJobBody(c.req.raw);
 
@@ -1459,6 +1449,14 @@ async function handleCreateTransformJob(
 
   try {
     sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+    if (shouldEnsureAccount) {
+      await sql`
+        insert into accounts (id, display_name)
+        values (${accountId}::uuid, '匿名')
+        on conflict (id) do nothing
+      `;
+    }
 
     if (parsed.kind === "reply_77") {
       const parentPost =

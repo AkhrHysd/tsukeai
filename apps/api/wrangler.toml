@@ -7,6 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 # environment in the Cloudflare dashboard or apps/api/.dev.vars — not in source.
 [vars]
 API_ALLOWED_ORIGINS = "http://localhost:3000"
+LLM_BASE_URL = "https://api.openai.com/v1/chat/completions"
+LLM_MODEL = "gpt-4o-mini"
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"
