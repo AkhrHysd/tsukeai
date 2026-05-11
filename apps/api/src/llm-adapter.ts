@@ -65,6 +65,8 @@ export class LlmAdapterError extends Error {
     readonly code: LlmAdapterErrorCode,
     message: string,
     readonly retryable: boolean,
+    readonly attempts = 0,
+    readonly model?: string,
   ) {
     super(message);
     this.name = "LlmAdapterError";
@@ -100,6 +102,7 @@ const DEFAULT_LLM_TIMEOUT_MS = 8_000;
 const DEFAULT_LLM_MAX_INPUT_CHARS = 1_000;
 const DEFAULT_LLM_MAX_OUTPUT_TOKENS = 96;
 const DEFAULT_LLM_MAX_RETRIES = 1;
+const DEFAULT_RETRY_BACKOFF_MS = 250;
 const MIN_TIMEOUT_MS = 1_000;
 const MAX_TIMEOUT_MS = 20_000;
 const MIN_OUTPUT_TOKENS = 16;
@@ -173,8 +176,16 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
           lastError = adapterError;
 
           if (!adapterError.retryable || attempt === maxAttempts) {
-            throw adapterError;
+            throw new LlmAdapterError(
+              adapterError.code,
+              adapterError.message,
+              adapterError.retryable,
+              attempt,
+              config.model,
+            );
           }
+
+          await delay(DEFAULT_RETRY_BACKOFF_MS * 2 ** (attempt - 1));
         }
       }
 
@@ -229,6 +240,10 @@ export function classifyTransformFailure(
     logCode: error.code,
     retryable: error.retryable,
   };
+}
+
+function delay(durationMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, durationMs));
 }
 
 function readConfig(bindings: LlmAdapterBindings): LlmAdapterConfig {

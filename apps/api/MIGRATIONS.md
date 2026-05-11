@@ -6,13 +6,15 @@ database URL kept outside the repository; the Worker still reads through the
 
 ## Minimal Entities
 
-`0001_minimal_entities.sql` creates:
+The current migration set creates:
 
 - `accounts`: minimum owner identity for writes and later self-delete checks.
 - `threads`: the public thread container used by GT and thread reads.
 - `public_conversions`: only the public transformed text, ownership,
   post/reply kind, thread parent relation, optional source hash, and publish or
   delete state. Raw source text is not persisted.
+- `transform_jobs`: transform state, idempotency scope, public result link,
+  sanitized failure classification, and observation metadata.
 - `schema_migrations`: applied migration versions and checksums.
 
 ## Apply
@@ -46,6 +48,7 @@ where schemaname = 'public'
     'accounts',
     'threads',
     'public_conversions',
+    'transform_jobs',
     'schema_migrations'
   )
 order by tablename;
@@ -58,6 +61,7 @@ accounts
 public_conversions
 schema_migrations
 threads
+transform_jobs
 ```
 
 Then confirm the Worker can still reach the database through Hyperdrive:
