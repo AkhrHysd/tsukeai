@@ -10,6 +10,7 @@ dist/
 # Cloudflare Workers
 .wrangler/
 .dev.vars
+wrangler.hyperdrive.*.toml
 
 # Environment
 .env
