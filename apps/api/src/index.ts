@@ -7,8 +7,9 @@ import type {
   TimelineResponseDto,
 } from "@tanka-reply-sns/shared";
 import postgres from "postgres";
+import type { LlmAdapterBindings } from "./llm-adapter";
 
-type Bindings = {
+type Bindings = LlmAdapterBindings & {
   API_ALLOWED_ORIGINS?: string;
   HYPERDRIVE: Hyperdrive;
   SESSION_COOKIE_NAME?: string;
