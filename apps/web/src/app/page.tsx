@@ -162,8 +162,7 @@ export default async function Home() {
     <section className="timeline-page" aria-labelledby="page-title">
       <header className="timeline-header">
         <div>
-          <p className="eyebrow">公開閲覧 / SSR</p>
-          <h1 id="page-title">公開タイムライン</h1>
+          <h1 id="page-title">Tsukeai</h1>
         </div>
         <p className="lead">変換済みの公開句だけをサーバーで取得して表示します。</p>
       </header>
