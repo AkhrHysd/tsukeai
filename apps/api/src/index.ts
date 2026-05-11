@@ -179,6 +179,7 @@ function toSafeLogError(error: unknown): SafeLogError {
   return {
     name: error.name,
     ...(code ? { code } : {}),
+    ...("message" in error && typeof error.message === "string" ? { message: error.message } : {}),
   };
 }
 
@@ -982,6 +983,7 @@ async function runTransformJob(
       reason: classification.logCode,
       retryable: classification.retryable,
       attempts: adapterError.attempts,
+      error: toSafeLogError(adapterError),
     });
 
     return markTransformJobFailed(

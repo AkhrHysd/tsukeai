@@ -2,7 +2,7 @@
 name = "tsukeai-web"
 main = ".open-next/worker.js"
 compatibility_date = "2026-05-11"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
 [assets]
 directory = ".open-next/assets"

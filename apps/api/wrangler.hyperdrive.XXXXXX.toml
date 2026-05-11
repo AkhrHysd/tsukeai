@@ -14,6 +14,6 @@ LLM_MODEL = "gpt-4.1-mini"
 binding = "HYPERDRIVE"
 # Keep the real Cloudflare resource ID outside git and substitute it at deploy
 # time. See docs/orchestration/neon-hyperdrive.md for the exact command.
-id = "<hyperdrive-id>"
+id = "4c0d194a6a024a408984ecf6b4fa82c1"
 # Local development: wrangler dev uses this connection string directly.
 localConnectionString = "postgres://tsukeai:tsukeai@localhost:5433/tsukeai"

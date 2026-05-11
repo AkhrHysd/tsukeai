@@ -6,6 +6,7 @@
   "scripts": {
     "check": "pnpm run lint",
     "dev": "wrangler dev",
+    "cf:deploy": "node scripts/deploy.mjs",
     "lint": "pnpm --workspace-root exec biome check .",
     "migrate:up": "node scripts/migrate.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"

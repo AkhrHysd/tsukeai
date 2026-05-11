@@ -97,9 +97,19 @@ async function requestApi(path: string, init: RequestInit) {
   });
 
   if (!response.ok) {
+    let responseText: string | undefined;
+    try {
+      responseText = (await response.clone().text()).slice(0, 400);
+    } catch {
+      responseText = undefined;
+    }
+
     console.error("API request failed", {
       url: url.toString(),
       status: response.status,
+      cfRay: response.headers.get("cf-ray"),
+      contentType: response.headers.get("content-type"),
+      responseText,
     });
     let message = `API request failed with ${response.status}`;
 
