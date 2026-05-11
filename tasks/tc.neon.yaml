@@ -27,4 +27,4 @@ lastReview:
     - "The added database health endpoint exposes database name and server version; confirm this is acceptable for the API surface."
     - "Validation did not actually run tests because `npm test` is missing, despite the validation summary saying passed."
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.neon-2026-05-10T17-11-01-757Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.neon-2026-05-10T17-11-01-757Z.md

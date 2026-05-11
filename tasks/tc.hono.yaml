@@ -30,4 +30,4 @@ lastReview:
   riskNotes:
     - "提示された validation は npm test が未定義のため実質的な検証になっていない。手元でも node_modules 不在で typecheck/lint は実行できなかった。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.hono-2026-05-10T17-03-29-332Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.hono-2026-05-10T17-03-29-332Z.md

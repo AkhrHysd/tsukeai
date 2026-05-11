@@ -1,5 +1,5 @@
 {
-  "name": "@tanka-reply-sns/api",
+  "name": "@tsukeai/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@tanka-reply-sns/shared": "workspace:*",
+    "@tsukeai/shared": "workspace:*",
     "hono": "^4.7.0",
     "postgres": "^3.4.5"
   },

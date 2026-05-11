@@ -32,4 +32,4 @@ lastReview:
     - "Validation Summaryのnpm testはMissing scriptで失敗しており、このタスクの実質的な検証にはなっていない。"
     - "実DBへの適用はDATABASE_URLが必要なため未実行。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.schema-2026-05-10T17-14-43-161Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.schema-2026-05-10T17-14-43-161Z.md

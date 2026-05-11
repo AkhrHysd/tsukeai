@@ -32,4 +32,4 @@ lastReview:
     - "検証ログでは npm test が Missing script で実際にはテスト未実行です。"
     - "SESSION_SECRET 未設定時は認証済み Cookie もすべて拒否されます。運用設定で必須です。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.session-2026-05-10T17-17-33-596Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.session-2026-05-10T17-17-33-596Z.md

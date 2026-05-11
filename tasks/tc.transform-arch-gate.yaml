@@ -22,15 +22,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-arch-gate/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-arch-gate/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -42,4 +42,4 @@ lastReview:
   requiredFixes: []
   riskNotes: []
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-arch-gate-2026-05-10T23-57-07-696Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-arch-gate-2026-05-10T23-57-07-696Z.md

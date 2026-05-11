@@ -4,13 +4,13 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: tanka
-      POSTGRES_USER: tanka
-      POSTGRES_PASSWORD: tanka
+      POSTGRES_DB: tsukeai
+      POSTGRES_USER: tsukeai
+      POSTGRES_PASSWORD: tsukeai
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tanka -d tanka"]
+      test: ["CMD-SHELL", "pg_isready -U tsukeai -d tsukeai"]
       interval: 5s
       timeout: 3s
       retries: 5

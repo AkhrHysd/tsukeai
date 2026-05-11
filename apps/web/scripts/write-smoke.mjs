@@ -8,7 +8,7 @@ const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
 
 assert.equal(
   rootPackageJson.scripts?.test,
-  "pnpm --filter @tanka-reply-sns/web test",
+  "pnpm --filter @tsukeai/web test",
   "root npm test must run the web smoke suite",
 );
 assert.equal(

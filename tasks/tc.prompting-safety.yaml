@@ -21,15 +21,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.prompting-safety/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.prompting-safety/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.prompting-safety/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.prompting-safety/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -43,4 +43,4 @@ lastReview:
     - "API の typecheck は node_modules 不在で実行不能でした。提示された validation は web smoke のみで、API 側の型検証は未確認です。"
     - "変換エンドポイントはまだ存在しないため、classifyTransformFailure の公開レスポンス反映は今後の変換フロー実装時に接続確認が必要です。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.prompting-safety-2026-05-11T00-09-24-791Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.prompting-safety-2026-05-11T00-09-24-791Z.md

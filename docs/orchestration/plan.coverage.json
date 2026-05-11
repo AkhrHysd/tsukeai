@@ -8,7 +8,7 @@
   "topics": {
     "source_design": {
       "status": "confirmed",
-      "evidence": "Final Coverage Review でユーザーは「セッション tanka-reply-sns の plan.md、plan.coverage.json、intermediate-plan.json の内容に異議はなく、このセットで確定してよい」と述べた（design.md を上流入力とする前提はこれまでの Plan 対話どおり）。"
+      "evidence": "Final Coverage Review でユーザーは「セッション tsukeai の plan.md、plan.coverage.json、intermediate-plan.json の内容に異議はなく、このセットで確定してよい」と述べた（design.md を上流入力とする前提はこれまでの Plan 対話どおり）。"
     },
     "planning_boundary": {
       "status": "confirmed",

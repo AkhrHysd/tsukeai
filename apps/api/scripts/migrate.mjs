@@ -14,7 +14,7 @@ const migrationsTableSql = `
 
 function usage() {
   return [
-    "Usage: DATABASE_URL=postgres://... pnpm --filter @tanka-reply-sns/api migrate:up",
+    "Usage: DATABASE_URL=postgres://... pnpm --filter @tsukeai/api migrate:up",
     "",
     "Options:",
     "  --dry-run   List pending migrations without connecting to the database.",

@@ -20,7 +20,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@tanka-reply-sns/shared':
+      '@tsukeai/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       hono:
@@ -42,7 +42,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@tanka-reply-sns/shared':
+      '@tsukeai/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       next:

@@ -24,7 +24,7 @@ From the repository root:
 ```sh
 pnpm install
 export DATABASE_URL="postgres://USER:PASSWORD@HOST:5432/DB?sslmode=require"
-pnpm --filter @tanka-reply-sns/api migrate:up
+pnpm --filter @tsukeai/api migrate:up
 ```
 
 The same command is safe to run again. Already-applied migrations are skipped,
@@ -33,7 +33,7 @@ and an edited migration with the same version is rejected by checksum.
 For a non-connecting check of the migration files and checksums:
 
 ```sh
-pnpm --filter @tanka-reply-sns/api migrate:up -- --dry-run
+pnpm --filter @tsukeai/api migrate:up -- --dry-run
 ```
 
 ## Verify

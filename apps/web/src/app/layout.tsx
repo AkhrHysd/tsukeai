@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tanka Reply SNS",
-  description: "短歌で返信する公開タイムライン",
+  title: "tsukeai",
+  description: "短歌の句を読み合い、LLM で形を整えるコミュニケーション",
 };
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
                 <span className="brand__mark" aria-hidden="true">
                   た
                 </span>
-                <span>Tanka Reply SNS</span>
+                <span>tsukeai</span>
               </a>
               <nav className="site-nav" aria-label="主要ナビゲーション">
                 <a href="/">タイムライン</a>

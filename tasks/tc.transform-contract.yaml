@@ -21,15 +21,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-contract/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-contract/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-contract/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-contract/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -43,4 +43,4 @@ lastReview:
     - "ドキュメント上の状態説明は queued→processing→terminal と読める一方、契約では queued→failed/rejected も許可しているため、実装時に意図を明確化するとよいです。"
     - "TransformJobDto.state と observation.state は二重保持のため、将来の実装で不整合を作らない運用が必要です。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-contract-2026-05-11T00-12-39-342Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-contract-2026-05-11T00-12-39-342Z.md

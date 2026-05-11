@@ -13,7 +13,7 @@ import {
   type TransformPublicErrorCode,
   type TransformRetryPolicy,
   type TransformUserAction,
-} from "@tanka-reply-sns/shared";
+} from "@tsukeai/shared";
 import type { Context } from "hono";
 import { Hono } from "hono";
 import { getCookie } from "hono/cookie";
@@ -150,7 +150,7 @@ type ReplyParentPostRow = {
 };
 
 const LOCAL_WEB_ORIGIN = "http://localhost:3000";
-const DEFAULT_SESSION_COOKIE_NAME = "__Host-tanka_session";
+const DEFAULT_SESSION_COOKIE_NAME = "__Host-tsukeai_session";
 const DEFAULT_TIMELINE_LIMIT = 20;
 const MAX_TIMELINE_LIMIT = 50;
 const MAX_CLIENT_KEY_LENGTH = 128;

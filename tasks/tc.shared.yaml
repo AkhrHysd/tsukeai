@@ -30,4 +30,4 @@ lastReview:
   riskNotes:
     - "Validation Summary は passed ですが、ログ上は npm test が Missing script で実行できていません。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.shared-2026-05-10T16-59-31-413Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.shared-2026-05-10T16-59-31-413Z.md

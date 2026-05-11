@@ -21,15 +21,15 @@ lastValidation:
   logs: >
     $ npm test exitCode: 0 stdout:
     
-    > tanka-reply-sns@0.0.0 test > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test > pnpm --filter @tsukeai/web test
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > node scripts/read-smoke.mjs
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web > node scripts/read-smoke.mjs
     
     Read smoke passed.
     
-    > @tanka-reply-sns/web@0.0.0 smoke:write /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > node scripts/write-smoke.mjs
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web > node scripts/write-smoke.mjs
     
     Write smoke passed. stderr: (empty)
 lastReview:
@@ -42,4 +42,4 @@ lastReview:
     - "現在の smoke は該当文字列が存在すれば通るため、フォーム送信、認証Cookie伝播、APIレスポンス、DB反映、削除動作が壊れても検出できません。"
     - "API側にテスト用の publicText 直書き経路が追加されていますが、実 e2e で通っていないため経路の有効性が未確認です。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.e2e-write-2026-05-11T00-51-12-641Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.e2e-write-2026-05-11T00-51-12-641Z.md

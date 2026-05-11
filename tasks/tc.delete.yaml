@@ -21,15 +21,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.delete/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.delete/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.delete/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.delete/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -43,4 +43,4 @@ lastReview:
     - "DELETE API の自動テストは確認できず、検証は web の read smoke のみです。"
     - "親投稿削除時に他ユーザーの返信も非公開化される設計です。スレッドごと非表示にする方針なら妥当ですが、返信単体の復元や監査要件が増える場合は再検討が必要です。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.delete-2026-05-11T00-15-26-272Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.delete-2026-05-11T00-15-26-272Z.md

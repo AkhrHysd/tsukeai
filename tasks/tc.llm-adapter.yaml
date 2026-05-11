@@ -20,15 +20,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.llm-adapter/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.llm-adapter/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.llm-adapter/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.llm-adapter/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -43,4 +43,4 @@ lastReview:
     - "ADR のバックオフ方針は adapter 内では明示実装されていないため、後続のジョブ実行基盤側で担保する前提が残る。"
   scopeViolations:
     - "なし: 変更は apps/api 配下のみ。"
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.llm-adapter-2026-05-11T00-00-30-363Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.llm-adapter-2026-05-11T00-00-30-363Z.md

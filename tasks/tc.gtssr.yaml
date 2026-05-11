@@ -33,4 +33,4 @@ lastReview:
     - "Local verification could not be rerun because node_modules is missing and tsc is unavailable; provided validation used npm test, but this repo has no root test script."
     - "PublicTankaText is only a TypeScript alias, so actual raw-to-public conversion still relies on the external public API contract rather than runtime enforcement in this change."
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.gtssr-2026-05-10T17-24-36-207Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.gtssr-2026-05-10T17-24-36-207Z.md

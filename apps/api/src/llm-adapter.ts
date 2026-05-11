@@ -2,7 +2,7 @@ import {
   checkTransformForm,
   TRANSFORM_FORM_RULES,
   type TransformJobKind,
-} from "@tanka-reply-sns/shared";
+} from "@tsukeai/shared";
 
 export type LlmAdapterBindings = {
   LLM_API_KEY?: string;
@@ -94,8 +94,6 @@ type ChatMessage = {
   content: string;
 };
 
-const DEFAULT_LLM_BASE_URL = "https://api.openai.com/v1/chat/completions";
-const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 const DEFAULT_LLM_TIMEOUT_MS = 8_000;
 const DEFAULT_LLM_MAX_INPUT_CHARS = 1_000;
 const DEFAULT_LLM_MAX_OUTPUT_TOKENS = 96;
@@ -236,7 +234,11 @@ function delay(durationMs: number): Promise<void> {
 }
 
 function readConfig(bindings: LlmAdapterBindings): LlmAdapterConfig {
-  if (!bindings.LLM_API_KEY) {
+  const apiKey = bindings.LLM_API_KEY?.trim();
+  const baseUrlRaw = bindings.LLM_BASE_URL?.trim();
+  const model = bindings.LLM_MODEL?.trim();
+
+  if (!apiKey) {
     throw new LlmAdapterError(
       "configuration_error",
       "LLM_API_KEY secret is not configured.",
@@ -244,10 +246,44 @@ function readConfig(bindings: LlmAdapterBindings): LlmAdapterConfig {
     );
   }
 
+  if (!baseUrlRaw) {
+    throw new LlmAdapterError(
+      "configuration_error",
+      "LLM_BASE_URL binding is not configured.",
+      false,
+    );
+  }
+
+  if (!model) {
+    throw new LlmAdapterError("configuration_error", "LLM_MODEL binding is not configured.", false);
+  }
+
+  let baseUrl: string;
+  try {
+    const parsed = new URL(baseUrlRaw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new LlmAdapterError(
+        "configuration_error",
+        "LLM_BASE_URL must use http or https.",
+        false,
+      );
+    }
+    baseUrl = parsed.toString();
+  } catch (error) {
+    if (error instanceof LlmAdapterError) {
+      throw error;
+    }
+    throw new LlmAdapterError(
+      "configuration_error",
+      "LLM_BASE_URL is not a valid absolute URL.",
+      false,
+    );
+  }
+
   return {
-    apiKey: bindings.LLM_API_KEY,
-    baseUrl: bindings.LLM_BASE_URL ?? DEFAULT_LLM_BASE_URL,
-    model: bindings.LLM_MODEL ?? DEFAULT_LLM_MODEL,
+    apiKey,
+    baseUrl,
+    model,
     timeoutMs: readInteger(
       bindings.LLM_TIMEOUT_MS,
       DEFAULT_LLM_TIMEOUT_MS,

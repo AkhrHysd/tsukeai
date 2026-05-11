@@ -135,6 +135,6 @@ All required Discovery topics are confirmed or explicitly deferred. In this case
 
 Artifact output permission: The user said "お願いします" after the Final Coverage Review asking: "この内容で最終Discovery artifact（discovery.md と discovery.coverage.json）を出力してよいですか？"
 
-Suggested session-name: `tanka-reply-sns`
+Suggested session-name: `tsukeai`
 
 No target repository is required yet. Temporary files are only for transfer; after import, the canonical Discovery artifacts live in the local `solo-dev-orchestrator` session.

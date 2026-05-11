@@ -21,7 +21,7 @@ From `apps/api`, create the Hyperdrive configuration with the Neon connection
 string:
 
 ```sh
-pnpm exec wrangler hyperdrive create tanka-reply-sns-neon-tokyo \
+pnpm exec wrangler hyperdrive create tsukeai-neon-tokyo \
   --connection-string="postgres://USER:PASSWORD@HOST:5432/DB?sslmode=require"
 ```
 

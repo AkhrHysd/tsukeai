@@ -8,7 +8,7 @@ const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
 
 assert.equal(
   rootPackageJson.scripts?.test,
-  "pnpm --filter @tanka-reply-sns/web test",
+  "pnpm --filter @tsukeai/web test",
   "root npm test must run the web read smoke",
 );
 assert.equal(
@@ -27,7 +27,7 @@ assert.equal(
   "write smoke must stay dependency-free",
 );
 
-assertIncludes(pageSource, 'import type { TimelineResponseDto } from "@tanka-reply-sns/shared";');
+assertIncludes(pageSource, 'import type { TimelineResponseDto } from "@tsukeai/shared";');
 assertIncludes(pageSource, 'import { getApiBaseUrl } from "../lib/api-base-url";');
 assertIncludes(pageSource, 'export const dynamic = "force-dynamic";');
 assertIncludes(pageSource, 'new URL("/api/timeline?limit=20", apiBaseUrl)');

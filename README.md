@@ -1,7 +1,6 @@
-# Tanka Reply SNS
+# tsukeai
 
-短歌（五七五 / 七七）の形式で投稿・返信する公開タイムライン SNS。
-ユーザーが入力した素の文章を LLM で短歌形式に変換し、形式検証に通った句だけを公開する。
+短歌（五七五 / 七七）の形式で句を読み合う公開タイムライン。素の入力を LLM で短歌形式に変換し、形式検証に通った句だけを公開する。
 
 ## アーキテクチャ
 
@@ -23,6 +22,18 @@ packages/shared — DTO 型定義・短歌形式検証ロジック
 | `authentication.md` | パスワード + パスキー + TOTP の認証方式 |
 | `neon-hyperdrive.md` | Neon DB と Hyperdrive の接続手順 |
 | `apps/api/MIGRATIONS.md` | DB マイグレーション手順 |
+| [`docs/deployment/cloudflare.md`](docs/deployment/cloudflare.md) | Neon 設定・API／Web の Cloudflare デプロイ手順書 |
+
+## リポジトリ／フォルダ名
+
+コードとパッケージ名は **`tsukeai`**（スコープ `@tsukeai/*`）に揃えています。クローン先のディレクトリ名を `tsukeai` にしたい場合は、作業ツリー外でリネームしてください。
+
+```sh
+# 例: 親ディレクトリで
+mv tanka-reply-sns tsukeai
+```
+
+その後、Cursor や IDE で **`tsukeai` フォルダをワークスペースとして開き直す**とパスが一致します。
 
 ## 前提条件
 
@@ -52,18 +63,19 @@ docker compose up -d
 |---|---|
 | Host | `localhost` |
 | Port | `5433` |
-| Database | `tanka` |
-| User | `tanka` |
-| Password | `tanka` |
-| URL | `postgres://tanka:tanka@localhost:5433/tanka` |
+| Database | `tsukeai` |
+| User | `tsukeai` |
+| Password | `tsukeai` |
+| URL | `postgres://tsukeai:tsukeai@localhost:5433/tsukeai` |
 
-> ポート 5433 を使用しているのは、ホストの Postgres（5432）との衝突を避けるためです。
+> ポート 5433 を使用しているのは、ホストの Postgres（5432）との衝突を避けるためです。  
+> **DB 名・ユーザー・パスワードを `tanka` から変更した場合**は、既存の Docker ボリュームを削除してから `docker compose up -d` し直してください（`docker compose down -v` で `pgdata` が消えます）。
 
 ### 3. マイグレーション
 
 ```sh
-DATABASE_URL="postgres://tanka:tanka@localhost:5433/tanka" \
-  pnpm --filter @tanka-reply-sns/api migrate:up
+DATABASE_URL="postgres://tsukeai:tsukeai@localhost:5433/tsukeai" \
+  pnpm --filter @tsukeai/api migrate:up
 ```
 
 ### 4. API の起動
@@ -73,7 +85,7 @@ DATABASE_URL="postgres://tanka:tanka@localhost:5433/tanka" \
 cp apps/api/.dev.vars.example apps/api/.dev.vars
 
 # API サーバー起動（http://localhost:8787）
-pnpm --filter @tanka-reply-sns/api dev
+pnpm --filter @tsukeai/api dev
 ```
 
 > `wrangler dev` はローカルモードで動作し、Hyperdrive バインディングは
@@ -88,7 +100,7 @@ pnpm --filter @tanka-reply-sns/api dev
 cp apps/web/.env.local.example apps/web/.env.local
 
 # Web サーバー起動（http://localhost:3000）
-pnpm --filter @tanka-reply-sns/web dev
+pnpm --filter @tsukeai/web dev
 ```
 
 ### まとめて起動（turbo）
@@ -107,16 +119,18 @@ pnpm dev
 |---|---|---|---|
 | `HYPERDRIVE` | yes | Hyperdrive バインディング（wrangler.toml で設定） | — |
 | `SESSION_SECRET` | yes | セッション Cookie の HMAC 署名鍵 | — |
-| `LLM_API_KEY` | yes | OpenAI 互換 API キー | — |
+| `LLM_API_KEY` | yes† | OpenAI 互換 API キー | — |
+| `LLM_BASE_URL` | yes† | チャット完了 API の絶対 URL（`http` / `https` のみ。コードに既定値はない） | — |
+| `LLM_MODEL` | yes† | そのエンドポイント向けのモデル ID（コードに既定値はない） | — |
 | `API_ALLOWED_ORIGINS` | — | CORS 許可オリジン（カンマ区切り） | `http://localhost:3000` |
-| `SESSION_COOKIE_NAME` | — | セッション Cookie 名 | `__Host-tanka_session` |
-| `LLM_BASE_URL` | — | LLM API エンドポイント | `https://api.openai.com/v1/chat/completions` |
-| `LLM_MODEL` | — | 使用モデル | `gpt-4o-mini` |
+| `SESSION_COOKIE_NAME` | — | セッション Cookie 名 | `__Host-tsukeai_session` |
 | `LLM_TIMEOUT_MS` | — | LLM リクエストタイムアウト (ms) | `8000` |
 | `LLM_MAX_INPUT_CHARS` | — | 入力文字数上限 | `1000` |
 | `LLM_MAX_OUTPUT_TOKENS` | — | 出力トークン上限 | `96` |
 | `LLM_MAX_RETRIES` | — | LLM リトライ回数 | `1` |
 | `WRITE_SMOKE_FIXED_PUBLIC_TEXT` | — | `1` で LLM を通さず固定テキストを公開（テスト用） | — |
+
+† 実際に変換ジョブで LLM を呼ぶ場合は `LLM_API_KEY`・`LLM_BASE_URL`・`LLM_MODEL` の三者がすべて必要です。固定テキストの書き込みスモークだけなら、変換 API を叩かない限り未設定でも起動できます。本番・ステージングでは Cloudflare の Secrets / Vars または `wrangler.toml` の `[vars]` でプロバイダごとに設定してください。
 
 ### apps/web（Next.js の `.env.local`）
 
@@ -132,12 +146,12 @@ pnpm dev
 pnpm biome
 
 # 型チェック（全パッケージ）
-pnpm --filter @tanka-reply-sns/shared typecheck
-pnpm --filter @tanka-reply-sns/api typecheck
-pnpm --filter @tanka-reply-sns/web typecheck
+pnpm --filter @tsukeai/shared typecheck
+pnpm --filter @tsukeai/api typecheck
+pnpm --filter @tsukeai/web typecheck
 
 # Next.js ビルド
-pnpm --filter @tanka-reply-sns/web build
+pnpm --filter @tsukeai/web build
 
 # スモークテスト
 pnpm test
@@ -178,7 +192,7 @@ values (
 ## プロジェクト構造
 
 ```
-tanka-reply-sns/
+tsukeai/                      （リポジトリルートの想定ディレクトリ名）
 ├── apps/
 │   ├── api/                  Hono API（Cloudflare Workers）
 │   │   ├── migrations/       SQL マイグレーション

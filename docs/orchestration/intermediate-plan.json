@@ -1,15 +1,15 @@
 {
   "schemaVersion": "intermediate-plan/v1",
   "metadata": {
-    "planId": "tanka-reply-sns.plan.v2",
-    "title": "tanka-reply-sns MVP 実装計画（タスク候補）",
+    "planId": "tsukeai.plan.v2",
+    "title": "tsukeai MVP 実装計画（タスク候補）",
     "summary": "Design 入力に基づき、Milestone 3.5 の変換アーキ ADR ゲートを挟み、未確定のまま変換実装を分割しない。",
     "sourcePhase": "planning",
     "createdAt": "2026-05-10T23:00:00.000+09:00",
     "updatedAt": "2026-05-10T23:00:00.000+09:00",
     "sourceArtifacts": ["design.md", "design.coverage.json"],
     "constraints": [
-      "Bootstrap targetDir: /Users/akyrhysd/work/tanka-reply-sns。",
+      "Bootstrap targetDir: /Users/akyrhysd/work/tsukeai。",
       "変換アーキの正本は docs/orchestration/transform-architecture.md（ADR）。",
       "tc.transform-arch-gate 完了まで tc.llm-adapter 等の変換系は blocked。",
       "CI は LLM 実呼び出しに依存しない（Design Testing Strategy）。"

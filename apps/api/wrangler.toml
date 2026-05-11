@@ -1,8 +1,10 @@
-name = "tanka-reply-sns-api"
+name = "tsukeai-api"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Non-secret vars. Set LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY (secret) per
+# environment in the Cloudflare dashboard or apps/api/.dev.vars — not in source.
 [vars]
 API_ALLOWED_ORIGINS = "http://localhost:3000"
 
@@ -12,4 +14,4 @@ binding = "HYPERDRIVE"
 # time. See docs/orchestration/neon-hyperdrive.md for the exact command.
 id = "<hyperdrive-id>"
 # Local development: wrangler dev uses this connection string directly.
-localConnectionString = "postgres://tanka:tanka@localhost:5433/tanka"
+localConnectionString = "postgres://tsukeai:tsukeai@localhost:5433/tsukeai"

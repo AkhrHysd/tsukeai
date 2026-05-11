@@ -1,5 +1,5 @@
 {
-  "name": "@tanka-reply-sns/shared",
+  "name": "@tsukeai/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",

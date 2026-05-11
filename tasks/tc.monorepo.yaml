@@ -30,4 +30,4 @@ lastReview:
     - "現ワークツリーには node_modules が無いため pnpm run biome は biome: command not found で実行不能だった。pnpm install 後の前提なら設定上は成立する。"
     - "提示された Validation Summary は npm test が missing script で失敗しており、受け入れ条件そのものの検証にはなっていない。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.monorepo-2026-05-10T16-46-02-110Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.monorepo-2026-05-10T16-46-02-110Z.md

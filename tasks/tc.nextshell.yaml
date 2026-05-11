@@ -31,4 +31,4 @@ lastReview:
     - "ローカルでは node_modules がなく next コマンド未検出のため pnpm --dir apps/web build は実行確認できませんでした。"
     - "提示された Validation Summary は npm test が存在せず失敗しているログなので、実質的な検証にはなっていません。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.nextshell-2026-05-10T16-57-08-857Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.nextshell-2026-05-10T16-57-08-857Z.md

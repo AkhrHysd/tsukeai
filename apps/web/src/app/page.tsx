@@ -1,4 +1,4 @@
-import type { TimelineResponseDto } from "@tanka-reply-sns/shared";
+import type { TimelineResponseDto } from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";

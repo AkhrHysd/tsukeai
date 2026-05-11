@@ -22,15 +22,15 @@ lastValidation:
     exitCode: 0
     stdout:
     
-    > tanka-reply-sns@0.0.0 test
-    > pnpm --filter @tanka-reply-sns/web test
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
     
     
-    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-reply-flow/apps/web
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-reply-flow/apps/web
     > pnpm run smoke:read
     
     
-    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-reply-flow/apps/web
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-reply-flow/apps/web
     > node scripts/read-smoke.mjs
     
     Read smoke passed.
@@ -44,4 +44,4 @@ lastReview:
     - "API typecheck/lint は node_modules 不在で再実行できませんでした。提示された validation summary では npm test は成功しています。"
     - "親投稿がジョブ作成後から公開前までに削除された場合、そのジョブは publish 失敗として failed になり、同じ idempotency scope では自動再作成されません。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-reply-flow-2026-05-11T00-40-52-312Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-reply-flow-2026-05-11T00-40-52-312Z.md

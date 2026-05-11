@@ -32,4 +32,4 @@ lastReview:
     - "検証ログは npm test が存在せず実質未実行のため、型チェック・実行時確認は別途必要。"
     - "ローカル依存関係が未インストールで pnpm typecheck は実行できなかった。"
   scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.timeline-2026-05-10T17-21-09-756Z.md
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.timeline-2026-05-10T17-21-09-756Z.md
