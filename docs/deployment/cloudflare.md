@@ -60,10 +60,20 @@ API は `apps/api` の Worker としてデプロイします。Neon への実接
 ### 2.1 Wrangler のログイン
 
 ```sh
+pnpm install
+cd apps/api
 pnpm exec wrangler login
 ```
 
 初回はブラウザで Cloudflare アカウントを許可します。
+
+補足:
+
+- `wrangler` は `apps/api/package.json` の `devDependencies` として管理しています。`cd apps/api` せずに実行したい場合は、次でも同等です:
+
+  ```sh
+  pnpm --filter @tsukeai/api exec wrangler login
+  ```
 
 ### 2.2 Hyperdrive の作成
 
