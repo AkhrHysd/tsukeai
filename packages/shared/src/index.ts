@@ -66,6 +66,36 @@ export type TransformJobStateTransition =
 
 export type TransformJobKind = "post_575" | "reply_77";
 
+export const TRANSFORM_FORM_RULES = {
+  post_575: [5, 7, 5],
+  reply_77: [7, 7],
+} as const satisfies Record<TransformJobKind, readonly number[]>;
+
+export type TransformFormCheckReason =
+  | "blank"
+  | "contains_uncheckable_characters"
+  | "segment_count_mismatch"
+  | "mora_count_mismatch";
+
+export type TransformFormCheckSegment = {
+  text: string;
+  moraCount: number;
+  expectedMoraCount: number;
+};
+
+export type TransformFormCheckError = {
+  reason: TransformFormCheckReason;
+  message: string;
+};
+
+export type TransformFormCheckResult = {
+  accepted: boolean;
+  kind: TransformJobKind;
+  normalizedText: PublicTankaText;
+  segments: TransformFormCheckSegment[];
+  errors: TransformFormCheckError[];
+};
+
 export type TransformIdempotencyScope = {
   userId: EntityId;
   kind: TransformJobKind;
@@ -132,6 +162,140 @@ export type TransformJobDto = {
 export type TransformJobResponseDto = {
   job: TransformJobDto;
 };
+
+const EXPLICIT_SEGMENT_SEPARATOR_PATTERN = /[\n\r/／]+/u;
+const INLINE_SEGMENT_SEPARATOR_PATTERN = /[\s　、，,。．.！？!?]+/u;
+const IGNORED_FORM_CHARACTERS_PATTERN = /[\s　、，,。．.！？!?「」『』（）()［］\[\]【】]/gu;
+const SMALL_KANA_WITHOUT_OWN_MORA = new Set([
+  "ぁ",
+  "ぃ",
+  "ぅ",
+  "ぇ",
+  "ぉ",
+  "ゃ",
+  "ゅ",
+  "ょ",
+  "ゎ",
+  "ァ",
+  "ィ",
+  "ゥ",
+  "ェ",
+  "ォ",
+  "ャ",
+  "ュ",
+  "ョ",
+  "ヮ",
+]);
+const MORA_CHAR_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}ー]/u;
+const CHECKABLE_TANKA_TEXT_PATTERN =
+  /^[\p{Script=Hiragana}\p{Script=Katakana}ー\s　、，,。．.！？!?「」『』（）()［］\[\]【】/／]+$/u;
+
+export function checkTransformForm(
+  kind: TransformJobKind,
+  text: TankaText,
+): TransformFormCheckResult {
+  const normalizedText = normalizeTankaText(text);
+  const expectedMoraCounts = TRANSFORM_FORM_RULES[kind];
+  const errors: TransformFormCheckError[] = [];
+
+  if (normalizedText.length === 0) {
+    errors.push({
+      reason: "blank",
+      message: "Transformed text must not be blank.",
+    });
+  }
+
+  if (
+    normalizedText.length > 0 &&
+    !CHECKABLE_TANKA_TEXT_PATTERN.test(normalizedText)
+  ) {
+    errors.push({
+      reason: "contains_uncheckable_characters",
+      message:
+        "Transformed text must use kana and supported tanka separators only.",
+    });
+  }
+
+  const segments = splitTankaSegments(normalizedText).map((segment, index) => ({
+    text: segment,
+    moraCount: countJapaneseMora(segment),
+    expectedMoraCount: expectedMoraCounts[index] ?? 0,
+  }));
+
+  if (segments.length !== expectedMoraCounts.length) {
+    errors.push({
+      reason: "segment_count_mismatch",
+      message: `Transformed text must have ${expectedMoraCounts.length} segments.`,
+    });
+  }
+
+  for (const [index, expectedMoraCount] of expectedMoraCounts.entries()) {
+    const segment = segments[index];
+
+    if (!segment || segment.moraCount !== expectedMoraCount) {
+      errors.push({
+        reason: "mora_count_mismatch",
+        message: `Segment ${index + 1} must have ${expectedMoraCount} mora.`,
+      });
+    }
+  }
+
+  return {
+    accepted: errors.length === 0,
+    kind,
+    normalizedText: segments.map((segment) => segment.text).join("\n"),
+    segments,
+    errors,
+  };
+}
+
+export function normalizeTankaText(text: TankaText): PublicTankaText {
+  return text
+    .normalize("NFKC")
+    .replaceAll(/\p{Cc}/gu, (character) =>
+      character === "\n" || character === "\t" ? character : " ",
+    )
+    .trim();
+}
+
+export function countJapaneseMora(text: TankaText): number {
+  const countableText = normalizeTankaText(text).replaceAll(
+    IGNORED_FORM_CHARACTERS_PATTERN,
+    "",
+  );
+  let moraCount = 0;
+
+  for (const character of countableText) {
+    if (!MORA_CHAR_PATTERN.test(character)) {
+      continue;
+    }
+
+    if (!SMALL_KANA_WITHOUT_OWN_MORA.has(character)) {
+      moraCount += 1;
+    }
+  }
+
+  return moraCount;
+}
+
+function splitTankaSegments(text: TankaText): string[] {
+  const normalizedText = normalizeTankaText(text);
+
+  if (normalizedText.length === 0) {
+    return [];
+  }
+
+  const separatorPattern = EXPLICIT_SEGMENT_SEPARATOR_PATTERN.test(
+    normalizedText,
+  )
+    ? EXPLICIT_SEGMENT_SEPARATOR_PATTERN
+    : INLINE_SEGMENT_SEPARATOR_PATTERN;
+
+  return normalizedText
+    .split(separatorPattern)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+}
 
 export type AuthorDto = {
   id: EntityId;

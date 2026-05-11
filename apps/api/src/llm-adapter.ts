@@ -1,3 +1,9 @@
+import {
+  checkTransformForm,
+  TRANSFORM_FORM_RULES,
+  type TransformJobKind,
+} from "@tanka-reply-sns/shared";
+
 export type LlmAdapterBindings = {
   LLM_API_KEY?: string;
   LLM_BASE_URL?: string;
@@ -8,7 +14,7 @@ export type LlmAdapterBindings = {
   LLM_MAX_RETRIES?: string;
 };
 
-export type TransformKind = "post_575" | "reply_77";
+export type TransformKind = TransformJobKind;
 
 export type TransformTextRequest = {
   kind: TransformKind;
@@ -34,7 +40,8 @@ export type LlmAdapterErrorCode =
   | "rate_limited"
   | "provider_unavailable"
   | "provider_rejected"
-  | "invalid_provider_response";
+  | "invalid_provider_response"
+  | "validation_failed";
 
 export type TransformFailureJobState = "failed" | "rejected";
 
@@ -127,6 +134,10 @@ const SYSTEM_PROMPT = [
     "Return only the transformed public Japanese text,",
     "with no markdown, labels, or commentary.",
   ].join(" "),
+  [
+    "Separate every phrase with a newline.",
+    "Use kana only, except punctuation separators.",
+  ].join(" "),
 ].join(" ");
 
 export type LlmAdapter = ReturnType<typeof createLlmAdapter>;
@@ -197,6 +208,7 @@ export function classifyTransformFailure(
     error.code === "input_limit_exceeded" ||
     error.code === "cost_limit_exceeded" ||
     error.code === "output_limit_exceeded" ||
+    error.code === "validation_failed" ||
     error.code === "provider_rejected"
   ) {
     return {
@@ -365,7 +377,7 @@ async function requestCompletion(
     );
   }
 
-  return text;
+  return assertAcceptedTransformOutput(request.kind, text);
 }
 
 function buildMessages(request: TransformTextRequest): ChatMessage[] {
@@ -373,9 +385,11 @@ function buildMessages(request: TransformTextRequest): ChatMessage[] {
     request.kind === "post_575"
       ? "5-7-5 の上の句"
       : "7-7 の返信句";
+  const requiredMoraCounts = TRANSFORM_FORM_RULES[request.kind].join("-");
   const metadataJson = JSON.stringify({
     jobId: request.jobId,
     requiredForm: form,
+    requiredMoraCounts,
   });
   const sourceTextJson = JSON.stringify(normalizeSourceText(request.input));
 
@@ -399,6 +413,23 @@ function buildMessages(request: TransformTextRequest): ChatMessage[] {
       ].join("\n"),
     },
   ];
+}
+
+function assertAcceptedTransformOutput(
+  kind: TransformKind,
+  text: string,
+): string {
+  const formCheck = checkTransformForm(kind, text);
+
+  if (!formCheck.accepted) {
+    throw new LlmAdapterError(
+      "validation_failed",
+      "LLM provider response did not satisfy the required tanka form.",
+      false,
+    );
+  }
+
+  return formCheck.normalizedText;
 }
 
 function normalizeSourceText(input: string): string {
