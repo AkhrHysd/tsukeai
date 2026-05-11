@@ -55,6 +55,11 @@ type TimelineRow = {
   has_next: boolean;
 };
 
+type SafeLogError = {
+  name: string;
+  code?: string;
+};
+
 const LOCAL_WEB_ORIGIN = "http://localhost:3000";
 const DEFAULT_SESSION_COOKIE_NAME = "__Host-tanka_session";
 const DEFAULT_TIMELINE_LIMIT = 20;
@@ -71,6 +76,20 @@ const HEALTH_RESPONSE: HealthResponse = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+function toSafeLogError(error: unknown): SafeLogError {
+  if (!(error instanceof Error)) {
+    return { name: typeof error };
+  }
+
+  const code =
+    "code" in error && typeof error.code === "string" ? error.code : undefined;
+
+  return {
+    name: error.name,
+    ...(code ? { code } : {}),
+  };
+}
 
 function createSql(connectionString: string) {
   return postgres(connectionString, {
@@ -361,7 +380,7 @@ app.get("/api/db/health", async (c) => {
 
     return c.json(response);
   } catch (error) {
-    console.error("Database health check failed", error);
+    console.error("Database health check failed", toSafeLogError(error));
 
     return c.json(
       {
@@ -376,7 +395,10 @@ app.get("/api/db/health", async (c) => {
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error("Failed to close database health check client", error);
+      console.error(
+        "Failed to close database health check client",
+        toSafeLogError(error),
+      );
     }
   }
 });
@@ -513,7 +535,7 @@ app.get("/api/timeline", async (c) => {
 
     return c.json(toTimelineResponse(rows));
   } catch (error) {
-    console.error("Timeline query failed", error);
+    console.error("Timeline query failed", toSafeLogError(error));
 
     return c.json(
       {
@@ -528,7 +550,10 @@ app.get("/api/timeline", async (c) => {
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error("Failed to close timeline database client", error);
+      console.error(
+        "Failed to close timeline database client",
+        toSafeLogError(error),
+      );
     }
   }
 });

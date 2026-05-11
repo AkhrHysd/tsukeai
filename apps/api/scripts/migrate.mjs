@@ -21,6 +21,17 @@ function usage() {
   ].join("\n");
 }
 
+function toSafeLogError(error) {
+  if (!(error instanceof Error)) {
+    return { name: typeof error };
+  }
+
+  return {
+    name: error.name,
+    ...(typeof error.code === "string" ? { code: error.code } : {}),
+  };
+}
+
 async function loadMigrations() {
   const entries = await readdir(migrationsDir, { withFileTypes: true });
   const files = entries
@@ -114,6 +125,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error(toSafeLogError(error));
   process.exitCode = 1;
 });
