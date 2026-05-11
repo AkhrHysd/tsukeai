@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -10,21 +10,13 @@
     "includes": [
       "**",
       "!.agents",
-      "!.agents/**",
       "!docs",
-      "!docs/**",
       "!tasks",
-      "!tasks/**",
       "!node_modules",
-      "!node_modules/**",
       "!dist",
-      "!dist/**",
       "!.next",
-      "!.next/**",
       "!.turbo",
-      "!.turbo/**",
-      "!coverage",
-      "!coverage/**"
+      "!coverage"
     ]
   },
   "formatter": {

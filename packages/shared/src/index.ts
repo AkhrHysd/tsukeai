@@ -49,8 +49,7 @@ export const TRANSFORM_TERMINAL_JOB_STATES = [
   "rejected",
 ] as const satisfies readonly TransformJobState[];
 
-export type TransformTerminalJobState =
-  (typeof TRANSFORM_TERMINAL_JOB_STATES)[number];
+export type TransformTerminalJobState = (typeof TRANSFORM_TERMINAL_JOB_STATES)[number];
 
 export const TRANSFORM_JOB_STATE_TRANSITIONS = [
   ["queued", "processing"],
@@ -61,8 +60,7 @@ export const TRANSFORM_JOB_STATE_TRANSITIONS = [
   ["processing", "rejected"],
 ] as const satisfies readonly (readonly [TransformJobState, TransformJobState])[];
 
-export type TransformJobStateTransition =
-  (typeof TRANSFORM_JOB_STATE_TRANSITIONS)[number];
+export type TransformJobStateTransition = (typeof TRANSFORM_JOB_STATE_TRANSITIONS)[number];
 
 export type TransformJobKind = "post_575" | "reply_77";
 
@@ -165,7 +163,7 @@ export type TransformJobResponseDto = {
 
 const EXPLICIT_SEGMENT_SEPARATOR_PATTERN = /[\n\r/／]+/u;
 const INLINE_SEGMENT_SEPARATOR_PATTERN = /[\s　、，,。．.！？!?]+/u;
-const IGNORED_FORM_CHARACTERS_PATTERN = /[\s　、，,。．.！？!?「」『』（）()［］\[\]【】]/gu;
+const IGNORED_FORM_CHARACTERS_PATTERN = /[\s　、，,。．.！？!?「」『』（）()［］[\]【】]/gu;
 const SMALL_KANA_WITHOUT_OWN_MORA = new Set([
   "ぁ",
   "ぃ",
@@ -188,7 +186,7 @@ const SMALL_KANA_WITHOUT_OWN_MORA = new Set([
 ]);
 const MORA_CHAR_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}ー]/u;
 const CHECKABLE_TANKA_TEXT_PATTERN =
-  /^[\p{Script=Hiragana}\p{Script=Katakana}ー\s　、，,。．.！？!?「」『』（）()［］\[\]【】/／]+$/u;
+  /^[\p{Script=Hiragana}\p{Script=Katakana}ー\s　、，,。．.！？!?「」『』（）()［］[\]【】/／]+$/u;
 
 export function checkTransformForm(
   kind: TransformJobKind,
@@ -205,14 +203,10 @@ export function checkTransformForm(
     });
   }
 
-  if (
-    normalizedText.length > 0 &&
-    !CHECKABLE_TANKA_TEXT_PATTERN.test(normalizedText)
-  ) {
+  if (normalizedText.length > 0 && !CHECKABLE_TANKA_TEXT_PATTERN.test(normalizedText)) {
     errors.push({
       reason: "contains_uncheckable_characters",
-      message:
-        "Transformed text must use kana and supported tanka separators only.",
+      message: "Transformed text must use kana and supported tanka separators only.",
     });
   }
 
@@ -259,10 +253,7 @@ export function normalizeTankaText(text: TankaText): PublicTankaText {
 }
 
 export function countJapaneseMora(text: TankaText): number {
-  const countableText = normalizeTankaText(text).replaceAll(
-    IGNORED_FORM_CHARACTERS_PATTERN,
-    "",
-  );
+  const countableText = normalizeTankaText(text).replaceAll(IGNORED_FORM_CHARACTERS_PATTERN, "");
   let moraCount = 0;
 
   for (const character of countableText) {
@@ -285,9 +276,7 @@ function splitTankaSegments(text: TankaText): string[] {
     return [];
   }
 
-  const separatorPattern = EXPLICIT_SEGMENT_SEPARATOR_PATTERN.test(
-    normalizedText,
-  )
+  const separatorPattern = EXPLICIT_SEGMENT_SEPARATOR_PATTERN.test(normalizedText)
     ? EXPLICIT_SEGMENT_SEPARATOR_PATTERN
     : INLINE_SEGMENT_SEPARATOR_PATTERN;
 

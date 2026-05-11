@@ -9,9 +9,37 @@ allowedPaths:
   - docs/orchestration/transform-architecture.md
 acceptanceCriteria:
   - "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。"
-status: running
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-workspacePath: /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate
-currentBranch: task/tc.transform-arch-gate-adr-milestone-3-5
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tanka-reply-sns@0.0.0 test
+    > pnpm --filter @tanka-reply-sns/web test
+    
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate/apps/web
+    > pnpm run smoke:read
+    
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-arch-gate/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "ADRとして同期/非同期方針、失敗時UX、再試行・冪等性、コスト上限が docs/orchestration/transform-architecture.md に記載されており、受け入れ条件を満たしています。"
+  requiredFixes: []
+  riskNotes: []
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-arch-gate-2026-05-10T23-57-07-696Z.md

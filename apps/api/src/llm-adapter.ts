@@ -47,9 +47,7 @@ export type TransformFailureJobState = "failed" | "rejected";
 
 export type TransformFailureUserAction = "retry_later" | "revise_input";
 
-export type TransformFailurePublicCode =
-  | "transform_failed"
-  | "transform_input_rejected";
+export type TransformFailurePublicCode = "transform_failed" | "transform_input_rejected";
 
 export type TransformFailureClassification = {
   jobState: TransformFailureJobState;
@@ -137,10 +135,9 @@ const SYSTEM_PROMPT = [
     "Return only the transformed public Japanese text,",
     "with no markdown, labels, or commentary.",
   ].join(" "),
-  [
-    "Separate every phrase with a newline.",
-    "Use kana only, except punctuation separators.",
-  ].join(" "),
+  ["Separate every phrase with a newline.", "Use kana only, except punctuation separators."].join(
+    " ",
+  ),
 ].join(" ");
 
 export type LlmAdapter = ReturnType<typeof createLlmAdapter>;
@@ -149,9 +146,7 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
   const config = readConfig(bindings);
 
   return {
-    async transformText(
-      request: TransformTextRequest,
-    ): Promise<TransformTextResponse> {
+    async transformText(request: TransformTextRequest): Promise<TransformTextResponse> {
       assertRequestWithinLimits(request, config);
 
       const startedAt = Date.now();
@@ -191,19 +186,13 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
 
       throw (
         lastError ??
-        new LlmAdapterError(
-          "provider_unavailable",
-          "LLM provider did not return a result.",
-          true,
-        )
+        new LlmAdapterError("provider_unavailable", "LLM provider did not return a result.", true)
       );
     },
   };
 }
 
-export function classifyTransformFailure(
-  error: LlmAdapterError,
-): TransformFailureClassification {
+export function classifyTransformFailure(error: LlmAdapterError): TransformFailureClassification {
   if (error.code === "prompt_injection_detected") {
     return {
       jobState: "rejected",
@@ -278,12 +267,7 @@ function readConfig(bindings: LlmAdapterBindings): LlmAdapterConfig {
       MAX_OUTPUT_TOKENS,
     ),
     maxAttempts:
-      readInteger(
-        bindings.LLM_MAX_RETRIES,
-        DEFAULT_LLM_MAX_RETRIES,
-        MIN_RETRIES,
-        MAX_RETRIES,
-      ) + 1,
+      readInteger(bindings.LLM_MAX_RETRIES, DEFAULT_LLM_MAX_RETRIES, MIN_RETRIES, MAX_RETRIES) + 1,
   };
 }
 
@@ -306,16 +290,9 @@ function readInteger(
   return Math.min(Math.max(parsed, minimum), maximum);
 }
 
-function assertRequestWithinLimits(
-  request: TransformTextRequest,
-  config: LlmAdapterConfig,
-): void {
+function assertRequestWithinLimits(request: TransformTextRequest, config: LlmAdapterConfig): void {
   if (request.input.trim().length === 0) {
-    throw new LlmAdapterError(
-      "input_limit_exceeded",
-      "Transform input must not be blank.",
-      false,
-    );
+    throw new LlmAdapterError("input_limit_exceeded", "Transform input must not be blank.", false);
   }
 
   if (request.input.length > config.maxInputChars) {
@@ -328,8 +305,7 @@ function assertRequestWithinLimits(
 
   if (
     request.remainingCallBudget !== undefined &&
-    (!Number.isInteger(request.remainingCallBudget) ||
-      request.remainingCallBudget < 1)
+    (!Number.isInteger(request.remainingCallBudget) || request.remainingCallBudget < 1)
   ) {
     throw new LlmAdapterError(
       "cost_limit_exceeded",
@@ -396,10 +372,7 @@ async function requestCompletion(
 }
 
 function buildMessages(request: TransformTextRequest): ChatMessage[] {
-  const form =
-    request.kind === "post_575"
-      ? "5-7-5 の上の句"
-      : "7-7 の返信句";
+  const form = request.kind === "post_575" ? "5-7-5 の上の句" : "7-7 の返信句";
   const requiredMoraCounts = TRANSFORM_FORM_RULES[request.kind].join("-");
   const metadataJson = JSON.stringify({
     jobId: request.jobId,
@@ -430,10 +403,7 @@ function buildMessages(request: TransformTextRequest): ChatMessage[] {
   ];
 }
 
-function assertAcceptedTransformOutput(
-  kind: TransformKind,
-  text: string,
-): string {
+function assertAcceptedTransformOutput(kind: TransformKind, text: string): string {
   const formCheck = checkTransformForm(kind, text);
 
   if (!formCheck.accepted) {
@@ -474,11 +444,7 @@ async function fetchWithTimeout(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw new LlmAdapterError(
-        "timeout",
-        "LLM provider request timed out.",
-        true,
-      );
+      throw new LlmAdapterError("timeout", "LLM provider request timed out.", true);
     }
 
     throw error;
@@ -489,11 +455,7 @@ async function fetchWithTimeout(
 
 function errorForProviderStatus(status: number): LlmAdapterError {
   if (status === 429) {
-    return new LlmAdapterError(
-      "rate_limited",
-      "LLM provider rate limit was reached.",
-      true,
-    );
+    return new LlmAdapterError("rate_limited", "LLM provider rate limit was reached.", true);
   }
 
   if (status >= 500) {
@@ -516,11 +478,7 @@ function toAdapterError(error: unknown): LlmAdapterError {
     return error;
   }
 
-  return new LlmAdapterError(
-    "provider_unavailable",
-    "LLM provider request failed.",
-    true,
-  );
+  return new LlmAdapterError("provider_unavailable", "LLM provider request failed.", true);
 }
 
 function isAbortError(error: unknown): boolean {

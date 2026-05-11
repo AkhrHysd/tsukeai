@@ -2,12 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
-const apiBaseUrlSource = await readWorkspaceFile(
-  "apps/web/src/lib/api-base-url.ts",
-);
-const webPackageJson = JSON.parse(
-  await readWorkspaceFile("apps/web/package.json"),
-);
+const apiBaseUrlSource = await readWorkspaceFile("apps/web/src/lib/api-base-url.ts");
+const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
 
 assert.equal(
@@ -31,10 +27,7 @@ assert.equal(
   "write smoke must stay dependency-free",
 );
 
-assertIncludes(
-  pageSource,
-  'import type { TimelineResponseDto } from "@tanka-reply-sns/shared";',
-);
+assertIncludes(pageSource, 'import type { TimelineResponseDto } from "@tanka-reply-sns/shared";');
 assertIncludes(pageSource, 'import { getApiBaseUrl } from "../lib/api-base-url";');
 assertIncludes(pageSource, 'export const dynamic = "force-dynamic";');
 assertIncludes(pageSource, 'new URL("/api/timeline?limit=20", apiBaseUrl)');
@@ -44,23 +37,20 @@ assertIncludes(pageSource, "if (!response.ok)");
 assertIncludes(pageSource, 'return { status: "unavailable" };');
 assertIncludes(pageSource, "catch");
 
-assertIncludes(pageSource, "<h1 id=\"page-title\">公開タイムライン</h1>");
+assertIncludes(pageSource, '<h1 id="page-title">公開タイムライン</h1>');
 assertIncludes(pageSource, 'role="status"');
 assertIncludes(pageSource, "タイムラインを読み込めませんでした。");
 assertIncludes(pageSource, "まだ公開句はありません。");
-assertIncludes(pageSource, 'role="list"');
+assertIncludes(pageSource, '<ul className="timeline-list"');
 assertIncludes(pageSource, 'aria-label="公開タイムライン"');
-assertIncludes(pageSource, 'role="listitem"');
+assertIncludes(pageSource, '<li className="post-card"');
 assertIncludes(pageSource, 'aria-label="返信"');
 assertIncludes(pageSource, "{item.post.author.displayName}");
 assertIncludes(pageSource, "{item.post.body}");
 assertIncludes(pageSource, "{reply.author.displayName}");
 assertIncludes(pageSource, "{reply.body}");
 
-assertIncludes(
-  apiBaseUrlSource,
-  'const DEFAULT_API_BASE_URL = "http://localhost:8787";',
-);
+assertIncludes(apiBaseUrlSource, 'const DEFAULT_API_BASE_URL = "http://localhost:8787";');
 assertIncludes(apiBaseUrlSource, "process.env.API_BASE_URL");
 assertIncludes(apiBaseUrlSource, "return new URL(value);");
 
@@ -75,10 +65,7 @@ async function readWorkspaceFile(path) {
 }
 
 function assertIncludes(source, expected) {
-  assert(
-    source.includes(expected),
-    `Expected source to include: ${expected}`,
-  );
+  assert(source.includes(expected), `Expected source to include: ${expected}`);
 }
 
 function assertNoLlmDependency(source, path) {

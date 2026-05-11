@@ -1,10 +1,6 @@
-import { Hono } from "hono";
-import type { Context } from "hono";
-import { getCookie } from "hono/cookie";
-import { cors } from "hono/cors";
 import {
-  checkTransformForm,
   type ApiErrorCode,
+  checkTransformForm,
   type PostDto,
   type ReplyDto,
   type TimelineItemDto,
@@ -18,12 +14,16 @@ import {
   type TransformRetryPolicy,
   type TransformUserAction,
 } from "@tanka-reply-sns/shared";
+import type { Context } from "hono";
+import { Hono } from "hono";
+import { getCookie } from "hono/cookie";
+import { cors } from "hono/cors";
 import postgres from "postgres";
 import {
   classifyTransformFailure,
   createLlmAdapter,
-  LlmAdapterError,
   type LlmAdapterBindings,
+  LlmAdapterError,
   type TransformFailureClassification,
 } from "./llm-adapter";
 
@@ -161,8 +161,7 @@ const ALLOWED_METHODS = ["GET", "POST", "DELETE", "OPTIONS"];
 const ALLOWED_HEADERS = ["Content-Type", "Authorization"];
 const PUBLIC_TIMELINE_CACHE_CONTROL = "no-store";
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HEALTH_RESPONSE: HealthResponse = {
   status: "ok",
   service: "api",
@@ -175,8 +174,7 @@ function toSafeLogError(error: unknown): SafeLogError {
     return { name: typeof error };
   }
 
-  const code =
-    "code" in error && typeof error.code === "string" ? error.code : undefined;
+  const code = "code" in error && typeof error.code === "string" ? error.code : undefined;
 
   return {
     name: error.name,
@@ -232,17 +230,11 @@ function toBase64Url(buffer: ArrayBuffer): string {
     binary += String.fromCharCode(byte);
   }
 
-  return btoa(binary)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
 function encodeBase64Url(value: string): string {
-  return btoa(value)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replaceAll("=", "");
+  return btoa(value).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
 function decodeBase64Url(value: string): string {
@@ -256,9 +248,7 @@ function encodeTimelineCursor(cursor: TimelineCursor): string {
   return encodeBase64Url(JSON.stringify(cursor));
 }
 
-function parseTimelineCursor(
-  value: string | undefined,
-): TimelineCursor | undefined {
+function parseTimelineCursor(value: string | undefined): TimelineCursor | undefined {
   if (value === undefined) {
     return undefined;
   }
@@ -341,19 +331,14 @@ async function getSessionAccountId(
 }
 
 async function sha256Hex(value: string): Promise<string> {
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value),
-  );
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
 
   return Array.from(new Uint8Array(hash))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
 
-function toRetryPolicy(
-  classification: TransformFailureClassification,
-): TransformRetryPolicy {
+function toRetryPolicy(classification: TransformFailureClassification): TransformRetryPolicy {
   return classification.retryable ? "server_retryable" : "client_revisable";
 }
 
@@ -365,9 +350,7 @@ function toTransformJobDto(row: TransformJobRow): TransformJobDto {
     idempotency: {
       userId: row.account_id,
       kind: row.kind,
-      ...(row.parent_public_conversion_id
-        ? { parentPostId: row.parent_public_conversion_id }
-        : {}),
+      ...(row.parent_public_conversion_id ? { parentPostId: row.parent_public_conversion_id } : {}),
       inputHash: row.input_sha256,
       clientKey: row.client_key,
     },
@@ -385,20 +368,13 @@ function toTransformJobDto(row: TransformJobRow): TransformJobDto {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     },
-    ...(row.state === "succeeded" &&
-    row.public_conversion_id &&
-    row.kind === "post_575"
+    ...(row.state === "succeeded" && row.public_conversion_id && row.kind === "post_575"
       ? { publishedPostId: row.public_conversion_id }
       : {}),
-    ...(row.state === "succeeded" &&
-    row.public_conversion_id &&
-    row.kind === "reply_77"
+    ...(row.state === "succeeded" && row.public_conversion_id && row.kind === "reply_77"
       ? { publishedReplyId: row.public_conversion_id }
       : {}),
-    ...(row.error_code &&
-    row.failure_reason &&
-    row.user_action &&
-    row.retry_policy
+    ...(row.error_code && row.failure_reason && row.user_action && row.retry_policy
       ? {
           error: {
             code: row.error_code,
@@ -431,9 +407,7 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
           author: {
             id: row.post_author_id,
             displayName: row.post_author_display_name,
-            ...(row.post_author_handle
-              ? { handle: row.post_author_handle }
-              : {}),
+            ...(row.post_author_handle ? { handle: row.post_author_handle } : {}),
           },
           body: row.post_body,
           createdAt: row.post_created_at,
@@ -460,9 +434,7 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
         author: {
           id: row.reply_author_id,
           displayName: row.reply_author_display_name,
-          ...(row.reply_author_handle
-            ? { handle: row.reply_author_handle }
-            : {}),
+          ...(row.reply_author_handle ? { handle: row.reply_author_handle } : {}),
         },
         body: row.reply_body,
         createdAt: row.reply_created_at,
@@ -477,9 +449,7 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
 
   return {
     items,
-    ...(hasNext && lastPostCursor
-      ? { nextCursor: encodeTimelineCursor(lastPostCursor) }
-      : {}),
+    ...(hasNext && lastPostCursor ? { nextCursor: encodeTimelineCursor(lastPostCursor) } : {}),
   };
 }
 
@@ -906,24 +876,10 @@ async function publishTransformJob(
   durationMs: number,
 ): Promise<TransformJobRow | undefined> {
   if (job.kind === "reply_77") {
-    return publishReplyTransformJob(
-      sql,
-      job,
-      publicText,
-      model,
-      attempts,
-      durationMs,
-    );
+    return publishReplyTransformJob(sql, job, publicText, model, attempts, durationMs);
   }
 
-  return publishPostTransformJob(
-    sql,
-    job,
-    publicText,
-    model,
-    attempts,
-    durationMs,
-  );
+  return publishPostTransformJob(sql, job, publicText, model, attempts, durationMs);
 }
 
 async function markTransformJobFailed(
@@ -1017,11 +973,7 @@ async function runTransformJob(
     const adapterError =
       error instanceof LlmAdapterError
         ? error
-        : new LlmAdapterError(
-            "provider_unavailable",
-            "Transform request failed.",
-            true,
-          );
+        : new LlmAdapterError("provider_unavailable", "Transform request failed.", true);
     const classification = classifyTransformFailure(adapterError);
 
     console.error("Transform job failed", {
@@ -1124,9 +1076,7 @@ async function resolveTransformJobForResponse(
   const runPromise = runTransformJobInBackground(bindings, job, input);
   context.waitUntil(runPromise.then(() => undefined));
 
-  return (
-    (await waitForTransformJob(runPromise)) ?? selectTransformJob(sql, job.id)
-  );
+  return (await waitForTransformJob(runPromise)) ?? selectTransformJob(sql, job.id);
 }
 
 async function readTransformJobBody(
@@ -1145,18 +1095,11 @@ async function readTransformJobBody(
   }
 }
 
-function parseClientKey(
-  bodyValue: unknown,
-  headerValue: string | undefined,
-): string | undefined {
+function parseClientKey(bodyValue: unknown, headerValue: string | undefined): string | undefined {
   const clientKey = typeof bodyValue === "string" ? bodyValue : headerValue;
   const normalized = clientKey?.trim();
 
-  if (
-    !normalized ||
-    normalized.length > MAX_CLIENT_KEY_LENGTH ||
-    /[\p{Cc}]/u.test(normalized)
-  ) {
+  if (!normalized || normalized.length > MAX_CLIENT_KEY_LENGTH || /[\p{Cc}]/u.test(normalized)) {
     return undefined;
   }
 
@@ -1170,16 +1113,9 @@ function parseTransformJobInput(
   const kind = body.kind;
   const input = body.input ?? body.body;
   const clientKey = parseClientKey(body.clientKey, headerClientKey);
-  const parentPostId =
-    typeof body.parentPostId === "string"
-      ? body.parentPostId.trim()
-      : undefined;
+  const parentPostId = typeof body.parentPostId === "string" ? body.parentPostId.trim() : undefined;
 
-  if (
-    (kind !== "post_575" && kind !== "reply_77") ||
-    typeof input !== "string" ||
-    !clientKey
-  ) {
+  if ((kind !== "post_575" && kind !== "reply_77") || typeof input !== "string" || !clientKey) {
     return undefined;
   }
 
@@ -1187,10 +1123,7 @@ function parseTransformJobInput(
     return undefined;
   }
 
-  if (
-    kind === "reply_77" &&
-    (!parentPostId || !UUID_PATTERN.test(parentPostId))
-  ) {
+  if (kind === "reply_77" && (!parentPostId || !UUID_PATTERN.test(parentPostId))) {
     return undefined;
   }
 
@@ -1211,18 +1144,13 @@ function parsePublicTextInput(
   const clientKey = parseClientKey(body.clientKey, headerClientKey);
   const parentPostId =
     forcedInput.parentPostId ??
-    (typeof body.parentPostId === "string"
-      ? body.parentPostId.trim()
-      : undefined);
+    (typeof body.parentPostId === "string" ? body.parentPostId.trim() : undefined);
 
   if (typeof publicText !== "string" || !clientKey) {
     return undefined;
   }
 
-  if (
-    forcedInput.kind === "reply_77" &&
-    (!parentPostId || !UUID_PATTERN.test(parentPostId))
-  ) {
+  if (forcedInput.kind === "reply_77" && (!parentPostId || !UUID_PATTERN.test(parentPostId))) {
     return undefined;
   }
 
@@ -1317,6 +1245,8 @@ async function publishPublicTextReply(
   const publicConversionId = crypto.randomUUID();
   const sourceHash = await sha256Hex(input.publicText);
 
+  const parentPostId = input.parentPostId;
+
   const row = await sql.begin(async (transaction) => {
     const [parentPost] = await transaction<ReplyParentPostRow[]>`
       select
@@ -1325,7 +1255,7 @@ async function publishPublicTextReply(
       from public_conversions p
       join threads t on t.id = p.thread_id
       where
-        p.id = ${input.parentPostId}::uuid
+        p.id = ${parentPostId}::uuid
         and p.kind = 'post'
         and p.is_published = true
         and p.deleted_at is null
@@ -1389,19 +1319,14 @@ async function handleCreatePublicText(
   body: TransformJobRequestBody,
   accountId: string,
 ) {
-  const parsed = parsePublicTextInput(
-    body,
-    forcedInput,
-    c.req.header("Idempotency-Key"),
-  );
+  const parsed = parsePublicTextInput(body, forcedInput, c.req.header("Idempotency-Key"));
 
   if (!parsed) {
     return c.json(
       {
         error: {
           code: "bad_request" satisfies ApiErrorCode,
-          message:
-            "Published write requests require valid publicText and an idempotency key.",
+          message: "Published write requests require valid publicText and an idempotency key.",
         },
       },
       400,
@@ -1454,10 +1379,7 @@ async function handleCreatePublicText(
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error(
-        "Failed to close published write database client",
-        toSafeLogError(error),
-      );
+      console.error("Failed to close published write database client", toSafeLogError(error));
     }
   }
 }
@@ -1467,10 +1389,7 @@ async function handleCreateTransformJob(
   forcedInput?: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
 ) {
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(
-    getCookie(c, cookieName),
-    c.env.SESSION_SECRET,
-  );
+  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
 
   if (!accountId) {
     return c.json(
@@ -1518,9 +1437,7 @@ async function handleCreateTransformJob(
     {
       ...body,
       ...(forcedInput?.kind ? { kind: forcedInput.kind } : {}),
-      ...(forcedInput?.parentPostId
-        ? { parentPostId: forcedInput.parentPostId }
-        : {}),
+      ...(forcedInput?.parentPostId ? { parentPostId: forcedInput.parentPostId } : {}),
     },
     c.req.header("Idempotency-Key"),
   );
@@ -1563,12 +1480,7 @@ async function handleCreateTransformJob(
     }
 
     const inputHash = await sha256Hex(parsed.input);
-    const existingJob = await selectTransformJobByScope(
-      sql,
-      accountId,
-      parsed,
-      inputHash,
-    );
+    const existingJob = await selectTransformJobByScope(sql, accountId, parsed, inputHash);
 
     if (existingJob) {
       const responseJob = await resolveTransformJobForResponse(
@@ -1671,10 +1583,7 @@ async function handleCreateTransformJob(
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error(
-        "Failed to close transform job database client",
-        toSafeLogError(error),
-      );
+      console.error("Failed to close transform job database client", toSafeLogError(error));
     }
   }
 }
@@ -1698,10 +1607,7 @@ app.use("*", async (c, next) => {
   }
 
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const isAuthenticated = await verifySessionCookie(
-    getCookie(c, cookieName),
-    c.env.SESSION_SECRET,
-  );
+  const isAuthenticated = await verifySessionCookie(getCookie(c, cookieName), c.env.SESSION_SECRET);
 
   if (isAuthenticated) {
     return next();
@@ -1773,10 +1679,7 @@ app.get("/api/db/health", async (c) => {
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error(
-        "Failed to close database health check client",
-        toSafeLogError(error),
-      );
+      console.error("Failed to close database health check client", toSafeLogError(error));
     }
   }
 });
@@ -1812,10 +1715,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
   }
 
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(
-    getCookie(c, cookieName),
-    c.env.SESSION_SECRET,
-  );
+  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
 
   if (!accountId) {
     return c.json(
@@ -1870,10 +1770,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error(
-        "Failed to close transform job lookup database client",
-        toSafeLogError(error),
-      );
+      console.error("Failed to close transform job lookup database client", toSafeLogError(error));
     }
   }
 });
@@ -2027,10 +1924,7 @@ app.get("/api/timeline", async (c) => {
     try {
       await sql?.end({ timeout: 5 });
     } catch (error) {
-      console.error(
-        "Failed to close timeline database client",
-        toSafeLogError(error),
-      );
+      console.error("Failed to close timeline database client", toSafeLogError(error));
     }
   }
 });
@@ -2051,10 +1945,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
   }
 
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(
-    getCookie(c, cookieName),
-    c.env.SESSION_SECRET,
-  );
+  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
 
   if (!accountId) {
     return c.json(

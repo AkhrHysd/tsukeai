@@ -91,9 +91,7 @@ async function main() {
       from schema_migrations
       order by version asc
     `;
-    const applied = new Map(
-      appliedRows.map((row) => [row.version, row.checksum]),
-    );
+    const applied = new Map(appliedRows.map((row) => [row.version, row.checksum]));
 
     for (const migration of migrations) {
       const existingChecksum = applied.get(migration.version);

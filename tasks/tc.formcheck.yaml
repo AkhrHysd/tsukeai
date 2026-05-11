@@ -8,7 +8,39 @@ allowedPaths:
   - apps/api
 acceptanceCriteria:
   - "規則外は公開フローに進まない。"
-status: blocked
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tanka-reply-sns@0.0.0 test
+    > pnpm --filter @tanka-reply-sns/web test
+    
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.formcheck/apps/web
+    > pnpm run smoke:read
+    
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.formcheck/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "LLM出力に対して共有の非LLMフォーム検証を挟み、規則外の場合は validation_failed として rejected に分類されるため、公開フローへ進まない要件を満たしています。"
+  requiredFixes: []
+  riskNotes:
+    - "フォーム検証ロジックに対する直接テストは差分上追加されておらず、現状の検証ログも web smoke のみです。"
+    - "validation_failed はユーザー入力起因の rejected として扱われるため、プロバイダ出力揺れを再試行せず却下します。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.formcheck-2026-05-11T00-18-56-051Z.md

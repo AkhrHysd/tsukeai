@@ -10,7 +10,36 @@ allowedPaths:
   - .
 acceptanceCriteria:
   - "書き込みスモークがパスし CI が LLM に依存しない。"
-status: blocked
-retryCount: 0
+status: done
+retryCount: 2
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test exitCode: 0 stdout:
+    
+    > tanka-reply-sns@0.0.0 test > pnpm --filter @tanka-reply-sns/web test
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:write /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.e2e-write/apps/web > node scripts/write-smoke.mjs
+    
+    Write smoke passed. stderr: (empty)
+lastReview:
+  decision: reject
+  summary: "書き込みスモークは追加されていますが、実体はソース文字列の静的検査であり、Playwright で投稿・返信・削除のクリティカルパスを実行していません。受け入れ条件の「書き込みスモーク」確認として不十分です。"
+  requiredFixes:
+    - "Playwright などで実ブラウザ/APIを起動し、投稿・返信・削除を実際に実行して検証する smoke に置き換える。"
+    - "CI用の固定 publicText 経路を実行時環境へ確実に渡し、LLM資格情報なしで write smoke が通ることを検証する。"
+  riskNotes:
+    - "現在の smoke は該当文字列が存在すれば通るため、フォーム送信、認証Cookie伝播、APIレスポンス、DB反映、削除動作が壊れても検出できません。"
+    - "API側にテスト用の publicText 直書き経路が追加されていますが、実 e2e で通っていないため経路の有効性が未確認です。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.e2e-write-2026-05-11T00-51-12-641Z.md

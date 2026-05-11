@@ -3,9 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
 const apiSource = await readWorkspaceFile("apps/api/src/index.ts");
-const webPackageJson = JSON.parse(
-  await readWorkspaceFile("apps/web/package.json"),
-);
+const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
 
 assert.equal(
@@ -29,33 +27,20 @@ assertIncludes(pageSource, 'import { headers } from "next/headers";');
 
 assertIncludes(pageSource, "async function createPost(formData: FormData)");
 assertIncludes(pageSource, '"use server";');
-assertIncludes(
-  pageSource,
-  'requestWrite("/api/posts", "post_575", formData)',
-);
+assertIncludes(pageSource, 'requestWrite("/api/posts", "post_575", formData)');
 assertIncludes(pageSource, "async function createReply(postId: string");
-assertIncludes(
-  pageSource,
-  'requestWrite(`/api/posts/${postId}/replies`, "reply_77", formData)',
-);
-assertIncludes(
-  pageSource,
-  "async function deletePublicConversion(publicConversionId: string)",
-);
-assertIncludes(
-  pageSource,
-  "requestApi(`/api/public-conversions/${publicConversionId}`",
-);
+// biome-ignore lint/suspicious/noTemplateCurlyInString: asserting source code content
+assertIncludes(pageSource, 'requestWrite(`/api/posts/${postId}/replies`, "reply_77", formData)');
+assertIncludes(pageSource, "async function deletePublicConversion(publicConversionId: string)");
+// biome-ignore lint/suspicious/noTemplateCurlyInString: asserting source code content
+assertIncludes(pageSource, "requestApi(`/api/public-conversions/${publicConversionId}`");
 
 assertIncludes(pageSource, 'method: "POST"');
 assertIncludes(pageSource, 'method: "DELETE"');
 assertIncludes(pageSource, '"Content-Type": "application/json"');
 assertIncludes(pageSource, '"Idempotency-Key": crypto.randomUUID()');
 assertIncludes(pageSource, "clientKey: crypto.randomUUID()");
-assertIncludes(
-  pageSource,
-  'process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1"',
-);
+assertIncludes(pageSource, 'process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1"');
 assertIncludes(pageSource, "WRITE_SMOKE_PUBLIC_TEXT[kind]");
 assertIncludes(pageSource, "publicText");
 assertIncludes(pageSource, "あさひさす\\nこころしずかに\\nはるをまつ");
@@ -64,7 +49,7 @@ assertIncludes(pageSource, 'headersInit.set("Accept", "application/json")');
 assertIncludes(pageSource, 'headersInit.set("Cookie", cookie)');
 assertIncludes(pageSource, 'cache: "no-store"');
 assertIncludes(pageSource, "throw new Error(message)");
-assertIncludes(pageSource, "revalidatePath(\"/\")");
+assertIncludes(pageSource, 'revalidatePath("/")');
 
 assertIncludes(pageSource, '<form className="composer" action={createPost}');
 assertIncludes(pageSource, 'aria-label="投稿"');
@@ -72,14 +57,8 @@ assertIncludes(pageSource, 'name="body"');
 assertIncludes(pageSource, 'type="submit">投稿</button>');
 assertIncludes(pageSource, "action={createReply.bind(null, item.post.id)}");
 assertIncludes(pageSource, 'type="submit">返信</button>');
-assertIncludes(
-  pageSource,
-  "action={deletePublicConversion.bind(null, item.post.id)}",
-);
-assertIncludes(
-  pageSource,
-  "action={deletePublicConversion.bind(null, reply.id)}",
-);
+assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
+assertIncludes(pageSource, "action={deletePublicConversion.bind(null, reply.id)}");
 assertIncludes(pageSource, 'className="link-button" type="submit"');
 assertIncludes(pageSource, "削除");
 
@@ -95,10 +74,7 @@ assertNotIncludes(
 );
 
 assertIncludes(apiSource, "WRITE_SMOKE_FIXED_PUBLIC_TEXT?: string");
-assertIncludes(
-  apiSource,
-  'c.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1"',
-);
+assertIncludes(apiSource, 'c.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1"');
 assertIncludes(apiSource, "body.publicText !== undefined");
 assertIncludes(apiSource, "handleCreatePublicText");
 assertIncludes(apiSource, "checkTransformForm(forcedInput.kind, publicText)");
@@ -158,9 +134,7 @@ function assertNoRuntimeDependency(packageJson) {
 }
 
 function assertNoLlmScriptDependency(packageJson) {
-  for (const [scriptName, script] of Object.entries(
-    packageJson.scripts ?? {},
-  )) {
+  for (const [scriptName, script] of Object.entries(packageJson.scripts ?? {})) {
     assert(
       !/\b(?:LLM_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY)\b/i.test(script),
       `${scriptName} script must not require LLM credentials`,

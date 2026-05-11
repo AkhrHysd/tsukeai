@@ -11,3 +11,5 @@ binding = "HYPERDRIVE"
 # Keep the real Cloudflare resource ID outside git and substitute it at deploy
 # time. See docs/orchestration/neon-hyperdrive.md for the exact command.
 id = "<hyperdrive-id>"
+# Local development: wrangler dev uses this connection string directly.
+localConnectionString = "postgres://tanka:tanka@localhost:5433/tanka"

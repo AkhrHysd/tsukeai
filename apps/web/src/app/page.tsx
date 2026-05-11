@@ -16,8 +16,7 @@ type TimelineResult =
 
 type TransformKind = "post_575" | "reply_77";
 
-const WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED =
-  process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1";
+const WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED = process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1";
 const WRITE_SMOKE_PUBLIC_TEXT = {
   post_575: "あさひさす\nこころしずかに\nはるをまつ",
   reply_77: "ほしをかぞえて\nよるがあけゆく",
@@ -46,11 +45,7 @@ async function deletePublicConversion(publicConversionId: string) {
   revalidatePath("/");
 }
 
-async function requestWrite(
-  path: string,
-  kind: TransformKind,
-  formData: FormData,
-) {
+async function requestWrite(path: string, kind: TransformKind, formData: FormData) {
   const input = formData.get("body");
 
   if (typeof input !== "string" || input.trim().length === 0) {
@@ -156,9 +151,7 @@ export default async function Home() {
           <p className="eyebrow">公開閲覧 / SSR</p>
           <h1 id="page-title">公開タイムライン</h1>
         </div>
-        <p className="lead">
-          変換済みの公開句だけをサーバーで取得して表示します。
-        </p>
+        <p className="lead">変換済みの公開句だけをサーバーで取得して表示します。</p>
       </header>
 
       <form className="composer" action={createPost} aria-label="投稿">
@@ -182,14 +175,12 @@ export default async function Home() {
           まだ公開句はありません。
         </p>
       ) : (
-        <div className="timeline-list" role="list" aria-label="公開タイムライン">
+        <ul className="timeline-list" aria-label="公開タイムライン">
           {timelineResult.timeline.items.map((item) => (
-            <article className="post-card" key={item.post.id} role="listitem">
+            <li className="post-card" key={item.post.id}>
               <div className="post-card__header">
                 <strong>{item.post.author.displayName}</strong>
-                {item.post.author.handle ? (
-                  <span>@{item.post.author.handle}</span>
-                ) : null}
+                {item.post.author.handle ? <span>@{item.post.author.handle}</span> : null}
                 <time dateTime={item.post.createdAt}>
                   {new Intl.DateTimeFormat("ja-JP", {
                     dateStyle: "medium",
@@ -207,26 +198,22 @@ export default async function Home() {
               <p className="post-card__body">{item.post.body}</p>
 
               {item.replies.length > 0 ? (
-                <div className="reply-list" aria-label="返信">
+                <ul className="reply-list" aria-label="返信">
                   {item.replies.map((reply) => (
-                    <section className="reply" key={reply.id}>
+                    <li className="reply" key={reply.id}>
                       <div className="reply__header">
                         <strong>{reply.author.displayName}</strong>
-                        {reply.author.handle ? (
-                          <span>@{reply.author.handle}</span>
-                        ) : null}
-                        <form
-                          action={deletePublicConversion.bind(null, reply.id)}
-                        >
+                        {reply.author.handle ? <span>@{reply.author.handle}</span> : null}
+                        <form action={deletePublicConversion.bind(null, reply.id)}>
                           <button className="link-button" type="submit">
                             削除
                           </button>
                         </form>
                       </div>
                       <p>{reply.body}</p>
-                    </section>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : null}
 
               <form
@@ -245,9 +232,9 @@ export default async function Home() {
                   <button type="submit">返信</button>
                 </div>
               </form>
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );

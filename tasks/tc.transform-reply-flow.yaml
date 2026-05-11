@@ -9,7 +9,39 @@ allowedPaths:
   - apps/api
 acceptanceCriteria:
   - "返信パイプラインが対称型方針と一致する。"
-status: blocked
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tanka-reply-sns@0.0.0 test
+    > pnpm --filter @tanka-reply-sns/web test
+    
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-reply-flow/apps/web
+    > pnpm run smoke:read
+    
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-reply-flow/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "返信ジョブは parentPostId を idempotency scope に含め、親投稿検証後に reply_77 として 7-7 変換され、同一 thread に reply public_conversion を作成するため、対称型方針に沿っています。"
+  requiredFixes: []
+  riskNotes:
+    - "API typecheck/lint は node_modules 不在で再実行できませんでした。提示された validation summary では npm test は成功しています。"
+    - "親投稿がジョブ作成後から公開前までに削除された場合、そのジョブは publish 失敗として failed になり、同じ idempotency scope では自動再作成されません。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-reply-flow-2026-05-11T00-40-52-312Z.md

@@ -8,7 +8,39 @@ allowedPaths:
   - apps/api
 acceptanceCriteria:
   - "投稿パイプラインが ADR とポリシーに一致する。"
-status: blocked
-retryCount: 0
+status: done
+retryCount: 1
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tanka-reply-sns@0.0.0 test
+    > pnpm --filter @tanka-reply-sns/web test
+    
+    
+    > @tanka-reply-sns/web@0.0.0 test /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-post-flow/apps/web
+    > pnpm run smoke:read
+    
+    
+    > @tanka-reply-sns/web@0.0.0 smoke:read /Users/akyrhysd/work/tanka-reply-sns/.worktrees/tc.transform-post-flow/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "投稿変換フローは ADR の非同期ジョブ＋短時間同期待ち、冪等キー、素入力非保存、サーバ側 LLM 呼び出し、形式検証後のみ公開という主要方針に概ね一致している。"
+  requiredFixes: []
+  riskNotes:
+    - "提供された validation は web smoke のみで、apps/api の typecheck は node_modules/tsc 不在のため手元でも確認できなかった。"
+    - "configuration_error など非入力起因の非 retryable failure が client_revisable として記録される可能性があり、UX 表示で誤解を生む余地がある。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tanka-reply-sns/.orchestrator/review-inputs/tc.transform-post-flow-2026-05-11T00-33-14-134Z.md

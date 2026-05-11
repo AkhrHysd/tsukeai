@@ -22,11 +22,7 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    Arial,
-    "Hiragino Sans",
-    "Yu Gothic",
-    sans-serif;
+  font-family: Arial, "Hiragino Sans", "Yu Gothic", sans-serif;
 }
 
 a {
@@ -125,6 +121,9 @@ h1 {
 .timeline-list {
   display: grid;
   gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .composer {
@@ -218,6 +217,9 @@ h1 {
   gap: 14px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
 }
 
 .reply {

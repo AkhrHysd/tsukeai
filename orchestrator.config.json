@@ -2,36 +2,23 @@
   "tasksDir": "tasks",
   "runner": {
     "command": "codex",
-    "args": [
-      "exec",
-      "--skip-git-repo-check",
-      "--full-auto"
-    ]
+    "args": ["exec", "--skip-git-repo-check", "--full-auto"]
   },
   "reviewer": {
     "command": "codex",
-    "args": [
-      "exec",
-      "--skip-git-repo-check",
-      "--full-auto"
-    ]
+    "args": ["exec", "--skip-git-repo-check", "--full-auto"]
   },
   "validator": {
     "typecheck": [
       {
         "command": "npm",
-        "args": [
-          "run",
-          "typecheck"
-        ]
+        "args": ["run", "typecheck"]
       }
     ],
     "test": [
       {
         "command": "npm",
-        "args": [
-          "test"
-        ]
+        "args": ["test"]
       }
     ]
   }

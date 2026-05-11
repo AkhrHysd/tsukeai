@@ -1,0 +1,23 @@
+# Cloudflare Workers secrets for local development (wrangler dev).
+# Copy this file to .dev.vars and fill in the values.
+
+# --- Required ---
+
+# HMAC key for signing session cookies. Any random string works locally.
+SESSION_SECRET=local-dev-secret-change-me
+
+# OpenAI-compatible API key for the LLM transform adapter.
+# Leave empty and set WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 to skip LLM calls.
+LLM_API_KEY=
+
+# --- Optional ---
+
+# LLM_BASE_URL=https://api.openai.com/v1/chat/completions
+# LLM_MODEL=gpt-4o-mini
+# LLM_TIMEOUT_MS=8000
+# LLM_MAX_INPUT_CHARS=1000
+# LLM_MAX_OUTPUT_TOKENS=96
+# LLM_MAX_RETRIES=1
+
+# Set to "1" to bypass LLM and publish fixed tanka text (for testing).
+WRITE_SMOKE_FIXED_PUBLIC_TEXT=1
