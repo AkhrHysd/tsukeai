@@ -1,30 +1,14 @@
 id: tc.neon
-title: "Neon と Hyperdrive の接続方針"
-description: "東京 Postgres へ Hyperdrive。秘密はリポジトリ外。"
+title: Neon と Hyperdrive の接続方針
+description: 東京 Postgres へ Hyperdrive。秘密はリポジトリ外。
 dependsOn:
   - tc.hono
 allowedPaths:
   - apps/api
   - docs/orchestration
 acceptanceCriteria:
-  - "Hyperdrive 経由で Neon 接続を再現できる。"
-status: done
-retryCount: 2
+  - Hyperdrive 経由で Neon 接続を再現できる。
+status: queued
+retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: "$ npm test skipped: npm error Missing script: \"test\" npm error npm error To see a list of scripts, run: npm error   npm run npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_11_01_718Z-debug-0.log"
-lastReview:
-  decision: reject
-  summary: "Hyperdrive binding is configured with a literal placeholder ID, so the checked-in Worker config cannot reproduce a Neon-over-Hyperdrive connection without editing or templating the file first."
-  requiredFixes:
-    - "Do not commit `id = \"<hyperdrive-id>\"`; provide a reproducible non-secret config flow such as a generated local Wrangler config or documented deploy-time config patch."
-    - "Ensure `/api/db/health` fails clearly when the Hyperdrive binding is absent instead of assuming `c.env.HYPERDRIVE` always exists."
-  riskNotes:
-    - "The added database health endpoint exposes database name and server version; confirm this is acceptable for the API surface."
-    - "Validation did not actually run tests because `npm test` is missing, despite the validation summary saying passed."
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.neon-2026-05-10T17-11-01-757Z.md

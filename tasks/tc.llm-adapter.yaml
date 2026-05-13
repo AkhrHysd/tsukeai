@@ -1,46 +1,13 @@
 id: tc.llm-adapter
-title: "Workers 上の LLM アダプタ"
-description: "タイムアウト・上限・Secrets。ゲートで決めた契約に従う。"
+title: Workers 上の LLM アダプタ
+description: タイムアウト・上限・Secrets。ゲートで決めた契約に従う。
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - "ADR の呼び出し契約に適合するアダプタが説明できる。"
-status: done
+  - ADR の呼び出し契約に適合するアダプタが説明できる。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    exitCode: 0
-    stdout:
-    
-    > tsukeai@0.0.0 test
-    > pnpm --filter @tsukeai/web test
-    
-    
-    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.llm-adapter/apps/web
-    > pnpm run smoke:read
-    
-    
-    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.llm-adapter/apps/web
-    > node scripts/read-smoke.mjs
-    
-    Read smoke passed.
-    stderr:
-    (empty)
-lastReview:
-  decision: accept
-  summary: "LLM_API_KEY を Workers binding/Secret として扱い、タイムアウト、入力長、出力 token、呼び出し予算、再試行可否を adapter 境界で表現しており、ADR の呼び出し契約に沿った adapter と説明できる。"
-  requiredFixes: []
-  riskNotes:
-    - "手元では node_modules が無く apps/api の typecheck は実行不能だったため、API 側の静的検証は未確認。"
-    - "ADR のバックオフ方針は adapter 内では明示実装されていないため、後続のジョブ実行基盤側で担保する前提が残る。"
-  scopeViolations:
-    - "なし: 変更は apps/api 配下のみ。"
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.llm-adapter-2026-05-11T00-00-30-363Z.md

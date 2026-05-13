@@ -1,33 +1,13 @@
 id: tc.hono
-title: "apps/api の Hono on Workers 入口"
-description: "ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。"
+title: apps/api の Hono on Workers 入口
+description: ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。
 dependsOn:
   - tc.shared
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - "Workers API がヘルス応答を返す。"
-status: done
+  - Workers API がヘルス応答を返す。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_03_29_293Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "apps/api に Hono Workers 入口が追加され、/health と /api/health が JSON のヘルス応答を返す実装になっている。変更範囲も apps/api 内に収まっている。"
-  requiredFixes: []
-  riskNotes:
-    - "提示された validation は npm test が未定義のため実質的な検証になっていない。手元でも node_modules 不在で typecheck/lint は実行できなかった。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.hono-2026-05-10T17-03-29-332Z.md

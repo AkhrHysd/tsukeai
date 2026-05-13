@@ -1,35 +1,14 @@
 id: tc.timeline
-title: "公開タイムライン GET API"
-description: "未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。"
+title: 公開タイムライン GET API
+description: 未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。
 dependsOn:
   - tc.schema
 allowedPaths:
   - apps/api
   - packages/shared
 acceptanceCriteria:
-  - "未認証でタイムライン JSON が取得できる。"
-status: done
+  - 未認証でタイムライン JSON が取得できる。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_21_09_717Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "未認証GETで公開タイムラインJSONを返す実装になっており、公開済み・未削除データのみを取得している。許可パス外の変更もない。"
-  requiredFixes: []
-  riskNotes:
-    - "検証ログは npm test が存在せず実質未実行のため、型チェック・実行時確認は別途必要。"
-    - "ローカル依存関係が未インストールで pnpm typecheck は実行できなかった。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.timeline-2026-05-10T17-21-09-756Z.md

@@ -1,35 +1,16 @@
 id: tc.session
-title: "セッション／Cookie と書き込み境界"
-description: "投稿・返信・削除はログイン後のみ。Workers 側で検証。"
+title: セッション／Cookie と書き込み境界
+description: 投稿・返信・削除はログイン後のみ。Workers 側で検証。**セッション状態の単一正本**（Neon のみとするか KV
+  併用か等）は **S1 スパイク結果に合わせ orchestration に文書化**する。
 dependsOn:
   - tc.authgate
   - tc.hono
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - "書き込み API が未認証で拒否される。"
-status: done
+  - 書き込み API が未認証で拒否される。
+  - セッション状態の単一正本（Neon のみ／KV 併用等）が orchestration に記載される。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_17_33_558Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "書き込み系の POST/DELETE /api/* は認証 Cookie がない場合に 401 で拒否されるため、受け入れ条件は満たしています。変更範囲も apps/api 内に収まっています。"
-  requiredFixes: []
-  riskNotes:
-    - "検証ログでは npm test が Missing script で実際にはテスト未実行です。"
-    - "SESSION_SECRET 未設定時は認証済み Cookie もすべて拒否されます。運用設定で必須です。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.session-2026-05-10T17-17-33-596Z.md

@@ -1,6 +1,6 @@
 id: tc.gtssr
-title: "GT の SSR 一覧・スレッド"
-description: "公開 API と整合。変換句のみ表示し素を出さない。"
+title: GT の SSR 一覧・スレッド
+description: 公開 API と整合。変換句のみ表示し素を出さない。
 dependsOn:
   - tc.nextshell
   - tc.timeline
@@ -8,29 +8,8 @@ allowedPaths:
   - apps/web
   - packages/shared
 acceptanceCriteria:
-  - "GT が SSR で変換句のみを表示する。"
-status: done
+  - GT が SSR で変換句のみを表示する。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_24_36_168Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "SSR page now fetches the public timeline server-side and renders only the public DTO body fields for posts and replies; no raw input text is introduced in the view. Changed files are within the allowed paths."
-  requiredFixes: []
-  riskNotes:
-    - "Local verification could not be rerun because node_modules is missing and tsc is unavailable; provided validation used npm test, but this repo has no root test script."
-    - "PublicTankaText is only a TypeScript alias, so actual raw-to-public conversion still relies on the external public API contract rather than runtime enforcement in this change."
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.gtssr-2026-05-10T17-24-36-207Z.md

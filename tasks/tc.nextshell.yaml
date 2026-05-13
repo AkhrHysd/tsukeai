@@ -1,34 +1,13 @@
 id: tc.nextshell
-title: "apps/web の Next App Router シェル"
-description: "レイアウトと API ベース URL の読み方。SSR 前提。"
+title: apps/web の Next App Router シェル
+description: レイアウトと API ベース URL の読み方。SSR 前提。
 dependsOn:
   - tc.monorepo
 allowedPaths:
   - apps/web
 acceptanceCriteria:
-  - "Next がビルドしレイアウトが載る。"
-status: done
-retryCount: 1
+  - Next がビルドしレイアウトが載る。
+status: queued
+retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T16_57_08_821Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "apps/web に Next App Router の root layout、ページ、SSR 側の API_BASE_URL 読み取りが追加されており、受け入れ条件の意図は満たしています。"
-  requiredFixes: []
-  riskNotes:
-    - "ローカルでは node_modules がなく next コマンド未検出のため pnpm --dir apps/web build は実行確認できませんでした。"
-    - "提示された Validation Summary は npm test が存在せず失敗しているログなので、実質的な検証にはなっていません。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.nextshell-2026-05-10T16-57-08-857Z.md

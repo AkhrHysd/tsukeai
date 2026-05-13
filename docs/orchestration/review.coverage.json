@@ -1,0 +1,41 @@
+{
+  "phase": "review",
+  "coverageScore": 7,
+  "coverageMaxScore": 7,
+  "coverageReady": true,
+  "userApprovedArtifactOutput": true,
+  "readyForArtifact": true,
+  "topics": {
+    "implementation_evidence": {
+      "status": "confirmed",
+      "evidence": "ユーザーは `session start-review` 済みのセッションに対しレビューフェーズ実行を依頼した。証跡は `review-context.json`（tsukeai の git・tasks 埋め込み）と `implementation-gaps-post-review.md` を根拠とする。"
+    },
+    "plan_task_alignment": {
+      "status": "confirmed",
+      "evidence": "review-context 内のタスク YAML に `tc.e2e-write` の lastReview reject と `tc.neon` の reject が記録されている旨をユーザーが追認する文脈でレビュー実行を依頼した。"
+    },
+    "design_assumption_gaps": {
+      "status": "confirmed",
+      "evidence": "ユーザーが別途提示した実装ギャップ（認証未実装・UI 浅い・漢字表記・エラー UX 等）を design-plan-revision-brief の Design 側にルーティングする方針で合意した。"
+    },
+    "missing_plan_work": {
+      "status": "confirmed",
+      "evidence": "reject された E2E・Neon と npm test 不在の検証歪みを Plan 再分解の要件として review.md に記載したうえでレビュー成果物出力を依頼した。"
+    },
+    "implementation_learnings": {
+      "status": "confirmed",
+      "evidence": "変換 ADR ゲートの有効性と review-context の git 空問題を review.md の Learnings に整理し、ユーザーがレビューフェーズ実行を依頼した。"
+    },
+    "next_design_topics": {
+      "status": "confirmed",
+      "evidence": "実装ギャップ一覧に基づき認証方針・画面設計・LLM 表記・エラー UX を Next Design として review.md に列挙した。"
+    },
+    "next_plan_requirements": {
+      "status": "confirmed",
+      "evidence": "E2E／Neon／検証コマンド整合とギャップのタスク化を Next Plan として review.md に列挙し、ユーザーがレビューフェーズ実行を依頼した。"
+    }
+  },
+  "blockingTopics": [],
+  "deferredTopics": [],
+  "validationWarnings": []
+}

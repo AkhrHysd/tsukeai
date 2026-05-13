@@ -1,46 +1,14 @@
 id: tc.delete
-title: "本人削除（M6）"
-description: "公開句の削除または非表示。管理者削除は MVP 外。"
+title: 本人削除（M6）
+description: 公開句の削除または非表示。管理者削除は MVP 外。
 dependsOn:
   - tc.session
   - tc.transform-contract
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - "本人削除後に一覧／スレッドが一貫する。"
-status: done
+  - 本人削除後に一覧／スレッドが一貫する。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    exitCode: 0
-    stdout:
-    
-    > tsukeai@0.0.0 test
-    > pnpm --filter @tsukeai/web test
-    
-    
-    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.delete/apps/web
-    > pnpm run smoke:read
-    
-    
-    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.delete/apps/web
-    > node scripts/read-smoke.mjs
-    
-    Read smoke passed.
-    stderr:
-    (empty)
-lastReview:
-  decision: accept
-  summary: "本人の公開句を非公開化し、親投稿削除時は同一スレッドの返信と thread も削除状態にするため、現在の一覧取得では削除後の表示一貫性を満たしています。"
-  requiredFixes: []
-  riskNotes:
-    - "DELETE API の自動テストは確認できず、検証は web の read smoke のみです。"
-    - "親投稿削除時に他ユーザーの返信も非公開化される設計です。スレッドごと非表示にする方針なら妥当ですが、返信単体の復元や監査要件が増える場合は再検討が必要です。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.delete-2026-05-11T00-15-26-272Z.md

@@ -1,46 +1,14 @@
 id: tc.transform-contract
-title: "変換ジョブの契約（状態・冪等・エラー）"
-description: "ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。"
+title: 変換ジョブの契約（状態・冪等・エラー）
+description: ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - packages/shared
   - docs/orchestration
 acceptanceCriteria:
-  - "変換ジョブの状態・冪等・エラーが共有契約で説明できる。"
-status: done
+  - 変換ジョブの状態・冪等・エラーが共有契約で説明できる。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    exitCode: 0
-    stdout:
-    
-    > tsukeai@0.0.0 test
-    > pnpm --filter @tsukeai/web test
-    
-    
-    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-contract/apps/web
-    > pnpm run smoke:read
-    
-    
-    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-contract/apps/web
-    > node scripts/read-smoke.mjs
-    
-    Read smoke passed.
-    stderr:
-    (empty)
-lastReview:
-  decision: accept
-  summary: "共有パッケージに変換ジョブの状態、冪等スコープ、公開エラー、観測 DTO が追加され、ADR 文書側にも契約の正本と利用方針が説明されています。Acceptance Criteria は満たしています。"
-  requiredFixes: []
-  riskNotes:
-    - "ドキュメント上の状態説明は queued→processing→terminal と読める一方、契約では queued→failed/rejected も許可しているため、実装時に意図を明確化するとよいです。"
-    - "TransformJobDto.state と observation.state は二重保持のため、将来の実装で不整合を作らない運用が必要です。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-contract-2026-05-11T00-12-39-342Z.md

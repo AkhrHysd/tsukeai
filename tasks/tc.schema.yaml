@@ -1,35 +1,14 @@
 id: tc.schema
-title: "最小エンティティとマイグレーション運用"
-description: "Account・公開変換・スレッドの最小列と適用手順（DDL 全文は実装フェーズ）。"
+title: 最小エンティティとマイグレーション運用
+description: Account・公開変換・スレッドの最小列と適用手順（DDL 全文は実装フェーズ）。
 dependsOn:
   - tc.neon
 allowedPaths:
   - apps/api
   - packages/shared
 acceptanceCriteria:
-  - "最小エンティティのマイグレーション適用が手順どおり再現できる。"
-status: done
+  - 最小エンティティのマイグレーション適用が手順どおり再現できる。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_14_43_123Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "最小エンティティDDL、migrate:upスクリプト、MIGRATIONS.mdの適用手順はいずれもallowed paths内で追加され、dry-runでマイグレーション読み込みとチェックサム出力を確認できた。"
-  requiredFixes: []
-  riskNotes:
-    - "Validation Summaryのnpm testはMissing scriptで失敗しており、このタスクの実質的な検証にはなっていない。"
-    - "実DBへの適用はDATABASE_URLが必要なため未実行。"
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.schema-2026-05-10T17-14-43-161Z.md

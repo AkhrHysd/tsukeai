@@ -1,6 +1,7 @@
 id: tc.transform-arch-gate
-title: "変換アーキ ADR（Milestone 3.5）"
-description: "docs/orchestration/transform-architecture.md に、同期／非同期、失敗時 UX、再試行・冪等性、コスト上限を ADR で記録。コードは書かない。"
+title: 変換アーキ ADR（Milestone 3.5）
+description: docs/orchestration/transform-architecture.md に、同期／非同期、失敗時
+  UX、再試行・冪等性、コスト上限を ADR で記録。コードは書かない。
 dependsOn:
   - tc.session
   - tc.schema
@@ -8,38 +9,8 @@ allowedPaths:
   - docs/orchestration
   - docs/orchestration/transform-architecture.md
 acceptanceCriteria:
-  - "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。"
-status: done
+  - transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    exitCode: 0
-    stdout:
-    
-    > tsukeai@0.0.0 test
-    > pnpm --filter @tsukeai/web test
-    
-    
-    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-arch-gate/apps/web
-    > pnpm run smoke:read
-    
-    
-    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.transform-arch-gate/apps/web
-    > node scripts/read-smoke.mjs
-    
-    Read smoke passed.
-    stderr:
-    (empty)
-lastReview:
-  decision: accept
-  summary: "ADRとして同期/非同期方針、失敗時UX、再試行・冪等性、コスト上限が docs/orchestration/transform-architecture.md に記載されており、受け入れ条件を満たしています。"
-  requiredFixes: []
-  riskNotes: []
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-arch-gate-2026-05-10T23-57-07-696Z.md

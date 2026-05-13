@@ -1,32 +1,18 @@
 id: tc.authgate
-title: "認証方式の決定ゲート"
-description: "パスワード／パスキー／TOTP の組み合わせを記録。SMS 従量依存は避ける（Design）。"
+title: Passkey（S1）の orchestration 同期と SimpleWebAuthn スパイク
+description: Design で確定した S1（@simplewebauthn/server on Hono Workers、Neon
+  にクレデンシャル／セッション、httpOnly Cookie、パスワードなし）を docs/orchestration に同期し、Workers
+  上でのライブラリ適合をスパイクして記録する。
 dependsOn:
   - tc.shared
 allowedPaths:
   - docs/orchestration
 acceptanceCriteria:
-  - "認証方式が orchestration 文書に記録される。"
-status: done
+  - S1 パスキー方針とスパイク結果が orchestration 文書に記録される。
+  - RP ID・公開 URL・Cookie ドメイン・CORS の対応が orchestration に記載される。
+  - MVP におけるメール検証の要否（採用／不採用／将来）が orchestration に明文化される。
+  - SimpleWebAuthn on Workers のスパイク結果と代替方針が orchestration に記載される。
+status: queued
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
-lastValidation:
-  passed: true
-  stage: test
-  failures: []
-  logs: >
-    $ npm test
-    skipped:
-    npm error Missing script: "test"
-    npm error
-    npm error To see a list of scripts, run:
-    npm error   npm run
-    npm error A complete log of this run can be found in: /var/folders/n2/cxypjnxj15jg_ps764m9sdrw0000gn/T/cursor-sandbox-cache/7afdc93aaa86e33c9dd2fc139830d468/npm/_logs/2026-05-10T17_01_00_143Z-debug-0.log
-lastReview:
-  decision: accept
-  summary: "認証方式が orchestration 文書に記録され、SMS 不採用も明記されているため acceptance criteria を満たしています。"
-  requiredFixes: []
-  riskNotes: []
-  scopeViolations: []
-lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.authgate-2026-05-10T17-01-00-183Z.md
