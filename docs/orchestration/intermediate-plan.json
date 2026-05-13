@@ -123,7 +123,7 @@
     {
       "id": "tc.authgate",
       "title": "認証方式の決定ゲート",
-      "description": "パスワード／パスキー／TOTP の組み合わせを記録。SMS 従量依存は避ける（Design）。",
+      "description": "S1: パスキー（WebAuthn）によるパスワードレス認証を記録。@simplewebauthn/server on Hono Workers、Neon の credential/session、httpOnly Cookie、RP/CORS/メール検証境界を含める。",
       "milestoneId": "ms.auth",
       "status": "candidate",
       "allowedPathCandidateIds": ["ap.docs.orch"],
@@ -329,7 +329,7 @@
     { "id": "ac.tc.neon", "description": "Hyperdrive 経由で Neon 接続を再現できる。", "source": "plan", "taskCandidateIds": ["tc.neon"] },
     { "id": "ac.tc.schema", "description": "最小エンティティのマイグレーション適用が手順どおり再現できる。", "source": "plan", "taskCandidateIds": ["tc.schema"] },
     { "id": "ac.tc.timeline", "description": "未認証でタイムライン JSON が取得できる。", "source": "plan", "taskCandidateIds": ["tc.timeline"] },
-    { "id": "ac.tc.authgate", "description": "認証方式が orchestration 文書に記録される。", "source": "plan", "taskCandidateIds": ["tc.authgate"] },
+    { "id": "ac.tc.authgate", "description": "S1 パスキー方針、Workers 上の SimpleWebAuthn スパイク結果、RP ID・公開 URL・Cookie ドメイン・CORS・メール検証方針が orchestration 文書に記録される。", "source": "plan", "taskCandidateIds": ["tc.authgate"] },
     { "id": "ac.tc.session", "description": "書き込み API が未認証で拒否される。", "source": "plan", "taskCandidateIds": ["tc.session"] },
     { "id": "ac.tc.transform-arch-gate", "description": "transform-architecture.md に同期性・失敗 UX・冪等・コストが ADR で記載される。", "source": "plan", "taskCandidateIds": ["tc.transform-arch-gate"] },
     { "id": "ac.tc.nextshell", "description": "Next がビルドしレイアウトが載る。", "source": "plan", "taskCandidateIds": ["tc.nextshell"] },

@@ -2,7 +2,7 @@
 
 ## Source Design
 
-この Plan は、セッション `tsukeai` の **`design.md`** および **`design.coverage.json`** を唯一の上流の方式・境界入力とする。Neon（東京）＋ Hyperdrive、Hono on Cloudflare Workers、Next.js App Router（SSR）、REST（JSON）、モノレポ（pnpm workspaces／Turborepo）、Biome 単一、GT 未ログイン閲覧、投稿／返信はログイン必須、本人削除（M6）、通報／管理者削除は MVP 外、といった Design の確定事項を前提に分解する。認証方式は **`authentication.md`** で **パスワード + 任意のパスキー（WebAuthn） + 任意の TOTP、SMS 不採用**として記録済み。
+この Plan は、セッション `tsukeai` の **`design.md`** および **`design.coverage.json`** を唯一の上流の方式・境界入力とする。Neon（東京）＋ Hyperdrive、Hono on Cloudflare Workers、Next.js App Router（SSR）、REST（JSON）、モノレポ（pnpm workspaces／Turborepo）、Biome 単一、GT 未ログイン閲覧、投稿／返信はログイン必須、本人削除（M6）、通報／管理者削除は MVP 外、といった Design の確定事項を前提に分解する。認証方式は **`authentication.md`** で **S1: パスキー（WebAuthn）によるパスワードレス認証、パスワード／TOTP／SMS 不採用、Neon にクレデンシャル／セッション、httpOnly Cookie** として記録済み。
 
 実装リポジトリの Bootstrap 先は **`/Users/akyrhysd/work/tsukeai`** とする（ユーザーが Bootstrap を実行済み。フォルダ名は環境に合わせてよい）。
 

@@ -8,7 +8,7 @@
 
 **Design で確定した認証の要点（ユーザー回答の要約）**: GT は **未ログインでも読める**。投稿・返信は **ログイン必須**。通報・管理者削除は **MVP に含めない**。
 
-**認証方式の決定**: `tc.authgate` により、MVP は **パスワード + 任意のパスキー（WebAuthn） + 任意の TOTP** とし、**SMS は採用しない**。詳細は **`authentication.md`** を正とする。
+**認証方式の決定**: `tc.authgate` により、MVP は **S1: パスキー（WebAuthn）によるパスワードレス認証** とし、**パスワード、TOTP、SMS は採用しない**。Hono on Workers 上で `@simplewebauthn/server` を使い、クレデンシャルとセッションの正本は Neon、ブラウザには httpOnly Cookie を発行する。詳細は **`authentication.md`** を正とする。
 
 ## Architecture Policy
 
@@ -68,7 +68,7 @@ flowchart LR
 - **投稿・返信**: **ログイン必須**（ユーザー確認済み）。
 - **本人削除**: **自分の投稿・返信（変換後の公開句）を削除できる**ことを MVP に含める（ユーザー確認済み）。**Scope の M6** と一致する。
 - **通報・管理者削除**: **MVP には含めない**（ユーザー確認済み）。リスクとして Design で認識し、後続で検討。
-- **認証方式**: **パスワード + 任意のパスキー（WebAuthn） + 任意の TOTP** を MVP の組み合わせとする。**SMS は採用しない**。ベンダー固定や詳細フローは **`authentication.md`** の境界に従い、実装タスク側で決める。
+- **認証方式**: **S1: パスキー（WebAuthn）によるパスワードレス認証** を MVP の方式とする。**パスワード、TOTP、SMS は採用しない**。`@simplewebauthn/server` の Workers 適合、RP ID、公開 URL、Cookie ドメイン、CORS、メール検証の扱いは **`authentication.md`** の境界に従い、実装タスク側で検証を固定する。
 
 ## llm-task-orchestrator Boundary
 
