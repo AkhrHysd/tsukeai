@@ -203,7 +203,7 @@ function allowedOrigins(value: string | undefined): string[] {
 
 function isProtectedWrite(method: string, path: string): boolean {
   return (
-    method === "DELETE" &&
+    (method === "POST" || method === "DELETE") &&
     path.startsWith("/api/") &&
     !/^\/api\/(?:auth|sessions)(?:\/|$)/.test(path)
   );
@@ -213,7 +213,6 @@ function parseTimelineLimit(value: string | undefined): number | undefined {
   if (value === undefined) {
     return DEFAULT_TIMELINE_LIMIT;
   }
-  
 
   const limit = Number(value);
 
@@ -1392,7 +1391,10 @@ async function handleCreateTransformJob(
   forcedInput?: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
 ) {
   const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const existingAccountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  const existingAccountId = await getSessionAccountId(
+    getCookie(c, cookieName),
+    c.env.SESSION_SECRET,
+  );
   const accountId = existingAccountId ?? crypto.randomUUID();
   const shouldEnsureAccount = existingAccountId === undefined;
 

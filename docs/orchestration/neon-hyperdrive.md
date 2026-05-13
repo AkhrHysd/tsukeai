@@ -66,11 +66,9 @@ The required deploy-time contract is:
   git.
 
 The API uses postgres.js with prepared statements disabled for the Hyperdrive
-connection (`prepare: false`) so requests go through Hyperdrive reliably.
-
-This repository currently has no committed package lock. If a lockfile is added
-later, update it whenever `apps/api/package.json` changes so the `postgres`
-dependency is reproducible.
+connection (`prepare: false`) so requests go through Hyperdrive reliably. Keep
+`pnpm-lock.yaml` updated whenever `apps/api/package.json` changes so the
+`postgres` and `wrangler` versions remain reproducible.
 
 ## Verify
 

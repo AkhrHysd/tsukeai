@@ -1,8 +1,4 @@
-import {
-  checkTransformForm,
-  TRANSFORM_FORM_RULES,
-  type TransformJobKind,
-} from "@tsukeai/shared";
+import { checkTransformForm, TRANSFORM_FORM_RULES, type TransformJobKind } from "@tsukeai/shared";
 
 export type LlmAdapterBindings = {
   LLM_API_KEY?: string;
@@ -207,7 +203,7 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
           const preview =
             (lastNormalizedOutput ?? normalized).length > 200
               ? `${(lastNormalizedOutput ?? normalized).slice(0, 200)}…`
-              : lastNormalizedOutput ?? normalized;
+              : (lastNormalizedOutput ?? normalized);
 
           throw new LlmAdapterError(
             "validation_failed",
@@ -586,10 +582,16 @@ async function fetchWithTimeout(
 }
 
 function errorForProviderStatus(status: number, responseText?: string): LlmAdapterError {
-  const suffix = responseText ? ` (status=${status} body=${JSON.stringify(responseText)})` : ` (status=${status})`;
+  const suffix = responseText
+    ? ` (status=${status} body=${JSON.stringify(responseText)})`
+    : ` (status=${status})`;
 
   if (status === 429) {
-    return new LlmAdapterError("rate_limited", `LLM provider rate limit was reached.${suffix}`, true);
+    return new LlmAdapterError(
+      "rate_limited",
+      `LLM provider rate limit was reached.${suffix}`,
+      true,
+    );
   }
 
   if (status >= 500) {

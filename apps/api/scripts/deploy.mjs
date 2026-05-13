@@ -1,8 +1,8 @@
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
 
 function usage() {
   return [
@@ -19,8 +19,7 @@ function usage() {
 function assertHyperdriveId(value) {
   if (!value) return undefined;
   const trimmed = value.trim();
-  const uuid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const hex32 = /^[0-9a-f]{32}$/i;
   return uuid.test(trimmed) || hex32.test(trimmed) ? trimmed : undefined;
 }
@@ -58,11 +57,10 @@ async function main() {
   const tmpConfig = wranglerToml.replaceAll("<hyperdrive-id>", hyperdriveId);
   await writeFile(tmpConfigPath, tmpConfig, "utf8");
 
-  const child = spawn(
-    "pnpm",
-    ["exec", "wrangler", "deploy", "--config", tmpConfigPath],
-    { cwd: apiDir, stdio: "inherit" },
-  );
+  const child = spawn("pnpm", ["exec", "wrangler", "deploy", "--config", tmpConfigPath], {
+    cwd: apiDir,
+    stdio: "inherit",
+  });
 
   const exitCode = await new Promise((resolve) => {
     child.on("close", (code) => resolve(code ?? 1));
@@ -76,4 +74,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-

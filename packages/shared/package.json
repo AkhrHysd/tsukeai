@@ -12,6 +12,6 @@
   "scripts": {
     "check": "pnpm run lint",
     "lint": "pnpm --workspace-root exec biome check .",
-    "typecheck": "pnpm --workspace-root exec tsc --noEmit"
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   }
 }
