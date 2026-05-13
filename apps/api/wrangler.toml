@@ -9,11 +9,3 @@ compatibility_flags = ["nodejs_compat"]
 API_ALLOWED_ORIGINS = "http://localhost:3000"
 LLM_BASE_URL = "https://api.openai.com/v1/chat/completions"
 LLM_MODEL = "gpt-4.1-mini"
-
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-# Keep the real Cloudflare resource ID outside git and substitute it at deploy
-# time. See docs/orchestration/neon-hyperdrive.md for the exact command.
-id = "<hyperdrive-id>"
-# Local development: wrangler dev uses this connection string directly.
-localConnectionString = "postgres://tsukeai:tsukeai@localhost:5433/tsukeai"

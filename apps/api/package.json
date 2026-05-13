@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "check": "pnpm run lint",
-    "dev": "wrangler dev",
-    "cf:deploy": "node scripts/deploy.mjs",
+    "dev": "node scripts/wrangler-hyperdrive.mjs dev",
+    "cf:deploy": "node scripts/wrangler-hyperdrive.mjs deploy",
     "lint": "pnpm --workspace-root exec biome check .",
     "migrate:up": "node scripts/migrate.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"
