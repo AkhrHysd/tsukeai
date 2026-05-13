@@ -209,6 +209,12 @@ function isProtectedWrite(method: string, path: string): boolean {
   );
 }
 
+function handleHealth(c: AppContext) {
+  c.header("Cache-Control", "no-store");
+
+  return c.json(HEALTH_RESPONSE);
+}
+
 function parseTimelineLimit(value: string | undefined): number | undefined {
   if (value === undefined) {
     return DEFAULT_TIMELINE_LIMIT;
@@ -1627,13 +1633,9 @@ app.use("*", async (c, next) => {
   );
 });
 
-app.get("/health", (c) => {
-  return c.json(HEALTH_RESPONSE);
-});
+app.get("/health", handleHealth);
 
-app.get("/api/health", (c) => {
-  return c.json(HEALTH_RESPONSE);
-});
+app.get("/api/health", handleHealth);
 
 app.get("/api/db/health", async (c) => {
   let sql: ReturnType<typeof createSql> | undefined;
