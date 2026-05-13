@@ -33,6 +33,11 @@ export type ApiErrorResponseDto = {
   error: ApiErrorDto;
 };
 
+export type BoundaryErrorCode = ApiErrorCode;
+export type BoundaryFieldErrorDto = FieldErrorDto;
+export type BoundaryErrorDto = ApiErrorDto;
+export type BoundaryErrorResponseDto = ApiErrorResponseDto;
+
 export const TRANSFORM_JOB_STATES = [
   "queued",
   "processing",
@@ -160,6 +165,23 @@ export type TransformJobDto = {
 export type TransformJobResponseDto = {
   job: TransformJobDto;
 };
+
+export type BoundaryTransformJobState = TransformJobState;
+export type BoundaryTransformTerminalJobState = TransformTerminalJobState;
+export type BoundaryTransformJobKind = TransformJobKind;
+export type BoundaryTransformFormCheckReason = TransformFormCheckReason;
+export type BoundaryTransformFormCheckSegmentDto = TransformFormCheckSegment;
+export type BoundaryTransformFormCheckErrorDto = TransformFormCheckError;
+export type BoundaryTransformFormCheckResultDto = TransformFormCheckResult;
+export type BoundaryTransformIdempotencyScopeDto = TransformIdempotencyScope;
+export type BoundaryTransformRetryPolicy = TransformRetryPolicy;
+export type BoundaryTransformUserAction = TransformUserAction;
+export type BoundaryTransformPublicErrorCode = TransformPublicErrorCode;
+export type BoundaryTransformFailureReason = TransformFailureReason;
+export type BoundaryTransformJobErrorDto = TransformJobErrorDto;
+export type BoundaryTransformJobObservationDto = TransformJobObservationDto;
+export type BoundaryTransformJobDto = TransformJobDto;
+export type BoundaryTransformJobResponseDto = TransformJobResponseDto;
 
 const EXPLICIT_SEGMENT_SEPARATOR_PATTERN = /[\n\r/／]+/u;
 const INLINE_SEGMENT_SEPARATOR_PATTERN = /[\s　、，,。．.！？!?]+/u;
@@ -332,3 +354,17 @@ export type CreateReplyRequestDto = {
 export type CreateReplyResponseDto = {
   reply: ReplyDto;
 };
+
+export type BoundaryEntityId = EntityId;
+export type BoundaryIsoDateTimeString = IsoDateTimeString;
+export type BoundaryTankaText = TankaText;
+export type BoundaryPublicTankaText = PublicTankaText;
+export type BoundaryAuthorDto = AuthorDto;
+export type BoundaryPostDto = PostDto;
+export type BoundaryReplyDto = ReplyDto;
+export type BoundaryTimelineItemDto = TimelineItemDto;
+export type BoundaryTimelineResponseDto = TimelineResponseDto;
+export type BoundaryCreatePostRequestDto = CreatePostRequestDto;
+export type BoundaryCreatePostResponseDto = CreatePostResponseDto;
+export type BoundaryCreateReplyRequestDto = CreateReplyRequestDto;
+export type BoundaryCreateReplyResponseDto = CreateReplyResponseDto;
