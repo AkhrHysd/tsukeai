@@ -1189,6 +1189,9 @@ function getTransformJobErrorMessage(
   }
 
   if (errorCode === "transform_failed") {
+    if (failureReason === "validation_failed") {
+      return "五七五の音節に整えられませんでした。入力を短くするか言い回しを変えると改善することがあります。そのまま再試行してもうまくいく場合があります。";
+    }
     return "変換サーバーでエラーが発生しました。しばらくしてから再度お試しください。";
   }
 

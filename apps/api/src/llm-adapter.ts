@@ -122,7 +122,7 @@ type ChatMessage = {
 const DEFAULT_LLM_TIMEOUT_MS = 8_000;
 const DEFAULT_LLM_MAX_INPUT_CHARS = 1_000;
 const DEFAULT_LLM_MAX_OUTPUT_TOKENS = 96;
-const DEFAULT_LLM_MAX_RETRIES = 1;
+const DEFAULT_LLM_MAX_RETRIES = 2;
 const DEFAULT_RETRY_BACKOFF_MS = 250;
 const KANJI_DISPLAY_MAX_ATTEMPTS = 2;
 const MIN_TIMEOUT_MS = 1_000;
@@ -171,19 +171,27 @@ const SYSTEM_PROMPT = [
     "Do not add extra lines.",
   ].join(" "),
   [
-    "Each line MUST match the required mora count from metadata.",
-    "If you cannot satisfy the form, output the closest valid form anyway.",
+    "Each line MUST match the required mora count from metadata EXACTLY.",
+    "If the input is hard to fit, rephrase or choose synonyms until every line matches.",
+    "Never output a line with the wrong mora count.",
+  ].join(" "),
+  [
+    "Mora counting rules (CRITICAL — apply these exactly):",
+    "- Every standard hiragana or katakana character = 1 mora.",
+    "- ん = 1 mora. っ = 1 mora. ー = 1 mora.",
+    "- Small kana (ぁぃぅぇぉゃゅょゎ and katakana equivalents) = 0 additional mora — they combine with the preceding character.",
+    "Examples: きょ=1, しゅ=1, きょう=2, にっぽん=4, ほんとう=4.",
   ].join(" "),
   "Do not include the input text verbatim.",
   [
-    "Examples (do not copy content, only structure):",
-    "5-7-5:",
-    "あさひさす",
-    "こころしずかに",
-    "はるをまつ",
-    "7-7:",
-    "ほしをかぞえて",
-    "よるがあけゆく",
+    "Examples with mora counts (do not copy content, only structure):",
+    "5-7-5 (5+7+5 mora per line):",
+    "あさひかげ [5: あ-さ-ひ-か-げ]",
+    "そらにたなびく [7: そ-ら-に-た-な-び-く]",
+    "しずかなる [5: し-ず-か-な-る]",
+    "7-7 (7+7 mora per line):",
+    "かぜふくさとに [7: か-ぜ-ふ-く-さ-と-に]",
+    "ほしみえてくる [7: ほ-し-み-え-て-く-る]",
   ].join("\n"),
 ].join(" ");
 
@@ -374,7 +382,6 @@ export function classifyTransformFailure(error: LlmAdapterError): TransformFailu
     error.code === "input_limit_exceeded" ||
     error.code === "cost_limit_exceeded" ||
     error.code === "output_limit_exceeded" ||
-    error.code === "validation_failed" ||
     error.code === "provider_rejected"
   ) {
     return {

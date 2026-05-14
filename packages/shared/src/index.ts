@@ -165,6 +165,8 @@ export const TRANSFORM_SERVER_RETRYABLE_FAILURE_REASONS = [
   "provider_unavailable",
   "invalid_provider_response",
   "configuration_error",
+  // LLM quality failure: not the user's fault — retrying the same input often succeeds
+  "validation_failed",
 ] as const satisfies readonly TransformFailureReason[];
 
 export type TransformServerRetryableFailureReason =
@@ -175,7 +177,6 @@ export const TRANSFORM_CLIENT_REVISABLE_FAILURE_REASONS = [
   "input_limit_exceeded",
   "output_limit_exceeded",
   "cost_limit_exceeded",
-  "validation_failed",
   "prompt_injection_detected",
   "content_policy_violation",
   "unauthorized",
