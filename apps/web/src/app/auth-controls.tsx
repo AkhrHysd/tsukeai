@@ -37,6 +37,39 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
     setSupported(browserSupportsWebAuthn());
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshSession() {
+      try {
+        const response = await fetch("/api/sessions/current", {
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const session = (await response.json()) as CurrentSessionResponseDto;
+
+        if (!cancelled) {
+          setAccount(session.authenticated ? session.account : undefined);
+        }
+      } catch {
+        // Keep the server-rendered state when session refresh is unavailable.
+      }
+    }
+
+    refreshSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function submitRegistration(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
