@@ -2,7 +2,7 @@
 
 import type { EntityId, TransformJobResponseDto } from "@tsukeai/shared";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 type TransformKind = "post_575" | "reply_77";
 type WriteTarget = "post" | "reply";
@@ -35,7 +35,13 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
   const router = useRouter();
   const [state, setState] = useState(initialWriteActionState);
   const [busy, setBusy] = useState(false);
-  const feedbackState = useTransformJobFeedback(state, variant === "sheet" ? router : undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const onSuccess = useCallback(() => formRef.current?.reset(), []);
+  const feedbackState = useTransformJobFeedback(
+    state,
+    variant === "sheet" ? router : undefined,
+    onSuccess,
+  );
 
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +49,7 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
   }
 
   return (
-    <form className="composer" onSubmit={submitPost} aria-label="投稿">
+    <form ref={formRef} className="composer" onSubmit={submitPost} aria-label="投稿">
       <label htmlFor="post-body">五七五に変換したい内容を入力</label>
       <textarea
         id="post-body"
@@ -71,7 +77,13 @@ export function ReplyComposer({
   const router = useRouter();
   const [state, setState] = useState(initialWriteActionState);
   const [busy, setBusy] = useState(false);
-  const feedbackState = useTransformJobFeedback(state, variant === "sheet" ? router : undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const onSuccess = useCallback(() => formRef.current?.reset(), []);
+  const feedbackState = useTransformJobFeedback(
+    state,
+    variant === "sheet" ? router : undefined,
+    onSuccess,
+  );
   const inputId = `reply-body-${postId}`;
 
   async function submitReply(event: FormEvent<HTMLFormElement>) {
@@ -87,7 +99,7 @@ export function ReplyComposer({
   }
 
   return (
-    <form className="composer" onSubmit={submitReply} aria-label="返信">
+    <form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">
       <label htmlFor={inputId}>七七に変換したい内容を入力</label>
       <textarea
         id={inputId}
@@ -126,7 +138,7 @@ async function submitWrite(
 
     setState(result);
 
-    if (result.status === "success" || result.status === "pending") {
+    if (result.status === "success") {
       form.reset();
     }
   } catch (error) {
@@ -300,9 +312,18 @@ function WriteMessage({ state }: { state: WriteActionState }) {
 
 type AppRouter = ReturnType<typeof useRouter>;
 
-function useTransformJobFeedback(actionState: WriteActionState, sheetRouter?: AppRouter) {
+function useTransformJobFeedback(
+  actionState: WriteActionState,
+  sheetRouter?: AppRouter,
+  onSuccess?: () => void,
+) {
   const router = useRouter();
   const [feedbackState, setFeedbackState] = useState(actionState);
+  const onSuccessRef = useRef(onSuccess);
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  });
 
   useEffect(() => {
     setFeedbackState(actionState);
@@ -337,6 +358,7 @@ function useTransformJobFeedback(actionState: WriteActionState, sheetRouter?: Ap
         const body = (await response.json()) as TransformJobResponseDto;
 
         if (body.job.state === "succeeded") {
+          onSuccessRef.current?.();
           setFeedbackState({
             status: "success",
             message: actionState.target === "reply" ? "返信しました。" : "投稿しました。",
@@ -356,7 +378,6 @@ function useTransformJobFeedback(actionState: WriteActionState, sheetRouter?: Ap
               body.job.error?.message ??
               "変換に失敗しました。内容を見直してもう一度お試しください。",
           });
-          router.refresh();
           return;
         }
 
@@ -395,7 +416,7 @@ function useTransformJobFeedback(actionState: WriteActionState, sheetRouter?: Ap
         clearTimeout(timeoutId);
       }
     };
-  }, [actionState, router]);
+  }, [actionState, router, sheetRouter]);
 
   return feedbackState;
 }

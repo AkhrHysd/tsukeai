@@ -1180,6 +1180,37 @@ function toRetryPolicy(classification: TransformFailureClassification): Transfor
   return getTransformRetryPolicy(classification.logCode);
 }
 
+function getTransformJobErrorMessage(
+  errorCode: TransformPublicErrorCode,
+  failureReason: TransformFailureReason,
+): string {
+  if (errorCode === "transform_limit_exceeded") {
+    return "変換の利用制限に達しました。時間をおいてから再度お試しください。";
+  }
+
+  if (errorCode === "transform_failed") {
+    return "変換サーバーでエラーが発生しました。しばらくしてから再度お試しください。";
+  }
+
+  switch (failureReason) {
+    case "validation_failed":
+      return "五七五の形に整えられませんでした。別の内容や言い回しでお試しください。";
+    case "prompt_injection_detected":
+      return "入力内容に問題が検出されたため変換できませんでした。内容を確認してください。";
+    case "input_limit_exceeded":
+      return "入力が長すぎます。短くしてからお試しください。";
+    case "output_limit_exceeded":
+    case "cost_limit_exceeded":
+      return "変換の利用制限に達しました。時間をおいてから再度お試しください。";
+    case "content_policy_violation":
+      return "入力内容がポリシーに違反しているため変換できませんでした。内容を変更してください。";
+    case "provider_rejected":
+      return "変換サービスが入力を処理できませんでした。内容を変えてお試しください。";
+    default:
+      return "入力内容を変換できませんでした。内容を見直してください。";
+  }
+}
+
 function toTransformJobDto(row: TransformJobRow): TransformJobDto {
   const dto: TransformJobDto = {
     id: row.id,
@@ -1217,10 +1248,7 @@ function toTransformJobDto(row: TransformJobRow): TransformJobDto {
           error: {
             code: row.error_code,
             reason: row.failure_reason,
-            message:
-              row.error_code === "transform_failed"
-                ? "変換を完了できませんでした。しばらくしてから再度お試しください。"
-                : "入力内容を変換できませんでした。内容を見直してください。",
+            message: getTransformJobErrorMessage(row.error_code, row.failure_reason),
             retryPolicy: row.retry_policy,
             userAction: row.user_action,
           },
