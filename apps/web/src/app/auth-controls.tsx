@@ -123,6 +123,7 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
     try {
       await fetch("/api/sessions/current", {
         method: "DELETE",
+        credentials: "same-origin",
         headers: {
           Accept: "application/json",
         },
@@ -216,6 +217,7 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(path, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",

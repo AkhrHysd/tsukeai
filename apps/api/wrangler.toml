@@ -6,8 +6,8 @@ compatibility_flags = ["nodejs_compat"]
 # Non-secret vars. Set LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY (secret) per
 # environment in the Cloudflare dashboard or apps/api/.dev.vars — not in source.
 [vars]
-API_ALLOWED_ORIGINS = "http://localhost:3000"
-PUBLIC_WEB_ORIGIN = "http://localhost:3000"
+API_ALLOWED_ORIGINS = "https://tsukeai-web.yaurevoci.workers.dev"
+PUBLIC_WEB_ORIGIN = "https://tsukeai-web.yaurevoci.workers.dev"
 RP_NAME = "tsukeai"
 SESSION_COOKIE_NAME = "tsukeai_session"
 LLM_BASE_URL = "https://api.openai.com/v1/chat/completions"

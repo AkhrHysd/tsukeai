@@ -30,14 +30,22 @@ export async function proxyApiRequest(request: NextRequest, path: string): Promi
   });
   const responseHeaders = new Headers();
   const responseContentType = apiResponse.headers.get("content-type");
-  const setCookie = apiResponse.headers.get("set-cookie");
+  const setCookies =
+    "getSetCookie" in apiResponse.headers && typeof apiResponse.headers.getSetCookie === "function"
+      ? apiResponse.headers.getSetCookie()
+      : [];
+  const fallbackSetCookie = apiResponse.headers.get("set-cookie");
 
   if (responseContentType) {
     responseHeaders.set("Content-Type", responseContentType);
   }
 
-  if (setCookie) {
-    responseHeaders.set("Set-Cookie", setCookie);
+  for (const setCookie of setCookies) {
+    responseHeaders.append("Set-Cookie", setCookie);
+  }
+
+  if (setCookies.length === 0 && fallbackSetCookie) {
+    responseHeaders.append("Set-Cookie", fallbackSetCookie);
   }
 
   return new NextResponse(await apiResponse.text(), {
