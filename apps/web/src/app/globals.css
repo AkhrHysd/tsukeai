@@ -223,6 +223,12 @@ h1 {
   line-height: 1.5;
 }
 
+.composer textarea:disabled,
+.reply-form input:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .composer button,
 .reply-form button {
   justify-self: start;
@@ -234,6 +240,27 @@ h1 {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+.composer button:disabled,
+.reply-form button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.write-message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.write-message--success {
+  color: var(--accent-strong);
+}
+
+.write-message--error {
+  color: #9b2c2c;
 }
 
 .post-card {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
+const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
 const apiSource = await readWorkspaceFile("apps/api/src/index.ts");
 const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
@@ -24,13 +25,16 @@ assert.equal(
 
 assertIncludes(pageSource, 'import { revalidatePath } from "next/cache";');
 assertIncludes(pageSource, 'import { headers } from "next/headers";');
+assertIncludes(pageSource, 'import { PostComposer, ReplyComposer } from "./post-forms";');
 
-assertIncludes(pageSource, "async function createPost(formData: FormData)");
+assertIncludes(pageSource, "async function createPost(");
 assertIncludes(pageSource, '"use server";');
-assertIncludes(pageSource, 'requestWrite("/api/posts", "post_575", formData)');
-assertIncludes(pageSource, "async function createReply(postId: string");
-// biome-ignore lint/suspicious/noTemplateCurlyInString: asserting source code content
-assertIncludes(pageSource, 'requestWrite(`/api/posts/${postId}/replies`, "reply_77", formData)');
+assertIncludes(pageSource, 'requestWrite("/api/posts", "post_575", "post", formData)');
+assertIncludes(pageSource, "async function createReply(");
+assertIncludes(
+  pageSource,
+  "requestWrite(`/api/posts/$" + '{postId}/replies`, "reply_77", "reply", formData)',
+);
 assertIncludes(pageSource, "async function deletePublicConversion(publicConversionId: string)");
 // biome-ignore lint/suspicious/noTemplateCurlyInString: asserting source code content
 assertIncludes(pageSource, "requestApi(`/api/public-conversions/${publicConversionId}`");
@@ -50,13 +54,16 @@ assertIncludes(pageSource, 'headersInit.set("Cookie", cookie)');
 assertIncludes(pageSource, 'cache: "no-store"');
 assertIncludes(pageSource, "throw new Error(message)");
 assertIncludes(pageSource, 'revalidatePath("/")');
+assertIncludes(pageSource, 'message: "本文を入力してください。"');
+assertIncludes(pageSource, '"投稿しました。"');
+assertIncludes(pageSource, '"返信しました。"');
+assertIncludes(
+  pageSource,
+  'message: "投稿を受け付けました。変換完了後にタイムラインへ表示されます。"',
+);
 
-assertIncludes(pageSource, '<form className="composer" action={createPost}');
-assertIncludes(pageSource, 'aria-label="投稿"');
-assertIncludes(pageSource, 'name="body"');
-assertIncludes(pageSource, 'type="submit">投稿</button>');
-assertIncludes(pageSource, "action={createReply.bind(null, item.post.id)}");
-assertIncludes(pageSource, 'type="submit">返信</button>');
+assertIncludes(pageSource, "<PostComposer action={createPost} />");
+assertIncludes(pageSource, "<ReplyComposer");
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, reply.id)}");
 assertIncludes(pageSource, 'className="link-button" type="submit"');
@@ -81,6 +88,23 @@ assertIncludes(apiSource, "checkTransformForm(forcedInput.kind, publicText)");
 assertIncludes(apiSource, "Published text writes are disabled.");
 
 assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
+assertIncludes(postFormsSource, '"use client";');
+assertIncludes(postFormsSource, 'import { useActionState } from "react";');
+assertIncludes(postFormsSource, 'import { useFormStatus } from "react-dom";');
+assertIncludes(
+  postFormsSource,
+  '<form className="composer" action={formAction} aria-label="投稿">',
+);
+assertIncludes(
+  postFormsSource,
+  '<form className="reply-form" action={formAction} aria-label="返信">',
+);
+assertIncludes(postFormsSource, 'name="body"');
+assertIncludes(postFormsSource, "disabled={pending}");
+assertIncludes(postFormsSource, 'pendingLabel="投稿中..."');
+assertIncludes(postFormsSource, 'pendingLabel="返信中..."');
+assertIncludes(postFormsSource, 'role={state.status === "error" ? "alert" : "status"}');
+assertNoLlmDependency(postFormsSource, "apps/web/src/app/post-forms.tsx");
 assertNoRuntimeDependency(webPackageJson);
 assertNoLlmScriptDependency(webPackageJson);
 

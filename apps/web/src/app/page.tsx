@@ -1,8 +1,15 @@
-import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
+import type {
+  AuthorDto,
+  EntityId,
+  IsoDateTimeString,
+  TimelineResponseDto,
+  TransformJobResponseDto,
+} from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
 import { getCurrentSession } from "../lib/current-session";
+import { PostComposer, ReplyComposer } from "./post-forms";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +44,23 @@ type PublicReply = {
   publicText: string;
   createdAt: IsoDateTimeString;
 };
+export type WriteActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+};
+type WriteTarget = "post" | "reply";
+type PublishedWriteResponse = {
+  post?: unknown;
+  reply?: unknown;
+};
+type ApiResponse<T> = {
+  status: number;
+  body: T | undefined;
+};
+type ApiErrorBody = {
+  error?: { message?: unknown };
+  job?: { error?: { message?: unknown } };
+};
 
 const WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED = process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1";
 const WRITE_SMOKE_PUBLIC_TEXT = {
@@ -44,18 +68,25 @@ const WRITE_SMOKE_PUBLIC_TEXT = {
   reply_77: "ほしをかぞえて\nよるがあけゆく",
 } as const satisfies Record<TransformKind, string>;
 
-async function createPost(formData: FormData) {
+async function createPost(
+  _previousState: WriteActionState,
+  formData: FormData,
+): Promise<WriteActionState> {
   "use server";
 
-  await requestWrite("/api/posts", "post_575", formData);
-  revalidatePath("/");
+  return handleWriteAction(() => requestWrite("/api/posts", "post_575", "post", formData));
 }
 
-async function createReply(postId: string, formData: FormData) {
+async function createReply(
+  postId: string,
+  _previousState: WriteActionState,
+  formData: FormData,
+): Promise<WriteActionState> {
   "use server";
 
-  await requestWrite(`/api/posts/${postId}/replies`, "reply_77", formData);
-  revalidatePath("/");
+  return handleWriteAction(() =>
+    requestWrite(`/api/posts/${postId}/replies`, "reply_77", "reply", formData),
+  );
 }
 
 async function deletePublicConversion(publicConversionId: string) {
@@ -67,18 +98,45 @@ async function deletePublicConversion(publicConversionId: string) {
   revalidatePath("/");
 }
 
-async function requestWrite(path: string, kind: TransformKind, formData: FormData) {
+async function handleWriteAction(
+  write: () => Promise<WriteActionState>,
+): Promise<WriteActionState> {
+  try {
+    const result = await write();
+
+    if (result.status === "success") {
+      revalidatePath("/");
+    }
+
+    return result;
+  } catch (error) {
+    return {
+      status: "error",
+      message: toErrorMessage(error),
+    };
+  }
+}
+
+async function requestWrite(
+  path: string,
+  kind: TransformKind,
+  target: WriteTarget,
+  formData: FormData,
+): Promise<WriteActionState> {
   const input = formData.get("body");
 
   if (typeof input !== "string" || input.trim().length === 0) {
-    return;
+    return {
+      status: "error",
+      message: "本文を入力してください。",
+    };
   }
 
   const publicText = WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED
     ? WRITE_SMOKE_PUBLIC_TEXT[kind]
     : undefined;
 
-  await requestApi(path, {
+  const response = await requestApi<PublishedWriteResponse | TransformJobResponseDto>(path, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -97,9 +155,11 @@ async function requestWrite(path: string, kind: TransformKind, formData: FormDat
           },
     ),
   });
+
+  return toWriteActionState(response, target);
 }
 
-async function requestApi(path: string, init: RequestInit) {
+async function requestApi<T>(path: string, init: RequestInit): Promise<ApiResponse<T>> {
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL(path, apiBaseUrl);
   const requestHeaders = await headers();
@@ -117,29 +177,27 @@ async function requestApi(path: string, init: RequestInit) {
     headers: headersInit,
     cache: "no-store",
   });
+  let responseText: string | undefined;
+
+  try {
+    responseText = await response.text();
+  } catch {
+    responseText = undefined;
+  }
 
   if (!response.ok) {
-    let responseText: string | undefined;
-    try {
-      responseText = (await response.clone().text()).slice(0, 400);
-    } catch {
-      responseText = undefined;
-    }
-
     console.error("API request failed", {
       url: url.toString(),
       status: response.status,
       cfRay: response.headers.get("cf-ray"),
       contentType: response.headers.get("content-type"),
-      responseText,
+      responseText: responseText?.slice(0, 400),
     });
     let message = `API request failed with ${response.status}`;
 
     try {
-      const body = (await response.json()) as {
-        error?: { message?: unknown };
-      };
-      const errorMessage = body.error?.message;
+      const body = JSON.parse(responseText ?? "") as ApiErrorBody;
+      const errorMessage = body.error?.message ?? body.job?.error?.message;
 
       if (typeof errorMessage === "string" && errorMessage.length > 0) {
         message = errorMessage;
@@ -150,6 +208,87 @@ async function requestApi(path: string, init: RequestInit) {
 
     throw new Error(message);
   }
+
+  return {
+    status: response.status,
+    body: parseJsonResponse<T>(responseText),
+  };
+}
+
+function parseJsonResponse<T>(responseText: string | undefined): T | undefined {
+  if (!responseText) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(responseText) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function toWriteActionState(
+  response: ApiResponse<PublishedWriteResponse | TransformJobResponseDto>,
+  target: WriteTarget,
+): WriteActionState {
+  const body = response.body;
+  const successMessage = target === "post" ? "投稿しました。" : "返信しました。";
+
+  if (isPublishedWriteResponse(body, target) || isSucceededTransformJob(body, target)) {
+    return {
+      status: "success",
+      message: successMessage,
+    };
+  }
+
+  if (response.status === 202 || isActiveTransformJob(body)) {
+    return {
+      status: "success",
+      message: "投稿を受け付けました。変換完了後にタイムラインへ表示されます。",
+    };
+  }
+
+  return {
+    status: "success",
+    message: successMessage,
+  };
+}
+
+function isPublishedWriteResponse(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+  target: WriteTarget,
+): body is PublishedWriteResponse {
+  if (!body || typeof body !== "object" || !("job" in body)) {
+    return target === "post" ? Boolean(body?.post) : Boolean(body?.reply);
+  }
+
+  return false;
+}
+
+function isSucceededTransformJob(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+  target: WriteTarget,
+) {
+  if (!body || typeof body !== "object" || !("job" in body)) {
+    return false;
+  }
+
+  return (
+    body.job.state === "succeeded" ||
+    (target === "post" ? Boolean(body.job.publishedPostId) : Boolean(body.job.publishedReplyId))
+  );
+}
+
+function isActiveTransformJob(body: PublishedWriteResponse | TransformJobResponseDto | undefined) {
+  if (!body || typeof body !== "object" || !("job" in body)) {
+    return false;
+  }
+
+  return body.job.state === "queued" || body.job.state === "processing";
+}
+
+function toErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "投稿に失敗しました。";
 }
 
 async function getPublicTimeline(apiBaseUrl: URL): Promise<TimelineResult> {
@@ -218,17 +357,7 @@ export default async function Home() {
       </header>
 
       {currentAccount ? (
-        <form className="composer" action={createPost} aria-label="投稿">
-          <label htmlFor="post-body">投稿する</label>
-          <textarea
-            id="post-body"
-            name="body"
-            rows={3}
-            required
-            placeholder="五七五に変換したい内容"
-          />
-          <button type="submit">投稿</button>
-        </form>
+        <PostComposer action={createPost} />
       ) : (
         <p className="timeline-status" role="status">
           投稿・返信・削除にはログインが必要です。
@@ -290,22 +419,10 @@ export default async function Home() {
               ) : null}
 
               {currentAccount ? (
-                <form
-                  className="reply-form"
+                <ReplyComposer
                   action={createReply.bind(null, item.post.id)}
-                  aria-label="返信"
-                >
-                  <label htmlFor={`reply-body-${item.post.id}`}>返信する</label>
-                  <div>
-                    <input
-                      id={`reply-body-${item.post.id}`}
-                      name="body"
-                      required
-                      placeholder="七七に変換したい内容"
-                    />
-                    <button type="submit">返信</button>
-                  </div>
-                </form>
+                  postId={item.post.id}
+                />
               ) : null}
             </li>
           ))}
