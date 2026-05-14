@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: "短歌の句を読み合い、LLM で形を整えるコミュニケーション",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({
   children,
 }: Readonly<{

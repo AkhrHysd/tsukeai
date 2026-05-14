@@ -1,12 +1,15 @@
 import type { CurrentSessionResponseDto } from "@tsukeai/shared";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { getApiBaseUrl } from "./api-base-url";
 
 export async function getCurrentSession(): Promise<CurrentSessionResponseDto> {
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL("/api/sessions/current", apiBaseUrl);
-  const requestHeaders = await headers();
-  const cookie = requestHeaders.get("cookie");
+  const requestCookies = await cookies();
+  const cookie = requestCookies
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
   const headersInit = new Headers({
     Accept: "application/json",
   });
