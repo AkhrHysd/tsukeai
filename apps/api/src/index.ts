@@ -2028,15 +2028,17 @@ app.delete("/api/public-conversions/:id", async (c) => {
       const [row] = await transaction<DeletePublicConversionResult[]>`
         with target as (
           select
-            id,
-            account_id,
-            kind,
-            thread_id
-          from public_conversions
+            pc.id,
+            pc.account_id,
+            pc.kind,
+            pc.thread_id
+          from public_conversions pc
+          join threads t on t.id = pc.thread_id
           where
-            id = ${publicConversionId}::uuid
-            and is_published = true
-            and deleted_at is null
+            pc.id = ${publicConversionId}::uuid
+            and pc.is_published = true
+            and pc.deleted_at is null
+            and t.deleted_at is null
         ),
         authorized as (
           select *
@@ -2050,14 +2052,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
             deleted_at = now()
           from authorized a
           where
-            (
-              pc.id = a.id
-              or (
-                a.kind = 'post'
-                and pc.thread_id = a.thread_id
-                and pc.kind = 'reply'
-              )
-            )
+            pc.id = a.id
             and pc.is_published = true
             and pc.deleted_at is null
           returning pc.id
