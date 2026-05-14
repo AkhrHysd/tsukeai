@@ -2711,27 +2711,27 @@ app.get("/api/transform-jobs/:id", async (c) => {
     );
   }
 
-  const accountId = await getRequestSessionAccountId(c);
-
-  if (!accountId) {
-    return c.json(
-      {
-        error: {
-          code: "unauthorized" satisfies ApiErrorCode,
-          message: "Authentication is required to read this transform job.",
-        },
-      },
-      401,
-    );
-  }
-
   let sql: ReturnType<typeof createSql> | undefined;
 
   try {
     sql = createSql(c.env.HYPERDRIVE.connectionString);
+    const account = await getRequestSessionAccountWithSql(c, sql);
+
+    if (!account) {
+      return c.json(
+        {
+          error: {
+            code: "unauthorized" satisfies ApiErrorCode,
+            message: "Authentication is required to read this transform job.",
+          },
+        },
+        401,
+      );
+    }
+
     const job = await selectTransformJob(sql, jobId);
 
-    if (!job || job.account_id !== accountId) {
+    if (!job || job.account_id !== account.id) {
       return c.json(
         {
           error: {

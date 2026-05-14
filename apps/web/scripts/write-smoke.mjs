@@ -88,6 +88,8 @@ assertIncludes(apiSource, "body.publicText !== undefined");
 assertIncludes(apiSource, "handleCreatePublicText");
 assertIncludes(apiSource, "checkTransformForm(forcedInput.kind, publicText)");
 assertIncludes(apiSource, "Published text writes are disabled.");
+assertIncludes(apiSource, "const account = await getRequestSessionAccountWithSql(c, sql);");
+assertIncludes(apiSource, "job.account_id !== account.id");
 
 assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
