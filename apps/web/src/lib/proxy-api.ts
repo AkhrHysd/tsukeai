@@ -40,16 +40,107 @@ export async function proxyApiRequest(request: NextRequest, path: string): Promi
     responseHeaders.set("Content-Type", responseContentType);
   }
 
-  for (const setCookie of setCookies) {
-    responseHeaders.append("Set-Cookie", setCookie);
-  }
-
-  if (setCookies.length === 0 && fallbackSetCookie) {
-    responseHeaders.append("Set-Cookie", fallbackSetCookie);
-  }
-
-  return new NextResponse(await apiResponse.text(), {
+  const response = new NextResponse(await apiResponse.text(), {
     status: apiResponse.status,
     headers: responseHeaders,
   });
+
+  for (const setCookie of setCookies) {
+    applySetCookie(response, setCookie);
+  }
+
+  if (setCookies.length === 0 && fallbackSetCookie) {
+    applySetCookie(response, fallbackSetCookie);
+  }
+
+  return response;
+}
+
+function applySetCookie(response: NextResponse, setCookie: string) {
+  const parsed = parseSetCookie(setCookie);
+
+  if (!parsed) {
+    return;
+  }
+
+  response.cookies.set(parsed.name, parsed.value, {
+    httpOnly: parsed.httpOnly,
+    secure: parsed.secure,
+    sameSite: parsed.sameSite,
+    path: parsed.path,
+    maxAge: parsed.maxAge,
+  });
+}
+
+function parseSetCookie(setCookie: string) {
+  const parts = setCookie.split(";").map((part) => part.trim());
+  const [nameValue, ...attributes] = parts;
+
+  if (!nameValue) {
+    return undefined;
+  }
+
+  const separatorIndex = nameValue.indexOf("=");
+
+  if (separatorIndex <= 0) {
+    return undefined;
+  }
+
+  const parsed: {
+    name: string;
+    value: string;
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "lax" | "strict" | "none";
+    path: string;
+    maxAge?: number;
+  } = {
+    name: nameValue.slice(0, separatorIndex),
+    value: nameValue.slice(separatorIndex + 1),
+    httpOnly: false,
+    secure: false,
+    sameSite: "lax",
+    path: "/",
+  };
+
+  for (const attribute of attributes) {
+    const [rawName, rawValue] = attribute.split("=");
+
+    if (!rawName) {
+      continue;
+    }
+
+    const name = rawName.toLowerCase();
+    const value = rawValue?.trim();
+
+    if (name === "httponly") {
+      parsed.httpOnly = true;
+      continue;
+    }
+
+    if (name === "secure") {
+      parsed.secure = true;
+      continue;
+    }
+
+    if (name === "path" && value) {
+      parsed.path = value;
+      continue;
+    }
+
+    if (name === "max-age" && value) {
+      parsed.maxAge = Number.parseInt(value, 10);
+      continue;
+    }
+
+    if (name === "samesite" && value) {
+      const sameSite = value.toLowerCase();
+
+      if (sameSite === "strict" || sameSite === "none") {
+        parsed.sameSite = sameSite;
+      }
+    }
+  }
+
+  return parsed;
 }
