@@ -7,6 +7,7 @@ export async function proxyApiRequest(request: NextRequest, path: string): Promi
   const proxyHeaders = new Headers();
   const contentType = request.headers.get("content-type");
   const cookie = request.headers.get("cookie");
+  const idempotencyKey = request.headers.get("idempotency-key");
 
   proxyHeaders.set("Accept", "application/json");
 
@@ -16,6 +17,10 @@ export async function proxyApiRequest(request: NextRequest, path: string): Promi
 
   if (cookie) {
     proxyHeaders.set("Cookie", cookie);
+  }
+
+  if (idempotencyKey) {
+    proxyHeaders.set("Idempotency-Key", idempotencyKey);
   }
 
   const body =

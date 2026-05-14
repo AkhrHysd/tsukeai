@@ -1,23 +1,28 @@
 "use client";
 
-import type { TransformJobResponseDto } from "@tsukeai/shared";
+import type { EntityId, TransformJobResponseDto } from "@tsukeai/shared";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
-import type { WriteActionState } from "./page";
+import { type FormEvent, useEffect, useState } from "react";
 
-type WriteAction = (
-  previousState: WriteActionState,
-  formData: FormData,
-) => Promise<WriteActionState>;
-
-type PostComposerProps = {
-  action: WriteAction;
+type TransformKind = "post_575" | "reply_77";
+type WriteTarget = "post" | "reply";
+type WriteActionState = {
+  status: "idle" | "pending" | "success" | "error";
+  message: string;
+  jobId?: EntityId;
+  target?: WriteTarget;
 };
-
-type ReplyComposerProps = {
-  action: WriteAction;
-  postId: string;
+type PublishedWriteResponse = {
+  post?: unknown;
+  reply?: unknown;
+};
+type ApiResponse<T> = {
+  status: number;
+  body: T | undefined;
+};
+type ApiErrorBody = {
+  error?: { message?: unknown };
+  job?: { error?: { message?: unknown } };
 };
 
 const initialWriteActionState: WriteActionState = {
@@ -25,80 +30,249 @@ const initialWriteActionState: WriteActionState = {
   message: "",
 };
 
-export function PostComposer({ action }: PostComposerProps) {
-  const [state, formAction] = useActionState(action, initialWriteActionState);
+export function PostComposer() {
+  const [state, setState] = useState(initialWriteActionState);
+  const [busy, setBusy] = useState(false);
   const feedbackState = useTransformJobFeedback(state);
 
+  async function submitPost(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitWrite(event.currentTarget, "/api/posts", "post_575", "post", setState, setBusy);
+  }
+
   return (
-    <form className="composer" action={formAction} aria-label="投稿">
+    <form className="composer" onSubmit={submitPost} aria-label="投稿">
       <label htmlFor="post-body">投稿する</label>
-      <ComposerTextarea />
-      <WriteSubmitButton idleLabel="投稿" pendingLabel="投稿中..." />
+      <textarea
+        id="post-body"
+        name="body"
+        rows={3}
+        required
+        disabled={busy}
+        placeholder="五七五に変換したい内容"
+      />
+      <button type="submit" disabled={busy}>
+        {busy ? "投稿中..." : "投稿"}
+      </button>
       <WriteMessage state={feedbackState} />
     </form>
   );
 }
 
-export function ReplyComposer({ action, postId }: ReplyComposerProps) {
-  const [state, formAction] = useActionState(action, initialWriteActionState);
+export function ReplyComposer({ postId }: { postId: EntityId }) {
+  const [state, setState] = useState(initialWriteActionState);
+  const [busy, setBusy] = useState(false);
   const feedbackState = useTransformJobFeedback(state);
   const inputId = `reply-body-${postId}`;
 
+  async function submitReply(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitWrite(
+      event.currentTarget,
+      `/api/posts/${postId}/replies`,
+      "reply_77",
+      "reply",
+      setState,
+      setBusy,
+    );
+  }
+
   return (
-    <form className="reply-form" action={formAction} aria-label="返信">
+    <form className="reply-form" onSubmit={submitReply} aria-label="返信">
       <label htmlFor={inputId}>返信する</label>
       <div>
-        <ReplyInput inputId={inputId} />
-        <WriteSubmitButton idleLabel="返信" pendingLabel="返信中..." />
+        <input
+          id={inputId}
+          name="body"
+          required
+          disabled={busy}
+          placeholder="七七に変換したい内容"
+        />
+        <button type="submit" disabled={busy}>
+          {busy ? "返信中..." : "返信"}
+        </button>
       </div>
       <WriteMessage state={feedbackState} />
     </form>
   );
 }
 
-function ComposerTextarea() {
-  const { pending } = useFormStatus();
+async function submitWrite(
+  form: HTMLFormElement,
+  path: string,
+  kind: TransformKind,
+  target: WriteTarget,
+  setState: (state: WriteActionState) => void,
+  setBusy: (busy: boolean) => void,
+) {
+  if (form.dataset.busy === "true") {
+    return;
+  }
+
+  form.dataset.busy = "true";
+  setBusy(true);
+  setState(initialWriteActionState);
+
+  try {
+    const result = await requestWrite(path, kind, target, new FormData(form));
+
+    setState(result);
+
+    if (result.status === "success" || result.status === "pending") {
+      form.reset();
+    }
+  } catch (error) {
+    setState({
+      status: "error",
+      message: toErrorMessage(error),
+    });
+  } finally {
+    delete form.dataset.busy;
+    setBusy(false);
+  }
+}
+
+async function requestWrite(
+  path: string,
+  kind: TransformKind,
+  target: WriteTarget,
+  formData: FormData,
+): Promise<WriteActionState> {
+  const input = formData.get("body");
+
+  if (typeof input !== "string" || input.trim().length === 0) {
+    return {
+      status: "error",
+      message: "本文を入力してください。",
+    };
+  }
+
+  const response = await requestApi<PublishedWriteResponse | TransformJobResponseDto>(path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "Idempotency-Key": crypto.randomUUID(),
+    },
+    body: JSON.stringify({
+      kind,
+      input,
+      clientKey: crypto.randomUUID(),
+    }),
+  });
+
+  return toWriteActionState(response, target);
+}
+
+async function requestApi<T>(path: string, init: RequestInit): Promise<ApiResponse<T>> {
+  const response = await fetch(path, {
+    ...init,
+    cache: "no-store",
+  });
+  const responseText = await response.text().catch(() => undefined);
+
+  if (!response.ok) {
+    let message = `Request failed with ${response.status}`;
+
+    try {
+      const body = JSON.parse(responseText ?? "") as ApiErrorBody;
+      const errorMessage = body.error?.message ?? body.job?.error?.message;
+
+      if (typeof errorMessage === "string" && errorMessage.length > 0) {
+        message = errorMessage;
+      }
+    } catch {
+      // Keep the status-only message when the API does not return JSON.
+    }
+
+    throw new Error(message);
+  }
+
+  return {
+    status: response.status,
+    body: parseJsonResponse<T>(responseText),
+  };
+}
+
+function parseJsonResponse<T>(responseText: string | undefined): T | undefined {
+  if (!responseText) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(responseText) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function toWriteActionState(
+  response: ApiResponse<PublishedWriteResponse | TransformJobResponseDto>,
+  target: WriteTarget,
+): WriteActionState {
+  const body = response.body;
+  const successMessage = target === "post" ? "投稿しました。" : "返信しました。";
+
+  if (isPublishedWriteResponse(body, target) || isSucceededTransformJob(body, target)) {
+    return {
+      status: "success",
+      message: successMessage,
+    };
+  }
+
+  if (response.status === 202 || isActiveTransformJob(body)) {
+    return {
+      status: "pending",
+      message: "変換中です。完了するとタイムラインに反映されます。",
+      ...(isTransformJobResponse(body) ? { jobId: body.job.id } : {}),
+      target,
+    };
+  }
+
+  return {
+    status: "success",
+    message: successMessage,
+  };
+}
+
+function isPublishedWriteResponse(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+  target: WriteTarget,
+): body is PublishedWriteResponse {
+  if (!body || typeof body !== "object" || !("job" in body)) {
+    return target === "post" ? Boolean(body?.post) : Boolean(body?.reply);
+  }
+
+  return false;
+}
+
+function isSucceededTransformJob(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+  target: WriteTarget,
+) {
+  if (!isTransformJobResponse(body)) {
+    return false;
+  }
 
   return (
-    <textarea
-      id="post-body"
-      name="body"
-      rows={3}
-      required
-      disabled={pending}
-      placeholder="五七五に変換したい内容"
-    />
+    body.job.state === "succeeded" ||
+    (target === "post" ? Boolean(body.job.publishedPostId) : Boolean(body.job.publishedReplyId))
   );
 }
 
-function ReplyInput({ inputId }: { inputId: string }) {
-  const { pending } = useFormStatus();
+function isActiveTransformJob(body: PublishedWriteResponse | TransformJobResponseDto | undefined) {
+  if (!isTransformJobResponse(body)) {
+    return false;
+  }
 
-  return (
-    <input
-      id={inputId}
-      name="body"
-      required
-      disabled={pending}
-      placeholder="七七に変換したい内容"
-    />
-  );
+  return body.job.state === "queued" || body.job.state === "processing";
 }
 
-function WriteSubmitButton({
-  idleLabel,
-  pendingLabel,
-}: {
-  idleLabel: string;
-  pendingLabel: string;
-}) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button type="submit" disabled={pending}>
-      {pending ? pendingLabel : idleLabel}
-    </button>
-  );
+function isTransformJobResponse(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+): body is TransformJobResponseDto {
+  return Boolean(body && typeof body === "object" && "job" in body);
 }
 
 function WriteMessage({ state }: { state: WriteActionState }) {
@@ -210,4 +384,8 @@ function useTransformJobFeedback(actionState: WriteActionState) {
   }, [actionState, router]);
 
   return feedbackState;
+}
+
+function toErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "投稿に失敗しました。";
 }

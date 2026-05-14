@@ -3,9 +3,14 @@ import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
 const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
+const postsRouteSource = await readWorkspaceFile("apps/web/src/app/api/posts/route.ts");
+const repliesRouteSource = await readWorkspaceFile(
+  "apps/web/src/app/api/posts/[postId]/replies/route.ts",
+);
 const transformJobRouteSource = await readWorkspaceFile(
   "apps/web/src/app/api/transform-jobs/[id]/route.ts",
 );
+const proxyApiSource = await readWorkspaceFile("apps/web/src/lib/proxy-api.ts");
 const apiSource = await readWorkspaceFile("apps/api/src/index.ts");
 const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
@@ -30,41 +35,19 @@ assertIncludes(pageSource, 'import { revalidatePath } from "next/cache";');
 assertIncludes(pageSource, 'import { headers } from "next/headers";');
 assertIncludes(pageSource, 'import { PostComposer, ReplyComposer } from "./post-forms";');
 
-assertIncludes(pageSource, "async function createPost(");
 assertIncludes(pageSource, '"use server";');
-assertIncludes(pageSource, 'requestWrite("/api/posts", "post_575", "post", formData)');
-assertIncludes(pageSource, "async function createReply(");
-assertIncludes(
-  pageSource,
-  "requestWrite(`/api/posts/$" + '{postId}/replies`, "reply_77", "reply", formData)',
-);
 assertIncludes(pageSource, "async function deletePublicConversion(publicConversionId: string)");
 // biome-ignore lint/suspicious/noTemplateCurlyInString: asserting source code content
 assertIncludes(pageSource, "requestApi(`/api/public-conversions/${publicConversionId}`");
 
-assertIncludes(pageSource, 'method: "POST"');
 assertIncludes(pageSource, 'method: "DELETE"');
-assertIncludes(pageSource, '"Content-Type": "application/json"');
-assertIncludes(pageSource, '"Idempotency-Key": crypto.randomUUID()');
-assertIncludes(pageSource, "clientKey: crypto.randomUUID()");
-assertIncludes(pageSource, 'process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1"');
-assertIncludes(pageSource, "WRITE_SMOKE_PUBLIC_TEXT[kind]");
-assertIncludes(pageSource, "publicText");
-assertIncludes(pageSource, "あさひさす\\nこころしずかに\\nはるをまつ");
-assertIncludes(pageSource, "ほしをかぞえて\\nよるがあけゆく");
 assertIncludes(pageSource, 'headersInit.set("Accept", "application/json")');
 assertIncludes(pageSource, 'headersInit.set("Cookie", cookie)');
 assertIncludes(pageSource, 'cache: "no-store"');
-assertIncludes(pageSource, "throw new Error(message)");
+assertIncludes(pageSource, "throw new Error(`API request failed with $" + "{response.status}`)");
 assertIncludes(pageSource, 'revalidatePath("/")');
-assertIncludes(pageSource, 'message: "本文を入力してください。"');
-assertIncludes(pageSource, '"投稿しました。"');
-assertIncludes(pageSource, '"返信しました。"');
-assertIncludes(pageSource, 'message: "変換中です。完了するとタイムラインに反映されます。"');
-assertIncludes(pageSource, 'status: "pending"');
-assertIncludes(pageSource, "jobId: body.job.id");
 
-assertIncludes(pageSource, "<PostComposer action={createPost} />");
+assertIncludes(pageSource, "<PostComposer />");
 assertIncludes(pageSource, "<ReplyComposer");
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, reply.id)}");
@@ -93,27 +76,42 @@ assertIncludes(apiSource, "job.account_id !== account.id");
 
 assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
-assertIncludes(postFormsSource, 'import { useActionState, useEffect, useState } from "react";');
+assertIncludes(postFormsSource, 'import { type FormEvent, useEffect, useState } from "react";');
 assertIncludes(postFormsSource, 'import { useRouter } from "next/navigation";');
-assertIncludes(postFormsSource, 'import { useFormStatus } from "react-dom";');
 assertIncludes(
   postFormsSource,
-  '<form className="composer" action={formAction} aria-label="投稿">',
+  '<form className="composer" onSubmit={submitPost} aria-label="投稿">',
 );
 assertIncludes(
   postFormsSource,
-  '<form className="reply-form" action={formAction} aria-label="返信">',
+  '<form className="reply-form" onSubmit={submitReply} aria-label="返信">',
 );
 assertIncludes(postFormsSource, 'name="body"');
-assertIncludes(postFormsSource, "disabled={pending}");
-assertIncludes(postFormsSource, 'pendingLabel="投稿中..."');
-assertIncludes(postFormsSource, 'pendingLabel="返信中..."');
+assertIncludes(postFormsSource, "disabled={busy}");
+assertIncludes(postFormsSource, 'busy ? "投稿中..." : "投稿"');
+assertIncludes(postFormsSource, 'busy ? "返信中..." : "返信"');
 assertIncludes(postFormsSource, 'role={state.status === "error" ? "alert" : "status"}');
+assertIncludes(postFormsSource, "requestWrite(path, kind, target, new FormData(form))");
+assertIncludes(postFormsSource, "fetch(`/api/transform-jobs/$");
+assertIncludes(postFormsSource, "fetch(path, {");
+assertIncludes(postFormsSource, '"Idempotency-Key": crypto.randomUUID()');
+assertIncludes(postFormsSource, "clientKey: crypto.randomUUID()");
+assertIncludes(postFormsSource, 'message: "本文を入力してください。"');
+assertIncludes(postFormsSource, '"投稿しました。"');
+assertIncludes(postFormsSource, '"返信しました。"');
+assertIncludes(postFormsSource, 'message: "変換中です。完了するとタイムラインに反映されます。"');
+assertIncludes(postFormsSource, 'status: "pending"');
+assertIncludes(postFormsSource, "jobId: body.job.id");
 assertIncludes(postFormsSource, "useTransformJobFeedback");
 assertIncludes(postFormsSource, "router.refresh()");
-assertIncludes(postFormsSource, "fetch(`/api/transform-jobs/$");
 assertNoLlmDependency(postFormsSource, "apps/web/src/app/post-forms.tsx");
+assertIncludes(postsRouteSource, 'proxyApiRequest(request, "/api/posts")');
+assertIncludes(repliesRouteSource, "proxyApiRequest(request, `/api/posts/$");
 assertIncludes(transformJobRouteSource, "proxyApiRequest(request, `/api/transform-jobs/$");
+assertIncludes(proxyApiSource, 'request.headers.get("idempotency-key")');
+assertIncludes(proxyApiSource, 'proxyHeaders.set("Idempotency-Key", idempotencyKey)');
+assertNoLlmDependency(postsRouteSource, "apps/web/src/app/api/posts/route.ts");
+assertNoLlmDependency(repliesRouteSource, "apps/web/src/app/api/posts/[postId]/replies/route.ts");
 assertNoLlmDependency(transformJobRouteSource, "apps/web/src/app/api/transform-jobs/[id]/route.ts");
 assertNoRuntimeDependency(webPackageJson);
 assertNoLlmScriptDependency(webPackageJson);

@@ -1,10 +1,4 @@
-import type {
-  AuthorDto,
-  EntityId,
-  IsoDateTimeString,
-  TimelineResponseDto,
-  TransformJobResponseDto,
-} from "@tsukeai/shared";
+import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
@@ -22,7 +16,6 @@ type TimelineResult =
       status: "unavailable";
     };
 
-type TransformKind = "post_575" | "reply_77";
 type PublicTimeline = {
   items: PublicTimelineItem[];
   nextCursor?: string;
@@ -44,52 +37,6 @@ type PublicReply = {
   publicText: string;
   createdAt: IsoDateTimeString;
 };
-export type WriteActionState = {
-  status: "idle" | "pending" | "success" | "error";
-  message: string;
-  jobId?: EntityId;
-  target?: WriteTarget;
-};
-type WriteTarget = "post" | "reply";
-type PublishedWriteResponse = {
-  post?: unknown;
-  reply?: unknown;
-};
-type ApiResponse<T> = {
-  status: number;
-  body: T | undefined;
-};
-type ApiErrorBody = {
-  error?: { message?: unknown };
-  job?: { error?: { message?: unknown } };
-};
-
-const WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED = process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1";
-const WRITE_SMOKE_PUBLIC_TEXT = {
-  post_575: "あさひさす\nこころしずかに\nはるをまつ",
-  reply_77: "ほしをかぞえて\nよるがあけゆく",
-} as const satisfies Record<TransformKind, string>;
-
-async function createPost(
-  _previousState: WriteActionState,
-  formData: FormData,
-): Promise<WriteActionState> {
-  "use server";
-
-  return handleWriteAction(() => requestWrite("/api/posts", "post_575", "post", formData));
-}
-
-async function createReply(
-  postId: string,
-  _previousState: WriteActionState,
-  formData: FormData,
-): Promise<WriteActionState> {
-  "use server";
-
-  return handleWriteAction(() =>
-    requestWrite(`/api/posts/${postId}/replies`, "reply_77", "reply", formData),
-  );
-}
 
 async function deletePublicConversion(publicConversionId: string) {
   "use server";
@@ -100,68 +47,7 @@ async function deletePublicConversion(publicConversionId: string) {
   revalidatePath("/");
 }
 
-async function handleWriteAction(
-  write: () => Promise<WriteActionState>,
-): Promise<WriteActionState> {
-  try {
-    const result = await write();
-
-    if (result.status === "success") {
-      revalidatePath("/");
-    }
-
-    return result;
-  } catch (error) {
-    return {
-      status: "error",
-      message: toErrorMessage(error),
-    };
-  }
-}
-
-async function requestWrite(
-  path: string,
-  kind: TransformKind,
-  target: WriteTarget,
-  formData: FormData,
-): Promise<WriteActionState> {
-  const input = formData.get("body");
-
-  if (typeof input !== "string" || input.trim().length === 0) {
-    return {
-      status: "error",
-      message: "本文を入力してください。",
-    };
-  }
-
-  const publicText = WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED
-    ? WRITE_SMOKE_PUBLIC_TEXT[kind]
-    : undefined;
-
-  const response = await requestApi<PublishedWriteResponse | TransformJobResponseDto>(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": crypto.randomUUID(),
-    },
-    body: JSON.stringify(
-      publicText
-        ? {
-            publicText,
-            clientKey: crypto.randomUUID(),
-          }
-        : {
-            kind,
-            input,
-            clientKey: crypto.randomUUID(),
-          },
-    ),
-  });
-
-  return toWriteActionState(response, target);
-}
-
-async function requestApi<T>(path: string, init: RequestInit): Promise<ApiResponse<T>> {
+async function requestApi(path: string, init: RequestInit) {
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL(path, apiBaseUrl);
   const requestHeaders = await headers();
@@ -195,110 +81,9 @@ async function requestApi<T>(path: string, init: RequestInit): Promise<ApiRespon
       contentType: response.headers.get("content-type"),
       responseText: responseText?.slice(0, 400),
     });
-    let message = `API request failed with ${response.status}`;
 
-    try {
-      const body = JSON.parse(responseText ?? "") as ApiErrorBody;
-      const errorMessage = body.error?.message ?? body.job?.error?.message;
-
-      if (typeof errorMessage === "string" && errorMessage.length > 0) {
-        message = errorMessage;
-      }
-    } catch {
-      // Keep the status-only message when the API does not return JSON.
-    }
-
-    throw new Error(message);
+    throw new Error(`API request failed with ${response.status}`);
   }
-
-  return {
-    status: response.status,
-    body: parseJsonResponse<T>(responseText),
-  };
-}
-
-function parseJsonResponse<T>(responseText: string | undefined): T | undefined {
-  if (!responseText) {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(responseText) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function toWriteActionState(
-  response: ApiResponse<PublishedWriteResponse | TransformJobResponseDto>,
-  target: WriteTarget,
-): WriteActionState {
-  const body = response.body;
-  const successMessage = target === "post" ? "投稿しました。" : "返信しました。";
-
-  if (isPublishedWriteResponse(body, target) || isSucceededTransformJob(body, target)) {
-    return {
-      status: "success",
-      message: successMessage,
-    };
-  }
-
-  if (response.status === 202 || isActiveTransformJob(body)) {
-    return {
-      status: "pending",
-      message: "変換中です。完了するとタイムラインに反映されます。",
-      ...(isTransformJobResponse(body) ? { jobId: body.job.id } : {}),
-      target,
-    };
-  }
-
-  return {
-    status: "success",
-    message: successMessage,
-  };
-}
-
-function isPublishedWriteResponse(
-  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
-  target: WriteTarget,
-): body is PublishedWriteResponse {
-  if (!body || typeof body !== "object" || !("job" in body)) {
-    return target === "post" ? Boolean(body?.post) : Boolean(body?.reply);
-  }
-
-  return false;
-}
-
-function isSucceededTransformJob(
-  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
-  target: WriteTarget,
-) {
-  if (!isTransformJobResponse(body)) {
-    return false;
-  }
-
-  return (
-    body.job.state === "succeeded" ||
-    (target === "post" ? Boolean(body.job.publishedPostId) : Boolean(body.job.publishedReplyId))
-  );
-}
-
-function isActiveTransformJob(body: PublishedWriteResponse | TransformJobResponseDto | undefined) {
-  if (!isTransformJobResponse(body)) {
-    return false;
-  }
-
-  return body.job.state === "queued" || body.job.state === "processing";
-}
-
-function isTransformJobResponse(
-  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
-): body is TransformJobResponseDto {
-  return Boolean(body && typeof body === "object" && "job" in body);
-}
-
-function toErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "投稿に失敗しました。";
 }
 
 async function getPublicTimeline(apiBaseUrl: URL): Promise<TimelineResult> {
@@ -367,7 +152,7 @@ export default async function Home() {
       </header>
 
       {currentAccount ? (
-        <PostComposer action={createPost} />
+        <PostComposer />
       ) : (
         <p className="timeline-status" role="status">
           投稿・返信・削除にはログインが必要です。
@@ -428,12 +213,7 @@ export default async function Home() {
                 </ul>
               ) : null}
 
-              {currentAccount ? (
-                <ReplyComposer
-                  action={createReply.bind(null, item.post.id)}
-                  postId={item.post.id}
-                />
-              ) : null}
+              {currentAccount ? <ReplyComposer postId={item.post.id} /> : null}
             </li>
           ))}
         </ul>
