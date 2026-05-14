@@ -653,7 +653,7 @@ async function handleCreateRegistrationOptions(c: AppContext) {
       {
         error: {
           code: "bad_request" satisfies ApiErrorCode,
-          message: "Display name is required.",
+          message: "表示名を入力してください。",
         },
       },
       400,
@@ -677,7 +677,7 @@ async function handleCreateRegistrationOptions(c: AppContext) {
           {
             error: {
               code: "conflict" satisfies ApiErrorCode,
-              message: "This handle is already in use.",
+              message: "このハンドルはすでに使用されています。",
             },
           },
           409,
@@ -736,7 +736,7 @@ async function handleCreateRegistrationOptions(c: AppContext) {
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Registration could not be started.",
+          message: "登録を開始できませんでした。",
         },
       },
       503,
@@ -781,7 +781,7 @@ async function handleVerifyRegistration(c: AppContext) {
         {
           error: {
             code: "bad_request" satisfies ApiErrorCode,
-            message: "Registration challenge is invalid or expired.",
+            message: "登録チャレンジが無効または期限切れです。",
           },
         },
         400,
@@ -802,7 +802,7 @@ async function handleVerifyRegistration(c: AppContext) {
         {
           error: {
             code: "bad_request" satisfies ApiErrorCode,
-            message: "Registration credential could not be verified.",
+            message: "登録情報を確認できませんでした。",
           },
         },
         400,
@@ -876,7 +876,7 @@ async function handleVerifyRegistration(c: AppContext) {
         {
           error: {
             code: "conflict" satisfies ApiErrorCode,
-            message: "This handle is already in use.",
+            message: "このハンドルはすでに使用されています。",
           },
         },
         409,
@@ -896,7 +896,7 @@ async function handleVerifyRegistration(c: AppContext) {
       {
         error: {
           code: "bad_request" satisfies ApiErrorCode,
-          message: "Registration credential could not be verified.",
+          message: "登録情報を確認できませんでした。",
         },
       },
       400,
@@ -939,7 +939,7 @@ async function handleCreateAuthenticationOptions(c: AppContext) {
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Login could not be started.",
+          message: "ログインを開始できませんでした。",
         },
       },
       503,
@@ -992,7 +992,7 @@ async function handleVerifyAuthentication(c: AppContext) {
         {
           error: {
             code: "bad_request" satisfies ApiErrorCode,
-            message: "Login challenge is invalid or expired.",
+            message: "ログインチャレンジが無効または期限切れです。",
           },
         },
         400,
@@ -1020,7 +1020,7 @@ async function handleVerifyAuthentication(c: AppContext) {
         {
           error: {
             code: "unauthorized" satisfies ApiErrorCode,
-            message: "Login credential was not found.",
+            message: "ログイン情報が見つかりませんでした。",
           },
         },
         401,
@@ -1046,7 +1046,7 @@ async function handleVerifyAuthentication(c: AppContext) {
         {
           error: {
             code: "unauthorized" satisfies ApiErrorCode,
-            message: "Login credential could not be verified.",
+            message: "ログイン情報を確認できませんでした。",
           },
         },
         401,
@@ -1084,7 +1084,7 @@ async function handleVerifyAuthentication(c: AppContext) {
       {
         error: {
           code: "unauthorized" satisfies ApiErrorCode,
-          message: "Login credential could not be verified.",
+          message: "ログイン情報を確認できませんでした。",
         },
       },
       401,
@@ -1119,7 +1119,7 @@ async function handleCurrentSession(c: AppContext) {
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Session is temporarily unavailable.",
+          message: "セッションが一時的に利用できません。",
         },
       },
       503,
@@ -1152,7 +1152,7 @@ async function handleDeleteCurrentSession(c: AppContext) {
         {
           error: {
             code: "service_unavailable" satisfies ApiErrorCode,
-            message: "Session could not be closed.",
+            message: "セッションを終了できませんでした。",
           },
         },
         503,
@@ -1219,8 +1219,8 @@ function toTransformJobDto(row: TransformJobRow): TransformJobDto {
             reason: row.failure_reason,
             message:
               row.error_code === "transform_failed"
-                ? "The transform could not be completed. Please retry later."
-                : "The input could not be transformed. Please revise it.",
+                ? "変換を完了できませんでした。しばらくしてから再度お試しください。"
+                : "入力内容を変換できませんでした。内容を見直してください。",
             retryPolicy: row.retry_policy,
             userAction: row.user_action,
           },
@@ -2302,7 +2302,7 @@ async function handleCreatePublicText(
           {
             error: {
               code: "not_found" satisfies ApiErrorCode,
-              message: "Parent post not found.",
+              message: "返信先の投稿が見つかりません。",
             },
           },
           404,
@@ -2326,7 +2326,7 @@ async function handleCreatePublicText(
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Published text could not be saved.",
+          message: "公開テキストを保存できませんでした。",
         },
       },
       503,
@@ -2351,7 +2351,7 @@ async function handleCreateTransformJob(
       {
         error: {
           code: "unauthorized" satisfies ApiErrorCode,
-          message: "Authentication is required for this write operation.",
+          message: "この操作にはログインが必要です。",
         },
       },
       401,
@@ -2426,7 +2426,7 @@ async function handleCreateTransformJob(
           {
             error: {
               code: "not_found" satisfies ApiErrorCode,
-              message: "Parent post not found.",
+              message: "返信先の投稿が見つかりません。",
             },
           },
           404,
@@ -2451,7 +2451,7 @@ async function handleCreateTransformJob(
           {
             error: {
               code: "service_unavailable" satisfies ApiErrorCode,
-              message: "Transform job could not be completed.",
+              message: "変換を完了できませんでした。",
             },
           },
           503,
@@ -2474,7 +2474,7 @@ async function handleCreateTransformJob(
         {
           error: {
             code: "transform_limit_exceeded" satisfies ApiErrorCode,
-            message: "The transform rate limit has been reached.",
+            message: "変換の利用制限に達しました。時間をおいてから再度お試しください。",
           },
         },
         429,
@@ -2488,7 +2488,7 @@ async function handleCreateTransformJob(
         {
           error: {
             code: "service_unavailable" satisfies ApiErrorCode,
-            message: "Transform job could not be created.",
+            message: "変換ジョブを作成できませんでした。",
           },
         },
         503,
@@ -2508,7 +2508,7 @@ async function handleCreateTransformJob(
         {
           error: {
             code: "service_unavailable" satisfies ApiErrorCode,
-            message: "Transform job could not be completed.",
+            message: "変換を完了できませんでした。",
           },
         },
         503,
@@ -2529,7 +2529,7 @@ async function handleCreateTransformJob(
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Transform job is temporarily unavailable.",
+          message: "変換機能が一時的に利用できません。",
         },
       },
       503,
@@ -2568,7 +2568,7 @@ app.use("*", async (c, next) => {
       {
         error: {
           code: "unauthorized",
-          message: "Authentication is required for this write operation.",
+          message: "この操作にはログインが必要です。",
         },
       },
       401,
@@ -2594,7 +2594,7 @@ app.use("*", async (c, next) => {
       {
         error: {
           code: "service_unavailable",
-          message: "Authentication could not be verified.",
+          message: "認証を確認できませんでした。",
         },
       },
       503,
@@ -2611,7 +2611,7 @@ app.use("*", async (c, next) => {
     {
       error: {
         code: "unauthorized",
-        message: "Authentication is required for this write operation.",
+        message: "この操作にはログインが必要です。",
       },
     },
     401,
@@ -2739,7 +2739,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
         {
           error: {
             code: "unauthorized" satisfies ApiErrorCode,
-            message: "Authentication is required to read this transform job.",
+            message: "変換ジョブの参照にはログインが必要です。",
           },
         },
         401,
@@ -2753,7 +2753,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
         {
           error: {
             code: "not_found" satisfies ApiErrorCode,
-            message: "Transform job not found.",
+            message: "変換ジョブが見つかりません。",
           },
         },
         404,
@@ -2774,7 +2774,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
       {
         error: {
           code: "service_unavailable" satisfies ApiErrorCode,
-          message: "Transform job is temporarily unavailable.",
+          message: "変換機能が一時的に利用できません。",
         },
       },
       503,
@@ -2928,7 +2928,7 @@ app.get("/api/timeline", async (c) => {
       {
         error: {
           code: "service_unavailable",
-          message: "Timeline is temporarily unavailable.",
+          message: "タイムラインが一時的に利用できません。",
         },
       },
       503,
@@ -2964,7 +2964,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
       {
         error: {
           code: "unauthorized",
-          message: "Authentication is required for this write operation.",
+          message: "この操作にはログインが必要です。",
         },
       },
       401,
@@ -3034,7 +3034,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
         {
           error: {
             code: "not_found",
-            message: "Public conversion not found.",
+            message: "投稿が見つかりません。",
           },
         },
         404,
@@ -3046,7 +3046,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
         {
           error: {
             code: "forbidden",
-            message: "Only the author can delete this public conversion.",
+            message: "削除できるのは投稿者のみです。",
           },
         },
         403,
@@ -3066,7 +3066,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
       {
         error: {
           code: "service_unavailable",
-          message: "Public conversion could not be deleted.",
+          message: "削除できませんでした。",
         },
       },
       503,

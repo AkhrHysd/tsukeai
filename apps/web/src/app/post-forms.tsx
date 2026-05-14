@@ -181,7 +181,7 @@ async function requestApi<T>(path: string, init: RequestInit): Promise<ApiRespon
   const responseText = await response.text().catch(() => undefined);
 
   if (!response.ok) {
-    let message = `Request failed with ${response.status}`;
+    let message = `リクエストに失敗しました（${response.status}）。`;
 
     try {
       const body = JSON.parse(responseText ?? "") as ApiErrorBody;
