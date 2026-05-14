@@ -486,7 +486,11 @@ async function getRequestSessionAccount(c: AppContext): Promise<AccountDto | und
   try {
     return activeSessionAccount(sql, sessionId);
   } finally {
-    await sql.end({ timeout: 5 });
+    try {
+      await sql.end({ timeout: 5 });
+    } catch (error) {
+      console.error("Failed to close current session database client", toSafeLogError(error));
+    }
   }
 }
 

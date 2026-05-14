@@ -1,14 +1,12 @@
-import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiBaseUrl } from "./api-base-url";
 
 export async function proxyApiRequest(request: NextRequest, path: string): Promise<NextResponse> {
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL(path, apiBaseUrl);
-  const incomingHeaders = await headers();
   const proxyHeaders = new Headers();
   const contentType = request.headers.get("content-type");
-  const cookie = incomingHeaders.get("cookie");
+  const cookie = request.headers.get("cookie");
 
   proxyHeaders.set("Accept", "application/json");
 
