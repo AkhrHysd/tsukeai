@@ -318,6 +318,29 @@ export type BoundaryTransformJobObservationDto = TransformJobObservationDto;
 export type BoundaryTransformJobDto = TransformJobDto;
 export type BoundaryTransformJobResponseDto = TransformJobResponseDto;
 
+export type KanjiDisplayCheckReason =
+  | "blank"
+  | "contains_invalid_characters"
+  | "segment_count_mismatch"
+  | "segment_too_long";
+
+export type KanjiDisplayCheckError = {
+  reason: KanjiDisplayCheckReason;
+  message: string;
+};
+
+export type KanjiDisplayCheckResult = {
+  accepted: boolean;
+  kind: TransformJobKind;
+  normalizedText: PublicTankaText;
+  segments: string[];
+  errors: KanjiDisplayCheckError[];
+};
+
+export type BoundaryKanjiDisplayCheckReason = KanjiDisplayCheckReason;
+export type BoundaryKanjiDisplayCheckError = KanjiDisplayCheckError;
+export type BoundaryKanjiDisplayCheckResult = KanjiDisplayCheckResult;
+
 const EXPLICIT_SEGMENT_SEPARATOR_PATTERN = /[\n\r/／]+/u;
 const INLINE_SEGMENT_SEPARATOR_PATTERN = /[\s　、，,。．.！？!?]+/u;
 const IGNORED_FORM_CHARACTERS_PATTERN = /[\s　、，,。．.！？!?「」『』（）()［］[\]【】]/gu;
@@ -395,6 +418,56 @@ export function checkTransformForm(
     accepted: errors.length === 0,
     kind,
     normalizedText: segments.map((segment) => segment.text).join("\n"),
+    segments,
+    errors,
+  };
+}
+
+const DISPLAY_TEXT_MAX_SEGMENT_CHARS = 30;
+const PUBLISHABLE_TANKA_DISPLAY_PATTERN =
+  /^[\p{Script=Hiragana}\p{Script=Katakana}ー\p{Script=Han}\s　、，,。．.！？!?「」『』（）()［］[\]【】/／]+$/u;
+
+export function checkPublishedTankaDisplayForm(
+  kind: TransformJobKind,
+  text: TankaText,
+): KanjiDisplayCheckResult {
+  const normalizedText = normalizeTankaText(text);
+  const expectedSegmentCount = TRANSFORM_FORM_RULES[kind].length;
+  const errors: KanjiDisplayCheckError[] = [];
+
+  if (normalizedText.length === 0) {
+    errors.push({ reason: "blank", message: "Display text must not be blank." });
+  }
+
+  if (normalizedText.length > 0 && !PUBLISHABLE_TANKA_DISPLAY_PATTERN.test(normalizedText)) {
+    errors.push({
+      reason: "contains_invalid_characters",
+      message: "Display text must use kanji, kana, and supported tanka separators only.",
+    });
+  }
+
+  const segments = splitTankaSegments(normalizedText);
+
+  if (segments.length !== expectedSegmentCount) {
+    errors.push({
+      reason: "segment_count_mismatch",
+      message: `Display text must have ${expectedSegmentCount} segments.`,
+    });
+  }
+
+  for (const [index, segment] of segments.entries()) {
+    if (segment.length > DISPLAY_TEXT_MAX_SEGMENT_CHARS) {
+      errors.push({
+        reason: "segment_too_long",
+        message: `Segment ${index + 1} must be at most ${DISPLAY_TEXT_MAX_SEGMENT_CHARS} characters.`,
+      });
+    }
+  }
+
+  return {
+    accepted: errors.length === 0,
+    kind,
+    normalizedText: segments.join("\n"),
     segments,
     errors,
   };

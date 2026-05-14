@@ -10,6 +10,7 @@ import {
   type AccountDto,
   type ApiErrorCode,
   type CurrentSessionResponseDto,
+  checkPublishedTankaDisplayForm,
   checkTransformForm,
   getTransformRetryPolicy,
   type PostDto,
@@ -1862,10 +1863,26 @@ async function runTransformJob(
     const adapter = createLlmAdapter(bindings);
     const request = await buildTransformTextRequest(sql, claimedJob, input);
     const transformed = await adapter.transformText(request);
+
+    let publicText = transformed.text;
+    try {
+      const kanjiResult = await adapter.kanjiDisplayText({
+        kind: claimedJob.kind,
+        kanaText: transformed.text,
+        jobId: claimedJob.id,
+      });
+      publicText = kanjiResult.text;
+    } catch (kanjiError) {
+      console.warn("Kanji display conversion failed, falling back to kana", {
+        jobId: claimedJob.id,
+        error: toSafeLogError(kanjiError),
+      });
+    }
+
     const publishedJob = await publishTransformJob(
       sql,
       claimedJob,
-      transformed.text,
+      publicText,
       transformed.model,
       transformed.attempts,
       transformed.durationMs,
@@ -2096,7 +2113,7 @@ function assertPublishableTransformText(
   attempts: number,
   model: string,
 ): string {
-  const formCheck = checkTransformForm(kind, publicText);
+  const formCheck = checkPublishedTankaDisplayForm(kind, publicText);
 
   if (!formCheck.accepted) {
     throw new LlmAdapterError(
