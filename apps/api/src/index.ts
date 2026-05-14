@@ -183,7 +183,6 @@ function toSafeLogError(error: unknown): SafeLogError {
   return {
     name: error.name,
     ...(code ? { code } : {}),
-    ...("message" in error && typeof error.message === "string" ? { message: error.message } : {}),
   };
 }
 

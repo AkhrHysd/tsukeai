@@ -48,14 +48,18 @@ The adapter follows the ADR call contract as follows:
   exhausted.
 - **Prompt and data boundary**: user input is normalized and encoded as JSON
   string data inside the prompt. The client cannot choose the model, system
-  prompt, output rules, retry conditions, or token limits.
+  prompt, output rules, retry conditions, or token limits. Inputs matching
+  explicit prompt-injection signals are rejected before the provider call with
+  `prompt_injection_detected`.
 - **Publication gate**: only output accepted by `checkTransformForm` is
   published. Failed transforms are marked `failed` for temporary/provider
   problems or `rejected` for revisable input/validation problems.
 - **Logging boundary**: transform logs include job ID, input hash, failure code,
   retryability, attempts, duration, and model. They do not include the source
   input, prompt body, raw provider response, provider error body, or rejected
-  output text.
+  output text. API error logs use normalized error summaries only: error name
+  and safe code fields are allowed, but exception messages and provider bodies
+  are not logged because they may contain source text.
 
 Runtime knobs are intentionally environment bindings, with conservative clamps
 inside the adapter:
