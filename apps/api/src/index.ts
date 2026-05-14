@@ -506,6 +506,24 @@ async function getRequestSessionAccountId(c: AppContext): Promise<string | undef
   return account?.id;
 }
 
+async function getRequestSessionAccountWithSql(
+  c: AppContext,
+  sql: ReturnType<typeof createSql>,
+): Promise<AccountDto | undefined> {
+  const contextAccountId = c.get("accountId");
+
+  if (contextAccountId) {
+    return {
+      id: contextAccountId,
+      displayName: "",
+    };
+  }
+
+  const sessionId = await getRequestSessionId(c);
+
+  return sessionId ? activeSessionAccount(sql, sessionId) : undefined;
+}
+
 function normalizeOptionalHandle(value: unknown): string | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -1076,8 +1094,11 @@ async function handleVerifyAuthentication(c: AppContext) {
 }
 
 async function handleCurrentSession(c: AppContext) {
+  let sql: ReturnType<typeof createSql> | undefined;
+
   try {
-    const account = await getRequestSessionAccount(c);
+    sql = createSql(c.env.HYPERDRIVE.connectionString);
+    const account = await getRequestSessionAccountWithSql(c, sql);
     const response: CurrentSessionResponseDto = account
       ? {
           authenticated: true,
@@ -1102,6 +1123,12 @@ async function handleCurrentSession(c: AppContext) {
       },
       503,
     );
+  } finally {
+    try {
+      await sql?.end({ timeout: 5 });
+    } catch (error) {
+      console.error("Failed to close current session database client", toSafeLogError(error));
+    }
   }
 }
 
