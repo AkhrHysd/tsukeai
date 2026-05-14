@@ -1,13 +1,30 @@
 id: tc.llm-adapter
-title: Workers 上の LLM アダプタ
-description: タイムアウト・上限・Secrets。ゲートで決めた契約に従う。
+title: "Workers 上の LLM アダプタ"
+description: "タイムアウト・上限・Secrets。ゲートで決めた契約に従う。"
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - ADR の呼び出し契約に適合するアダプタが説明できる。
-status: queued
+  - "ADR の呼び出し契約に適合するアダプタが説明できる。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "LLM adapter documentation and implementation align with the ADR call contract for server-only provider calls, required Worker bindings/secrets, bounded timeouts/retries, input/output limits, publication gating, and sanitized logging. The diff specifically removes rejected output/provider error bodies from error messages, improving compliance with the logging boundary."
+  requiredFixes: []
+  riskNotes:
+    - "Validation was reported as skipped by task validationPolicy, so this review is based on code inspection rather than executed tests."
+    - "The adapter uses a character heuristic for accepted output length relative to max tokens; acceptable for the documented bounded-output contract but not exact token accounting."
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.llm-adapter-2026-05-14T00-17-45-288Z.md

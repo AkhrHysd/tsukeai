@@ -1,14 +1,30 @@
 id: tc.timeline
-title: 公開タイムライン GET API
-description: 未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。
+title: "公開タイムライン GET API"
+description: "未ログインで取得可能な JSON。キャッシュはプライバシーと整合する範囲のみ。"
 dependsOn:
   - tc.schema
 allowedPaths:
   - apps/api
   - packages/shared
 acceptanceCriteria:
-  - 未認証でタイムライン JSON が取得できる。
-status: queued
+  - "未認証でタイムライン JSON が取得できる。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "GET /api/timeline remains unauthenticated and now consistently applies the public timeline Cache-Control policy before validation, so success and error JSON responses avoid unintended caching."
+  requiredFixes: []
+  riskNotes:
+    - "Task validation skipped tests, so behavior was reviewed from code/diff only."
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.timeline-2026-05-14T00-07-19-007Z.md

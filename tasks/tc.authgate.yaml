@@ -1,18 +1,52 @@
 id: tc.authgate
-title: Passkey（S1）の orchestration 同期と SimpleWebAuthn スパイク
-description: Design で確定した S1（@simplewebauthn/server on Hono Workers、Neon
-  にクレデンシャル／セッション、httpOnly Cookie、パスワードなし）を docs/orchestration に同期し、Workers
-  上でのライブラリ適合をスパイクして記録する。
+title: "Passkey（S1）の orchestration 同期と SimpleWebAuthn スパイク"
+description: "Design で確定した S1（@simplewebauthn/server on Hono Workers、Neon にクレデンシャル／セッション、httpOnly Cookie、パスワードなし）を docs/orchestration に同期し、Workers 上でのライブラリ適合をスパイクして記録する。"
 dependsOn:
   - tc.shared
 allowedPaths:
   - docs/orchestration
 acceptanceCriteria:
-  - S1 パスキー方針とスパイク結果が orchestration 文書に記録される。
-  - RP ID・公開 URL・Cookie ドメイン・CORS の対応が orchestration に記載される。
-  - MVP におけるメール検証の要否（採用／不採用／将来）が orchestration に明文化される。
-  - SimpleWebAuthn on Workers のスパイク結果と代替方針が orchestration に記載される。
-status: queued
+  - "S1 パスキー方針とスパイク結果が orchestration 文書に記録される。"
+  - "RP ID・公開 URL・Cookie ドメイン・CORS の対応が orchestration に記載される。"
+  - "MVP におけるメール検証の要否（採用／不採用／将来）が orchestration に明文化される。"
+  - "SimpleWebAuthn on Workers のスパイク結果と代替方針が orchestration に記載される。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
+    
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.authgate/apps/web
+    > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.authgate/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.authgate/apps/web
+    > node scripts/write-smoke.mjs
+    
+    Write smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "S1 パスキー方針、Workers 上の SimpleWebAuthn 採用可判定、RP ID・公開 URL・Cookie ドメイン・CORS、メール検証不採用／将来候補、代替方針が docs/orchestration に同期されている。"
+  requiredFixes: []
+  riskNotes:
+    - "スパイク結果は文書上の採用可判定として記録されているが、実際の Miniflare/Vitest 実行ログや検証コードは今回の allowed path 外であり、後続実装タスクで固定する前提になっている。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.authgate-2026-05-13T16-06-01-343Z.md

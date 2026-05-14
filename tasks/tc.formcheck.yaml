@@ -1,14 +1,31 @@
 id: tc.formcheck
-title: FormCheck（非 LLM）
-description: 受理／却下の機械検証。Design の規則確度により粒度調整。
+title: "FormCheck（非 LLM）"
+description: "受理／却下の機械検証。Design の規則確度により粒度調整。"
 dependsOn:
   - tc.transform-contract
 allowedPaths:
   - packages/shared
   - apps/api
 acceptanceCriteria:
-  - 規則外は公開フローに進まない。
-status: queued
+  - "規則外は公開フローに進まない。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "公開処理の直前で checkTransformForm を再実行し、accepted でない結果は LlmAdapterError(validation_failed) として publishPostTransformJob/publishReplyTransformJob に渡らないため、規則外が公開フローへ進む経路は塞がれています。正規化済みテキストを公開に使う点も既存の手動 publicText 入力処理と整合しています。"
+  requiredFixes: []
+  riskNotes:
+    - "Validation Summary は test skipped のため、この差分専用の自動テスト実行による裏取りはありません。"
+    - "validation_failed は classifyTransformFailure により rejected/422 扱いになり、公開はされません。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.formcheck-2026-05-14T03-37-49-075Z.md

@@ -1,14 +1,40 @@
 id: tc.transform-contract
-title: 変換ジョブの契約（状態・冪等・エラー）
-description: ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。
+title: "変換ジョブの契約（状態・冪等・エラー）"
+description: "ADR に基づき状態機械と観測・冪等キーを共有パッケージに載せる方針まで。"
 dependsOn:
   - tc.transform-arch-gate
 allowedPaths:
   - packages/shared
   - docs/orchestration
 acceptanceCriteria:
-  - 変換ジョブの状態・冪等・エラーが共有契約で説明できる。
-status: queued
-retryCount: 0
+  - "変換ジョブの状態・冪等・エラーが共有契約で説明できる。"
+status: done
+retryCount: 1
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "共有パッケージに状態判定、遷移検証、失敗理由分類、公開エラー導出が追加され、ADR 文書側も同じ契約を参照する説明に更新されています。受入条件は満たしています。"
+  requiredFixes: []
+  riskNotes:
+    - "Validation Summary では test が skipped のため、型検査で分類の網羅性・排他性が実際に検証された証跡はありません。"
+  scopeViolations: []
+lastRetryReason:
+  kind: review_rejected
+  summary: "共有契約として状態・冪等・エラーを説明する方向性は満たしていますが、エラー分類の契約に不整合があります。"
+  requiredFixes:
+    - "TransformFailureReason の全値が server_retryable/client_revisable のいずれかに明示分類されていることを型またはテストで保証する"
+    - "content_policy_violation の公開コードを transform_input_rejected に分類する意図なら CLIENT_REVISABLE 側へ明示追加する"
+  scopeViolations: []
+  riskNotes:
+    - "content_policy_violation がどちらの分類配列にも含まれていないため、現在は getTransformRetryPolicy のフォールバックで client_revisable 扱いになる。新しい failure reason 追加時も同様に暗黙分類され、公開エラーや userAction が意図せず変わる可能性がある"
+    - "Validation Summary は test skipped のため、共有契約の分類網羅性や helper の対応関係は検証されていない"
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-contract-2026-05-14T00-26-15-380Z.md

@@ -1,13 +1,49 @@
 id: tc.shared
-title: packages/shared の REST 契約たたき台
-description: DTO・エラー形の命名とエクスポート。フロントは DB に直接依存しない。
+title: "packages/shared の REST 契約たたき台"
+description: "DTO・エラー形の命名とエクスポート。フロントは DB に直接依存しない。"
 dependsOn:
   - tc.monorepo
 allowedPaths:
   - packages/shared
 acceptanceCriteria:
-  - 共有パッケージから境界型がインポートできる。
-status: queued
+  - "共有パッケージから境界型がインポートできる。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
+    
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.shared/apps/web
+    > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.shared/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.shared/apps/web
+    > node scripts/write-smoke.mjs
+    
+    Write smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "packages/shared/src/index.ts に REST 境界向けの型エイリアスが追加され、共有パッケージから DTO・エラー型をインポートできる状態です。検証も通過済みです。"
+  requiredFixes: []
+  riskNotes:
+    - "Boundary* は既存型への type alias のみなので、REST 契約としての独立性や後方互換管理は今後の運用で確認が必要です。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.shared-2026-05-13T16-03-07-541Z.md

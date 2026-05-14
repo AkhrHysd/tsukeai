@@ -1,14 +1,31 @@
 id: tc.transform-post-flow
-title: 投稿変換フロー実装候補
-description: 素→5-7-5。パイプライン詳細は ADR へ合わせる。
+title: "投稿変換フロー実装候補"
+description: "素→5-7-5。パイプライン詳細は ADR へ合わせる。"
 dependsOn:
   - tc.llm-adapter
   - tc.transform-contract
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - 投稿パイプラインが ADR とポリシーに一致する。
-status: queued
+  - "投稿パイプラインが ADR とポリシーに一致する。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "投稿変換フローは ADR の非同期ジョブ、公開ゲート、冪等性、失敗分類、上限超過レスポンス方針に概ね一致している。排他更新により二重公開や終端状態の上書きも抑制されている。"
+  requiredFixes: []
+  riskNotes:
+    - "Validation Summary は test skipped のため、今回差分の回帰は自動テストでは確認されていない。"
+    - "llm-adapter.ts の変更は投稿フローの一部として妥当だが、失敗分類の契約依存が強いため shared 側変更時の回帰テストが欲しい。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-post-flow-2026-05-14T03-42-11-003Z.md

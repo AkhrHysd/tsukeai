@@ -1,13 +1,49 @@
 id: tc.nextshell
-title: apps/web の Next App Router シェル
-description: レイアウトと API ベース URL の読み方。SSR 前提。
+title: "apps/web の Next App Router シェル"
+description: "レイアウトと API ベース URL の読み方。SSR 前提。"
 dependsOn:
   - tc.monorepo
 allowedPaths:
   - apps/web
 acceptanceCriteria:
-  - Next がビルドしレイアウトが載る。
-status: queued
+  - "Next がビルドしレイアウトが載る。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
+    
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.nextshell/apps/web
+    > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.nextshell/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.nextshell/apps/web
+    > node scripts/write-smoke.mjs
+    
+    Write smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: "変更は apps/web 内に限定されており、API_BASE_URL の空白処理と不要ログ削除、レイアウト文言変更、OpenNext dev 初期化はいずれも受け入れ可能です。提示された検証も通過しています。"
+  requiredFixes: []
+  riskNotes:
+    - "next.config.ts の initOpenNextCloudflareForDev() は dev 実行時の副作用を持つため、将来 Cloudflare 以外の実行経路を追加する場合は条件付き初期化が必要になる可能性があります。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.nextshell-2026-05-13T16-01-50-485Z.md

@@ -1,13 +1,49 @@
 id: tc.hono
-title: apps/api の Hono on Workers 入口
-description: ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。
+title: "apps/api の Hono on Workers 入口"
+description: "ルーティングとヘルス。REST JSON と Cookie／CORS 境界の置き場。"
 dependsOn:
   - tc.shared
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - Workers API がヘルス応答を返す。
-status: queued
+  - "Workers API がヘルス応答を返す。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
+    
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.hono/apps/web
+    > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.hono/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.hono/apps/web
+    > node scripts/write-smoke.mjs
+    
+    Write smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: accept
+  summary: Health routes are wired for both /health and /api/health and now share a handler that returns the configured JSON response with no-store caching.
+  requiredFixes: []
+  riskNotes:
+    - "Validation did not exercise apps/api directly; it only ran the web smoke tests."
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.hono-2026-05-13T16-08-00-454Z.md

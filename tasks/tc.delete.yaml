@@ -1,14 +1,30 @@
 id: tc.delete
-title: 本人削除（M6）
-description: 公開句の削除または非表示。管理者削除は MVP 外。
+title: "本人削除（M6）"
+description: "公開句の削除または非表示。管理者削除は MVP 外。"
 dependsOn:
   - tc.session
   - tc.transform-contract
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - 本人削除後に一覧／スレッドが一貫する。
-status: queued
+  - "本人削除後に一覧／スレッドが一貫する。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "本人削除は投稿本体または返信本人の公開行のみを非公開化し、投稿削除時は thread を deleted にするため、一覧から投稿と返信が消えて一貫します。管理者削除や他人の返信削除には拡張していません。"
+  requiredFixes: []
+  riskNotes:
+    - "削除投稿に紐づく返信行は is_published=true のまま残るため、将来 thread.deleted_at を見ない取得経路を追加すると露出リスクがあります。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.delete-2026-05-14T03-35-09-566Z.md

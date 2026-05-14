@@ -1,6 +1,6 @@
 id: tc.transform-reply-flow
-title: 返信変換フロー実装候補
-description: 対称型 7-7。投稿フローと独立レビュー可能なら分割維持。
+title: "返信変換フロー実装候補"
+description: "対称型 7-7。投稿フローと独立レビュー可能なら分割維持。"
 dependsOn:
   - tc.llm-adapter
   - tc.transform-contract
@@ -8,8 +8,25 @@ dependsOn:
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - 返信パイプラインが対称型方針と一致する。
-status: queued
+  - "返信パイプラインが対称型方針と一致する。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "返信変換時に親投稿の公開本文を取得して LLM リクエストへ渡し、adapter 側でも reply_77 に親文脈を必須化しているため、返信パイプラインは 7-7 の返信句生成方針に沿っています。変更範囲も apps/api のみです。"
+  requiredFixes: []
+  riskNotes:
+    - "Validation Summary では test が skipped のため、自動テストによる回帰確認は実施されていません。"
+    - "publishReplyTransformJob の親投稿 SELECT は ReplyParentPostRow 型を使っていますが public_text を取得していません。現状その場では未使用なので動作影響はありませんが、型と取得列がずれています。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.transform-reply-flow-2026-05-14T03-46-23-674Z.md

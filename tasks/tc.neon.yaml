@@ -1,14 +1,40 @@
 id: tc.neon
-title: Neon と Hyperdrive の接続方針
-description: 東京 Postgres へ Hyperdrive。秘密はリポジトリ外。
+title: "Neon と Hyperdrive の接続方針"
+description: "東京 Postgres へ Hyperdrive。秘密はリポジトリ外。"
 dependsOn:
   - tc.hono
 allowedPaths:
   - apps/api
   - docs/orchestration
 acceptanceCriteria:
-  - Hyperdrive 経由で Neon 接続を再現できる。
-status: queued
+  - "Hyperdrive 経由で Neon 接続を再現できる。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test exitCode: 0 stdout:
+    
+    > tsukeai@0.0.0 test > pnpm --filter @tsukeai/web test
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.neon/apps/web > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.neon/apps/web > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.neon/apps/web > node scripts/write-smoke.mjs
+    
+    Write smoke passed. stderr: (empty)
+lastReview:
+  decision: accept
+  summary: "Hyperdrive ID と Neon 接続文字列をリポジトリ外に置き、dev/deploy 時に一時 Wrangler config へ [[hyperdrive]] を注入する方針になっており、受け入れ条件を満たしています。"
+  requiredFixes: []
+  riskNotes:
+    - "実 Cloudflare/Neon 環境での wrangler dev/deploy は検証ログに含まれていないため、再現性はスクリプトと手順の静的確認ベースです。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.neon-2026-05-13T16-11-34-605Z.md

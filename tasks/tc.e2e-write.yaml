@@ -1,6 +1,6 @@
 id: tc.e2e-write
-title: Playwright 書き込みスモーク
-description: 投稿・返信・削除のクリティカルパス。変換経路確定後。
+title: "Playwright 書き込みスモーク"
+description: "投稿・返信・削除のクリティカルパス。変換経路確定後。"
 dependsOn:
   - tc.transform-reply-flow
   - tc.delete
@@ -9,8 +9,59 @@ allowedPaths:
   - apps/web
   - .
 acceptanceCriteria:
-  - 書き込みスモークがパスし CI が LLM に依存しない。
-status: queued
-retryCount: 0
+  - "書き込みスモークがパスし CI が LLM に依存しない。"
+status: running
+retryCount: 1
 maxRunRetries: 1
 maxReviewRetries: 1
+workspacePath: /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write
+currentBranch: task/tc.e2e-write-playwright
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: >
+    $ npm test
+    exitCode: 0
+    stdout:
+    
+    > tsukeai@0.0.0 test
+    > pnpm --filter @tsukeai/web test
+    
+    
+    > @tsukeai/web@0.0.0 test /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web
+    > WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write
+    
+    
+    > @tsukeai/web@0.0.0 smoke:read /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web
+    > node scripts/read-smoke.mjs
+    
+    Read smoke passed.
+    
+    > @tsukeai/web@0.0.0 smoke:write /Users/akyrhysd/work/tsukeai/.worktrees/tc.e2e-write/apps/web
+    > node scripts/write-smoke.mjs
+    
+    Write smoke passed.
+    stderr:
+    (empty)
+lastReview:
+  decision: reject
+  summary: "The smoke checks no longer exercise the real Playwright/browser write path. They mostly assert source strings and an in-memory fake API contract, so CI can pass without proving投稿・返信・削除のクリティカルパス."
+  requiredFixes:
+    - "Restore or add a Playwright-backed write smoke that drives the real web UI/API path for post, reply, and delete."
+    - "Ensure the CI smoke test fails if the browser flow cannot create, reply to, and delete content."
+  riskNotes:
+    - Installing Playwright in CI is insufficient because the current smoke scripts do not launch or use Playwright.
+    - String assertions against source files can pass while the actual runtime write flow is broken.
+  scopeViolations: []
+lastRetryReason:
+  kind: review_rejected
+  summary: "The smoke checks no longer exercise the real Playwright/browser write path. They mostly assert source strings and an in-memory fake API contract, so CI can pass without proving投稿・返信・削除のクリティカルパス."
+  requiredFixes:
+    - "Restore or add a Playwright-backed write smoke that drives the real web UI/API path for post, reply, and delete."
+    - "Ensure the CI smoke test fails if the browser flow cannot create, reply to, and delete content."
+  scopeViolations: []
+  riskNotes:
+    - Installing Playwright in CI is insufficient because the current smoke scripts do not launch or use Playwright.
+    - String assertions against source files can pass while the actual runtime write flow is broken.
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.e2e-write-2026-05-14T04-23-53-302Z.md

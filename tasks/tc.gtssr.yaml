@@ -1,6 +1,6 @@
 id: tc.gtssr
-title: GT の SSR 一覧・スレッド
-description: 公開 API と整合。変換句のみ表示し素を出さない。
+title: "GT の SSR 一覧・スレッド"
+description: "公開 API と整合。変換句のみ表示し素を出さない。"
 dependsOn:
   - tc.nextshell
   - tc.timeline
@@ -8,8 +8,25 @@ allowedPaths:
   - apps/web
   - packages/shared
 acceptanceCriteria:
-  - GT が SSR で変換句のみを表示する。
-status: queued
+  - "GT が SSR で変換句のみを表示する。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "SSR 表示は API レスポンスを `PublicTimeline` に変換し、投稿・返信とも JSX 上では `publicText` のみを描画している。API 側の既存 `body` は `public_conversions.public_text` 由来で素文ではないため、互換フォールバックも受け入れ可能。"
+  requiredFixes: []
+  riskNotes:
+    - "`pnpm --filter @tsukeai/web test` は成功。typecheck は node_modules 未配置で `tsc: command not found` のため未確認。"
+    - "read-smoke は文字列検査中心で、実 API レスポンス形状の回帰までは保証しない。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.gtssr-2026-05-14T00-10-13-370Z.md

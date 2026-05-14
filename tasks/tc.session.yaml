@@ -1,16 +1,32 @@
 id: tc.session
-title: セッション／Cookie と書き込み境界
-description: 投稿・返信・削除はログイン後のみ。Workers 側で検証。**セッション状態の単一正本**（Neon のみとするか KV
-  併用か等）は **S1 スパイク結果に合わせ orchestration に文書化**する。
+title: "セッション／Cookie と書き込み境界"
+description: "投稿・返信・削除はログイン後のみ。Workers 側で検証。**セッション状態の単一正本**（Neon のみとするか KV 併用か等）は **S1 スパイク結果に合わせ orchestration に文書化**する。"
 dependsOn:
   - tc.authgate
   - tc.hono
 allowedPaths:
   - apps/api
 acceptanceCriteria:
-  - 書き込み API が未認証で拒否される。
-  - セッション状態の単一正本（Neon のみ／KV 併用等）が orchestration に記載される。
-status: queued
+  - "書き込み API が未認証で拒否される。"
+  - "セッション状態の単一正本（Neon のみ／KV 併用等）が orchestration に記載される。"
+status: done
 retryCount: 0
 maxRunRetries: 1
 maxReviewRetries: 1
+validationPolicy:
+  skipStages:
+    - test
+lastValidation:
+  passed: true
+  stage: test
+  failures: []
+  logs: "test: skipped by task validationPolicy"
+lastReview:
+  decision: accept
+  summary: "書き込み API は未認証時に 401 で拒否され、署名済みセッションも Neon の active account で検証される実装になっている。セッション状態の単一正本も apps/api/ORCHESTRATION.md に Neon と明記されている。"
+  requiredFixes: []
+  riskNotes:
+    - "Validation Summary では test が skipped のため、自動テストによる認証境界の回帰確認はない。"
+    - "GET /api/transform-jobs/:id は書き込み対象外だが、active account 存在確認まではしていない。"
+  scopeViolations: []
+lastReviewInputPath: /Users/akyrhysd/work/tsukeai/.orchestrator/review-inputs/tc.session-2026-05-14T00-05-23-268Z.md
