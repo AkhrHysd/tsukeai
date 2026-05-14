@@ -1839,6 +1839,8 @@ app.get("/api/transform-jobs/:id", async (c) => {
 });
 
 app.get("/api/timeline", async (c) => {
+  c.header("Cache-Control", PUBLIC_TIMELINE_CACHE_CONTROL);
+
   const limit = parseTimelineLimit(c.req.query("limit"));
 
   if (limit === undefined) {
@@ -1967,8 +1969,6 @@ app.get("/api/timeline", async (c) => {
         pr.reply_published_sort asc,
         pr.reply_id asc
     `;
-
-    c.header("Cache-Control", PUBLIC_TIMELINE_CACHE_CONTROL);
 
     return c.json(toTimelineResponse(rows));
   } catch (error) {
