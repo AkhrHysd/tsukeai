@@ -168,7 +168,6 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
 
       const startedAt = Date.now();
       let lastError: LlmAdapterError | undefined;
-      let lastNormalizedOutput: string | undefined;
       let lastFormCheck: ReturnType<typeof checkTransformForm> | undefined;
       const maxAttempts = Math.min(
         config.maxAttempts,
@@ -190,7 +189,6 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
             };
           }
 
-          lastNormalizedOutput = normalized;
           lastFormCheck = formCheck;
 
           // Retry within the adapter (same request) when the provider output is
@@ -200,14 +198,9 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
             continue;
           }
 
-          const preview =
-            (lastNormalizedOutput ?? normalized).length > 200
-              ? `${(lastNormalizedOutput ?? normalized).slice(0, 200)}…`
-              : (lastNormalizedOutput ?? normalized);
-
           throw new LlmAdapterError(
             "validation_failed",
-            `LLM provider response did not satisfy the required tanka form. kind=${request.kind} output=${JSON.stringify(preview)}`,
+            `LLM provider response did not satisfy the required tanka form. kind=${request.kind}`,
             false,
             attempt,
             config.model,
@@ -432,14 +425,7 @@ async function requestCompletion(
   );
 
   if (!response.ok) {
-    let responseText: string | undefined;
-    try {
-      responseText = (await response.clone().text()).slice(0, 400);
-    } catch {
-      responseText = undefined;
-    }
-
-    throw errorForProviderStatus(response.status, responseText);
+    throw errorForProviderStatus(response.status);
   }
 
   const payload = (await response.json()) as ChatCompletionResponse;
@@ -581,10 +567,8 @@ async function fetchWithTimeout(
   }
 }
 
-function errorForProviderStatus(status: number, responseText?: string): LlmAdapterError {
-  const suffix = responseText
-    ? ` (status=${status} body=${JSON.stringify(responseText)})`
-    : ` (status=${status})`;
+function errorForProviderStatus(status: number): LlmAdapterError {
+  const suffix = ` (status=${status})`;
 
   if (status === 429) {
     return new LlmAdapterError(
