@@ -18,6 +18,7 @@ function usage() {
     "",
     "Options:",
     "  --dry-run   List pending migrations without connecting to the database.",
+    "  --to NAME   Apply migrations up to and including NAME.",
   ].join("\n");
 }
 
@@ -52,17 +53,71 @@ async function loadMigrations() {
   );
 }
 
-async function main() {
-  const args = new Set(process.argv.slice(2));
+function parseArgs(argv) {
+  const options = {
+    dryRun: false,
+    help: false,
+    to: undefined,
+  };
 
-  if (args.has("--help") || args.has("-h")) {
+  const args = argv.filter((arg) => arg !== "--");
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === "--help" || arg === "-h") {
+      options.help = true;
+      continue;
+    }
+
+    if (arg === "--dry-run") {
+      options.dryRun = true;
+      continue;
+    }
+
+    if (arg === "--to") {
+      const value = args[index + 1];
+
+      if (!value || value.startsWith("-")) {
+        throw new Error("--to requires a migration name.");
+      }
+
+      options.to = value;
+      index += 1;
+      continue;
+    }
+
+    throw new Error(`Unknown option: ${arg}`);
+  }
+
+  return options;
+}
+
+function selectMigrations(migrations, to) {
+  if (!to) {
+    return migrations;
+  }
+
+  const targetIndex = migrations.findIndex((migration) => migration.version === to);
+
+  if (targetIndex === -1) {
+    throw new Error(`Migration not found: ${to}`);
+  }
+
+  return migrations.slice(0, targetIndex + 1);
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+
+  if (options.help) {
     console.log(usage());
     return;
   }
 
-  const migrations = await loadMigrations();
+  const migrations = selectMigrations(await loadMigrations(), options.to);
 
-  if (args.has("--dry-run")) {
+  if (options.dryRun) {
     for (const migration of migrations) {
       console.log(`${migration.version} ${migration.checksum}`);
     }
