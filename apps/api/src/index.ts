@@ -35,7 +35,11 @@ type Bindings = LlmAdapterBindings & {
   WRITE_SMOKE_FIXED_PUBLIC_TEXT?: string;
 };
 
-type AppContext = Context<{ Bindings: Bindings }>;
+type Variables = {
+  accountId?: string;
+};
+
+type AppContext = Context<{ Bindings: Bindings; Variables: Variables }>;
 
 type HealthResponse = {
   status: "ok";
@@ -167,7 +171,7 @@ const HEALTH_RESPONSE: HealthResponse = {
   service: "api",
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 function toSafeLogError(error: unknown): SafeLogError {
   if (!(error instanceof Error)) {
@@ -295,13 +299,6 @@ function signaturesMatch(actual: string, expected: string): boolean {
   return difference === 0;
 }
 
-async function verifySessionCookie(
-  cookieValue: string | undefined,
-  secret: string | undefined,
-): Promise<boolean> {
-  return (await getSessionAccountId(cookieValue, secret)) !== undefined;
-}
-
 async function getSessionAccountId(
   cookieValue: string | undefined,
   secret: string | undefined,
@@ -335,6 +332,33 @@ async function getSessionAccountId(
   );
 
   return signaturesMatch(signature, expectedSignature) ? accountId : undefined;
+}
+
+async function activeAccountExists(
+  sql: ReturnType<typeof createSql>,
+  accountId: string,
+): Promise<boolean> {
+  const [row] = await sql<{ exists: boolean }[]>`
+    select exists (
+      select 1
+      from accounts
+      where id = ${accountId}::uuid and deleted_at is null
+    ) as exists
+  `;
+
+  return row?.exists === true;
+}
+
+async function getRequestSessionAccountId(c: AppContext): Promise<string | undefined> {
+  const contextAccountId = c.get("accountId");
+
+  if (contextAccountId) {
+    return contextAccountId;
+  }
+
+  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
+
+  return getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -1396,13 +1420,19 @@ async function handleCreateTransformJob(
   c: AppContext,
   forcedInput?: Pick<TransformJobCreateInput, "kind" | "parentPostId">,
 ) {
-  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const existingAccountId = await getSessionAccountId(
-    getCookie(c, cookieName),
-    c.env.SESSION_SECRET,
-  );
-  const accountId = existingAccountId ?? crypto.randomUUID();
-  const shouldEnsureAccount = existingAccountId === undefined;
+  const accountId = await getRequestSessionAccountId(c);
+
+  if (!accountId) {
+    return c.json(
+      {
+        error: {
+          code: "unauthorized" satisfies ApiErrorCode,
+          message: "Authentication is required for this write operation.",
+        },
+      },
+      401,
+    );
+  }
 
   const body = await readTransformJobBody(c.req.raw);
 
@@ -1460,14 +1490,6 @@ async function handleCreateTransformJob(
 
   try {
     sql = createSql(c.env.HYPERDRIVE.connectionString);
-
-    if (shouldEnsureAccount) {
-      await sql`
-        insert into accounts (id, display_name)
-        values (${accountId}::uuid, '匿名')
-        on conflict (id) do nothing
-      `;
-    }
 
     if (parsed.kind === "reply_77") {
       const parentPost =
@@ -1615,11 +1637,48 @@ app.use("*", async (c, next) => {
     return next();
   }
 
-  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const isAuthenticated = await verifySessionCookie(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  const accountId = await getRequestSessionAccountId(c);
 
-  if (isAuthenticated) {
-    return next();
+  if (!accountId) {
+    return c.json(
+      {
+        error: {
+          code: "unauthorized",
+          message: "Authentication is required for this write operation.",
+        },
+      },
+      401,
+    );
+  }
+
+  let sql: ReturnType<typeof createSql> | undefined;
+
+  try {
+    sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+    if (await activeAccountExists(sql, accountId)) {
+      c.set("accountId", accountId);
+
+      return next();
+    }
+  } catch (error) {
+    console.error("Session account verification failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "service_unavailable",
+          message: "Authentication could not be verified.",
+        },
+      },
+      503,
+    );
+  } finally {
+    try {
+      await sql?.end({ timeout: 5 });
+    } catch (error) {
+      console.error("Failed to close session verification database client", toSafeLogError(error));
+    }
   }
 
   return c.json(
@@ -1719,8 +1778,7 @@ app.get("/api/transform-jobs/:id", async (c) => {
     );
   }
 
-  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  const accountId = await getRequestSessionAccountId(c);
 
   if (!accountId) {
     return c.json(
@@ -1949,8 +2007,7 @@ app.delete("/api/public-conversions/:id", async (c) => {
     );
   }
 
-  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
-  const accountId = await getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  const accountId = await getRequestSessionAccountId(c);
 
   if (!accountId) {
     return c.json(
