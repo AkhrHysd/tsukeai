@@ -3,6 +3,13 @@ import { cookies } from "next/headers";
 import { getApiBaseUrl } from "./api-base-url";
 
 export async function getCurrentSession(): Promise<CurrentSessionResponseDto> {
+  if (process.env.DEV_MOCK === "1") {
+    return {
+      authenticated: true,
+      account: { id: "dev-mock-user", displayName: "開発ユーザー", handle: "dev" },
+    };
+  }
+
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL("/api/sessions/current", apiBaseUrl);
   const requestCookies = await cookies();

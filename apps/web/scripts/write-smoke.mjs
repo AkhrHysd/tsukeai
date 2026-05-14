@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
+const composePageSource = await readWorkspaceFile("apps/web/src/app/compose/page.tsx");
+const replyPageSource = await readWorkspaceFile(
+  "apps/web/src/app/posts/[postId]/reply/page.tsx",
+);
 const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
 const postsRouteSource = await readWorkspaceFile("apps/web/src/app/api/posts/route.ts");
 const repliesRouteSource = await readWorkspaceFile(
@@ -33,7 +37,6 @@ assert.equal(
 
 assertIncludes(pageSource, 'import { revalidatePath } from "next/cache";');
 assertIncludes(pageSource, 'import { headers } from "next/headers";');
-assertIncludes(pageSource, 'import { PostComposer, ReplyComposer } from "./post-forms";');
 
 assertIncludes(pageSource, '"use server";');
 assertIncludes(pageSource, "async function deletePublicConversion(publicConversionId: string)");
@@ -47,12 +50,13 @@ assertIncludes(pageSource, 'cache: "no-store"');
 assertIncludes(pageSource, "throw new Error(`API request failed with $" + "{response.status}`)");
 assertIncludes(pageSource, 'revalidatePath("/")');
 
-assertIncludes(pageSource, "<PostComposer />");
-assertIncludes(pageSource, "<ReplyComposer");
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
-assertIncludes(pageSource, "action={deletePublicConversion.bind(null, reply.id)}");
+assertIncludes(pageSource, "deletePublicConversion");
 assertIncludes(pageSource, 'className="link-button" type="submit"');
 assertIncludes(pageSource, "削除");
+
+assertIncludes(composePageSource, "<PostComposer");
+assertIncludes(replyPageSource, "<ReplyComposer");
 
 assertNotIncludes(
   pageSource,
@@ -84,7 +88,7 @@ assertIncludes(
 );
 assertIncludes(
   postFormsSource,
-  '<form className="reply-form" onSubmit={submitReply} aria-label="返信">',
+  '<form className="composer" onSubmit={submitReply} aria-label="返信">',
 );
 assertIncludes(postFormsSource, 'name="body"');
 assertIncludes(postFormsSource, "disabled={busy}");

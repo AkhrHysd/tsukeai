@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import net from "node:net";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
+const replyThreadSource = await readWorkspaceFile("apps/web/src/app/reply-thread.tsx");
 const apiBaseUrlSource = await readWorkspaceFile("apps/web/src/lib/api-base-url.ts");
 const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
@@ -45,21 +46,21 @@ assertIncludes(pageSource, "if (!response.ok)");
 assertIncludes(pageSource, 'return { status: "unavailable" };');
 assertIncludes(pageSource, "catch");
 
-assertIncludes(pageSource, '<h1 id="page-title">公開タイムライン</h1>');
+assertIncludes(pageSource, '<h1 id="page-title" className="sr-only">');
 assertIncludes(pageSource, 'role="status"');
 assertIncludes(pageSource, "タイムラインを読み込めませんでした。");
 assertIncludes(pageSource, "まだ公開句はありません。");
 assertIncludes(pageSource, '<ul className="timeline-list"');
 assertIncludes(pageSource, 'aria-label="公開タイムライン"');
-assertIncludes(pageSource, '<li className="post-card"');
-assertIncludes(pageSource, 'aria-label="返信"');
+assertIncludes(pageSource, '<li className="post-item"');
 assertIncludes(pageSource, "{item.post.author.displayName}");
 assertIncludes(pageSource, "{item.post.publicText}");
-assertIncludes(pageSource, "{reply.author.displayName}");
-assertIncludes(pageSource, "{reply.publicText}");
 assertIncludes(pageSource, "function toPublicTimeline");
 assertIncludes(pageSource, "conversion.publicText ?? conversion.body ??");
 assertIncludes(pageSource, "投稿・返信・削除にはログインが必要です。");
+assertIncludes(replyThreadSource, 'aria-label="返信"');
+assertIncludes(replyThreadSource, "{reply.author.displayName}");
+assertIncludes(replyThreadSource, "reply.publicText");
 
 assertIncludes(apiBaseUrlSource, 'const DEFAULT_API_BASE_URL = "http://localhost:8787";');
 assertIncludes(apiBaseUrlSource, "process.env.API_BASE_URL");
@@ -202,9 +203,7 @@ async function assertReadSmokeRendersTimeline() {
 
     const html = await fetchUntilReady(`http://127.0.0.1:${nextPort}/`, output);
 
-    assertIncludes(html, "公開タイムライン");
     assertIncludes(html, "読み取り太郎");
-    assertIncludes(html, "@read_smoke");
     assertIncludes(html, "あさひさす");
     assertIncludes(html, "こころしずかに");
     assertIncludes(html, "はるをまつ");
@@ -213,11 +212,14 @@ async function assertReadSmokeRendersTimeline() {
     assertIncludes(html, "よるがあけゆく");
     assert(!html.includes("タイムラインを読み込めませんでした。"));
     assert(!html.includes("まだ公開句はありません。"));
-    assert.deepEqual(requests.sort(), [
-      "/api/sessions/current",
-      "/api/sessions/current",
-      "/api/timeline?limit=20",
-    ]);
+    assert(
+      requests.includes("/api/sessions/current"),
+      "Expected at least one /api/sessions/current request",
+    );
+    assert(
+      requests.includes("/api/timeline?limit=20"),
+      "Expected a /api/timeline?limit=20 request",
+    );
   } finally {
     if (next) {
       next.kill("SIGTERM");

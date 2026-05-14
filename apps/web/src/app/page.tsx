@@ -1,9 +1,10 @@
 import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
+import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
 import { getCurrentSession } from "../lib/current-session";
-import { PostComposer, ReplyComposer } from "./post-forms";
+import { ReplyThreadWrapper } from "./reply-thread-wrapper";
 
 export const dynamic = "force-dynamic";
 
@@ -144,20 +145,13 @@ export default async function Home() {
 
   return (
     <section className="timeline-page" aria-labelledby="page-title">
-      <header className="timeline-header">
-        <div>
-          <h1 id="page-title">公開タイムライン</h1>
-        </div>
-        <p className="lead">変換済みの公開句だけをサーバーで取得して表示します。</p>
-      </header>
+      <h1 id="page-title" className="sr-only">tsukeai</h1>
 
-      {currentAccount ? (
-        <PostComposer />
-      ) : (
+      {!currentAccount ? (
         <p className="timeline-status" role="status">
           投稿・返信・削除にはログインが必要です。
         </p>
-      )}
+      ) : null}
 
       {timelineResult.status === "unavailable" ? (
         <p className="timeline-status" role="status">
@@ -170,11 +164,11 @@ export default async function Home() {
       ) : (
         <ul className="timeline-list" aria-label="公開タイムライン">
           {timelineResult.timeline.items.map((item) => (
-            <li className="post-card" key={item.post.id}>
-              <div className="post-card__header">
-                <strong>{item.post.author.displayName}</strong>
-                {item.post.author.handle ? <span>@{item.post.author.handle}</span> : null}
-                <time dateTime={item.post.createdAt}>
+            <li className="post-item" key={item.post.id}>
+              <p className="post-item__body">{item.post.publicText}</p>
+              <div className="post-item__meta">
+                <span className="post-item__author">{item.post.author.displayName}</span>
+                <time className="post-item__time" dateTime={item.post.createdAt}>
                   {new Intl.DateTimeFormat("ja-JP", {
                     dateStyle: "medium",
                     timeStyle: "short",
@@ -190,30 +184,24 @@ export default async function Home() {
                 ) : null}
               </div>
 
-              <p className="post-card__body">{item.post.publicText}</p>
+              <div className="post-item__actions">
+                {currentAccount ? (
+                  <Link href={`/posts/${item.post.id}/reply`} className="reply-link">
+                    返歌する
+                  </Link>
+                ) : null}
+              </div>
 
-              {item.replies.length > 0 ? (
-                <ul className="reply-list" aria-label="返信">
-                  {item.replies.map((reply) => (
-                    <li className="reply" key={reply.id}>
-                      <div className="reply__header">
-                        <strong>{reply.author.displayName}</strong>
-                        {reply.author.handle ? <span>@{reply.author.handle}</span> : null}
-                        {currentAccount?.id === reply.author.id ? (
-                          <form action={deletePublicConversion.bind(null, reply.id)}>
-                            <button className="link-button" type="submit">
-                              削除
-                            </button>
-                          </form>
-                        ) : null}
-                      </div>
-                      <p>{reply.publicText}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-
-              {currentAccount ? <ReplyComposer postId={item.post.id} /> : null}
+              <ReplyThreadWrapper
+                replies={item.replies.map((r) => ({
+                  id: r.id,
+                  author: r.author,
+                  publicText: r.publicText,
+                  createdAt: r.createdAt,
+                  canDelete: currentAccount?.id === r.author.id,
+                }))}
+                deleteAction={deletePublicConversion}
+              />
             </li>
           ))}
         </ul>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { getCurrentSession } from "../lib/current-session";
+import { AppShellActions } from "./app-shell-actions";
 import { AuthControls } from "./auth-controls";
 import "./globals.css";
 
@@ -22,22 +23,11 @@ export default async function RootLayout({
     <html lang="ja">
       <body>
         <div className="app-shell">
-          <header className="site-header">
-            <div className="site-header__inner">
-              <a className="brand" href="/">
-                <span className="brand__mark" aria-hidden="true">
-                  た
-                </span>
-                <span>tsukeai</span>
-              </a>
-              <nav className="site-nav" aria-label="主要ナビゲーション">
-                <a href="/">タイムライン</a>
-                <a href="/">投稿</a>
-              </nav>
-              <AuthControls initialSession={session} />
-            </div>
-          </header>
+          <AppShellActions initialSession={session} />
           <main className="main-content">{children}</main>
+          <footer className="site-footer">
+            <AuthControls initialSession={session} />
+          </footer>
         </div>
       </body>
     </html>

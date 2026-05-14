@@ -6,6 +6,7 @@ import { type FormEvent, useEffect, useState } from "react";
 
 type TransformKind = "post_575" | "reply_77";
 type WriteTarget = "post" | "reply";
+type ComposerVariant = "inline" | "sheet";
 type WriteActionState = {
   status: "idle" | "pending" | "success" | "error";
   message: string;
@@ -30,10 +31,11 @@ const initialWriteActionState: WriteActionState = {
   message: "",
 };
 
-export function PostComposer() {
+export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant }) {
+  const router = useRouter();
   const [state, setState] = useState(initialWriteActionState);
   const [busy, setBusy] = useState(false);
-  const feedbackState = useTransformJobFeedback(state);
+  const feedbackState = useTransformJobFeedback(state, variant === "sheet" ? router : undefined);
 
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,11 +44,11 @@ export function PostComposer() {
 
   return (
     <form className="composer" onSubmit={submitPost} aria-label="投稿">
-      <label htmlFor="post-body">投稿する</label>
+      <label htmlFor="post-body">五七五に変換したい内容を入力</label>
       <textarea
         id="post-body"
         name="body"
-        rows={3}
+        rows={8}
         required
         disabled={busy}
         placeholder="五七五に変換したい内容"
@@ -59,10 +61,17 @@ export function PostComposer() {
   );
 }
 
-export function ReplyComposer({ postId }: { postId: EntityId }) {
+export function ReplyComposer({
+  postId,
+  variant = "inline",
+}: {
+  postId: EntityId;
+  variant?: ComposerVariant;
+}) {
+  const router = useRouter();
   const [state, setState] = useState(initialWriteActionState);
   const [busy, setBusy] = useState(false);
-  const feedbackState = useTransformJobFeedback(state);
+  const feedbackState = useTransformJobFeedback(state, variant === "sheet" ? router : undefined);
   const inputId = `reply-body-${postId}`;
 
   async function submitReply(event: FormEvent<HTMLFormElement>) {
@@ -78,20 +87,19 @@ export function ReplyComposer({ postId }: { postId: EntityId }) {
   }
 
   return (
-    <form className="reply-form" onSubmit={submitReply} aria-label="返信">
-      <label htmlFor={inputId}>返信する</label>
-      <div>
-        <input
-          id={inputId}
-          name="body"
-          required
-          disabled={busy}
-          placeholder="七七に変換したい内容"
-        />
-        <button type="submit" disabled={busy}>
-          {busy ? "返信中..." : "返信"}
-        </button>
-      </div>
+    <form className="composer" onSubmit={submitReply} aria-label="返信">
+      <label htmlFor={inputId}>七七に変換したい内容を入力</label>
+      <textarea
+        id={inputId}
+        name="body"
+        rows={6}
+        required
+        disabled={busy}
+        placeholder="七七に変換したい内容"
+      />
+      <button type="submit" disabled={busy}>
+        {busy ? "返信中..." : "返信"}
+      </button>
       <WriteMessage state={feedbackState} />
     </form>
   );
@@ -290,7 +298,9 @@ function WriteMessage({ state }: { state: WriteActionState }) {
   );
 }
 
-function useTransformJobFeedback(actionState: WriteActionState) {
+type AppRouter = ReturnType<typeof useRouter>;
+
+function useTransformJobFeedback(actionState: WriteActionState, sheetRouter?: AppRouter) {
   const router = useRouter();
   const [feedbackState, setFeedbackState] = useState(actionState);
 
@@ -331,7 +341,11 @@ function useTransformJobFeedback(actionState: WriteActionState) {
             status: "success",
             message: actionState.target === "reply" ? "返信しました。" : "投稿しました。",
           });
-          router.refresh();
+          if (sheetRouter) {
+            sheetRouter.back();
+          } else {
+            router.refresh();
+          }
           return;
         }
 
