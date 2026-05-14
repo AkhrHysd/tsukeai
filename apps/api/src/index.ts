@@ -905,11 +905,18 @@ async function publishTransformJob(
   attempts: number,
   durationMs: number,
 ): Promise<TransformJobRow | undefined> {
+  const acceptedPublicText = assertPublishableTransformText(
+    job.kind,
+    publicText,
+    attempts,
+    model,
+  );
+
   if (job.kind === "reply_77") {
-    return publishReplyTransformJob(sql, job, publicText, model, attempts, durationMs);
+    return publishReplyTransformJob(sql, job, acceptedPublicText, model, attempts, durationMs);
   }
 
-  return publishPostTransformJob(sql, job, publicText, model, attempts, durationMs);
+  return publishPostTransformJob(sql, job, acceptedPublicText, model, attempts, durationMs);
 }
 
 async function markTransformJobFailed(
@@ -1201,6 +1208,27 @@ function parsePublicTextInput(
     clientKey,
     ...(parentPostId ? { parentPostId } : {}),
   };
+}
+
+function assertPublishableTransformText(
+  kind: TransformJobKind,
+  publicText: string,
+  attempts: number,
+  model: string,
+): string {
+  const formCheck = checkTransformForm(kind, publicText);
+
+  if (!formCheck.accepted) {
+    throw new LlmAdapterError(
+      "validation_failed",
+      `Transform result did not satisfy the required public form. kind=${kind}`,
+      false,
+      attempts,
+      model,
+    );
+  }
+
+  return formCheck.normalizedText;
 }
 
 async function publishPublicTextPost(
