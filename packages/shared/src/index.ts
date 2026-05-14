@@ -56,6 +56,13 @@ export const TRANSFORM_TERMINAL_JOB_STATES = [
 
 export type TransformTerminalJobState = (typeof TRANSFORM_TERMINAL_JOB_STATES)[number];
 
+export const TRANSFORM_ACTIVE_JOB_STATES = [
+  "queued",
+  "processing",
+] as const satisfies readonly TransformJobState[];
+
+export type TransformActiveJobState = (typeof TRANSFORM_ACTIVE_JOB_STATES)[number];
+
 export const TRANSFORM_JOB_STATE_TRANSITIONS = [
   ["queued", "processing"],
   ["queued", "failed"],
@@ -66,6 +73,27 @@ export const TRANSFORM_JOB_STATE_TRANSITIONS = [
 ] as const satisfies readonly (readonly [TransformJobState, TransformJobState])[];
 
 export type TransformJobStateTransition = (typeof TRANSFORM_JOB_STATE_TRANSITIONS)[number];
+
+export function isTransformTerminalJobState(
+  state: TransformJobState,
+): state is TransformTerminalJobState {
+  return TRANSFORM_TERMINAL_JOB_STATES.some((terminalState) => terminalState === state);
+}
+
+export function isTransformActiveJobState(
+  state: TransformJobState,
+): state is TransformActiveJobState {
+  return TRANSFORM_ACTIVE_JOB_STATES.some((activeState) => activeState === state);
+}
+
+export function canTransitionTransformJobState(
+  from: TransformJobState,
+  to: TransformJobState,
+): boolean {
+  return TRANSFORM_JOB_STATE_TRANSITIONS.some(
+    ([transitionFrom, transitionTo]) => transitionFrom === from && transitionTo === to,
+  );
+}
 
 export type TransformJobKind = "post_575" | "reply_77";
 
@@ -127,8 +155,101 @@ export type TransformFailureReason =
   | "cost_limit_exceeded"
   | "validation_failed"
   | "prompt_injection_detected"
+  | "content_policy_violation"
   | "unauthorized"
   | "configuration_error";
+
+export const TRANSFORM_SERVER_RETRYABLE_FAILURE_REASONS = [
+  "timeout",
+  "rate_limited",
+  "provider_unavailable",
+  "invalid_provider_response",
+  "configuration_error",
+] as const satisfies readonly TransformFailureReason[];
+
+export type TransformServerRetryableFailureReason =
+  (typeof TRANSFORM_SERVER_RETRYABLE_FAILURE_REASONS)[number];
+
+export const TRANSFORM_CLIENT_REVISABLE_FAILURE_REASONS = [
+  "provider_rejected",
+  "input_limit_exceeded",
+  "output_limit_exceeded",
+  "cost_limit_exceeded",
+  "validation_failed",
+  "prompt_injection_detected",
+  "content_policy_violation",
+  "unauthorized",
+] as const satisfies readonly TransformFailureReason[];
+
+export type TransformClientRevisableFailureReason =
+  (typeof TRANSFORM_CLIENT_REVISABLE_FAILURE_REASONS)[number];
+
+export type ClassifiedTransformFailureReason =
+  | TransformServerRetryableFailureReason
+  | TransformClientRevisableFailureReason;
+
+type AssertTransformFailureReasonClassification<T extends never> = T;
+export type TransformFailureReasonClassificationExhaustive =
+  AssertTransformFailureReasonClassification<
+    Exclude<TransformFailureReason, ClassifiedTransformFailureReason>
+  >;
+export type TransformFailureReasonClassificationExclusive =
+  AssertTransformFailureReasonClassification<
+    Extract<TransformServerRetryableFailureReason, TransformClientRevisableFailureReason>
+  >;
+
+export function isTransformServerRetryableFailureReason(
+  reason: TransformFailureReason,
+): reason is TransformServerRetryableFailureReason {
+  return TRANSFORM_SERVER_RETRYABLE_FAILURE_REASONS.some(
+    (retryableReason) => retryableReason === reason,
+  );
+}
+
+export function isTransformClientRevisableFailureReason(
+  reason: TransformFailureReason,
+): reason is TransformClientRevisableFailureReason {
+  return TRANSFORM_CLIENT_REVISABLE_FAILURE_REASONS.some(
+    (revisableReason) => revisableReason === reason,
+  );
+}
+
+export function getTransformRetryPolicy(reason: TransformFailureReason): TransformRetryPolicy {
+  if (isTransformServerRetryableFailureReason(reason)) {
+    return "server_retryable";
+  }
+
+  if (isTransformClientRevisableFailureReason(reason)) {
+    return "client_revisable";
+  }
+
+  const unclassifiedReason: never = reason;
+  throw new Error(`Unclassified transform failure reason: ${unclassifiedReason}`);
+}
+
+export function getTransformUserAction(reason: TransformFailureReason): TransformUserAction {
+  return getTransformRetryPolicy(reason) === "server_retryable"
+    ? "retry_later"
+    : "revise_input";
+}
+
+export function getTransformPublicErrorCode(
+  reason: TransformFailureReason,
+): TransformPublicErrorCode {
+  if (
+    reason === "input_limit_exceeded" ||
+    reason === "output_limit_exceeded" ||
+    reason === "cost_limit_exceeded"
+  ) {
+    return "transform_limit_exceeded";
+  }
+
+  if (getTransformRetryPolicy(reason) === "client_revisable") {
+    return "transform_input_rejected";
+  }
+
+  return "transform_failed";
+}
 
 export type TransformJobErrorDto = {
   code: TransformPublicErrorCode;
@@ -137,6 +258,19 @@ export type TransformJobErrorDto = {
   retryPolicy: TransformRetryPolicy;
   userAction: TransformUserAction;
 };
+
+export function createTransformJobErrorDto(
+  reason: TransformFailureReason,
+  message: string,
+): TransformJobErrorDto {
+  return {
+    code: getTransformPublicErrorCode(reason),
+    reason,
+    message,
+    retryPolicy: getTransformRetryPolicy(reason),
+    userAction: getTransformUserAction(reason),
+  };
+}
 
 export type TransformJobObservationDto = {
   jobId: EntityId;
@@ -168,6 +302,7 @@ export type TransformJobResponseDto = {
 
 export type BoundaryTransformJobState = TransformJobState;
 export type BoundaryTransformTerminalJobState = TransformTerminalJobState;
+export type BoundaryTransformActiveJobState = TransformActiveJobState;
 export type BoundaryTransformJobKind = TransformJobKind;
 export type BoundaryTransformFormCheckReason = TransformFormCheckReason;
 export type BoundaryTransformFormCheckSegmentDto = TransformFormCheckSegment;
@@ -178,6 +313,10 @@ export type BoundaryTransformRetryPolicy = TransformRetryPolicy;
 export type BoundaryTransformUserAction = TransformUserAction;
 export type BoundaryTransformPublicErrorCode = TransformPublicErrorCode;
 export type BoundaryTransformFailureReason = TransformFailureReason;
+export type BoundaryTransformServerRetryableFailureReason =
+  TransformServerRetryableFailureReason;
+export type BoundaryTransformClientRevisableFailureReason =
+  TransformClientRevisableFailureReason;
 export type BoundaryTransformJobErrorDto = TransformJobErrorDto;
 export type BoundaryTransformJobObservationDto = TransformJobObservationDto;
 export type BoundaryTransformJobDto = TransformJobDto;
