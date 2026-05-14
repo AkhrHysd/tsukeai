@@ -10,6 +10,7 @@
     "lint": "pnpm --workspace-root exec biome check .",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "mock": "node scripts/mock-api-server.mjs",
     "smoke:read": "node scripts/read-smoke.mjs",
     "smoke:write": "node scripts/write-smoke.mjs",
     "start": "next start",
