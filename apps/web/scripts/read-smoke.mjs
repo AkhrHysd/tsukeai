@@ -27,7 +27,10 @@ assert.equal(
   "write smoke must stay dependency-free",
 );
 
-assertIncludes(pageSource, 'import type { TimelineResponseDto } from "@tsukeai/shared";');
+assertIncludes(pageSource, "AuthorDto");
+assertIncludes(pageSource, "EntityId");
+assertIncludes(pageSource, "IsoDateTimeString");
+assertIncludes(pageSource, "TimelineResponseDto");
 assertIncludes(pageSource, 'import { getApiBaseUrl } from "../lib/api-base-url";');
 assertIncludes(pageSource, 'export const dynamic = "force-dynamic";');
 assertIncludes(pageSource, 'new URL("/api/timeline?limit=20", apiBaseUrl)');
@@ -46,9 +49,11 @@ assertIncludes(pageSource, 'aria-label="公開タイムライン"');
 assertIncludes(pageSource, '<li className="post-card"');
 assertIncludes(pageSource, 'aria-label="返信"');
 assertIncludes(pageSource, "{item.post.author.displayName}");
-assertIncludes(pageSource, "{item.post.body}");
+assertIncludes(pageSource, "{item.post.publicText}");
 assertIncludes(pageSource, "{reply.author.displayName}");
-assertIncludes(pageSource, "{reply.body}");
+assertIncludes(pageSource, "{reply.publicText}");
+assertIncludes(pageSource, "function toPublicTimeline");
+assertIncludes(pageSource, "conversion.publicText ?? conversion.body ??");
 
 assertIncludes(apiBaseUrlSource, 'const DEFAULT_API_BASE_URL = "http://localhost:8787";');
 assertIncludes(apiBaseUrlSource, "process.env.API_BASE_URL");

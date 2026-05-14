@@ -314,18 +314,26 @@ export type AuthorDto = {
   handle?: string;
 };
 
-export type PostDto = {
+export type PublicConversionTextDto =
+  | {
+      publicText: PublicTankaText;
+      body?: never;
+    }
+  | {
+      publicText?: never;
+      body: PublicTankaText;
+    };
+
+export type PostDto = PublicConversionTextDto & {
   id: EntityId;
   author: AuthorDto;
-  body: PublicTankaText;
   createdAt: IsoDateTimeString;
 };
 
-export type ReplyDto = {
+export type ReplyDto = PublicConversionTextDto & {
   id: EntityId;
   postId: EntityId;
   author: AuthorDto;
-  body: PublicTankaText;
   createdAt: IsoDateTimeString;
 };
 
@@ -360,6 +368,7 @@ export type BoundaryIsoDateTimeString = IsoDateTimeString;
 export type BoundaryTankaText = TankaText;
 export type BoundaryPublicTankaText = PublicTankaText;
 export type BoundaryAuthorDto = AuthorDto;
+export type BoundaryPublicConversionTextDto = PublicConversionTextDto;
 export type BoundaryPostDto = PostDto;
 export type BoundaryReplyDto = ReplyDto;
 export type BoundaryTimelineItemDto = TimelineItemDto;

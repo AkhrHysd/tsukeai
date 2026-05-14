@@ -1,4 +1,9 @@
-import type { TimelineResponseDto } from "@tsukeai/shared";
+import type {
+  AuthorDto,
+  EntityId,
+  IsoDateTimeString,
+  TimelineResponseDto,
+} from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
@@ -8,13 +13,34 @@ export const dynamic = "force-dynamic";
 type TimelineResult =
   | {
       status: "ready";
-      timeline: TimelineResponseDto;
+      timeline: PublicTimeline;
     }
   | {
       status: "unavailable";
     };
 
 type TransformKind = "post_575" | "reply_77";
+type PublicTimeline = {
+  items: PublicTimelineItem[];
+  nextCursor?: string;
+};
+type PublicTimelineItem = {
+  post: PublicPost;
+  replies: PublicReply[];
+};
+type PublicPost = {
+  id: EntityId;
+  author: AuthorDto;
+  publicText: string;
+  createdAt: IsoDateTimeString;
+};
+type PublicReply = {
+  id: EntityId;
+  postId: EntityId;
+  author: AuthorDto;
+  publicText: string;
+  createdAt: IsoDateTimeString;
+};
 
 const WRITE_SMOKE_FIXED_PUBLIC_TEXT_ENABLED = process.env.WRITE_SMOKE_FIXED_PUBLIC_TEXT === "1";
 const WRITE_SMOKE_PUBLIC_TEXT = {
@@ -145,13 +171,37 @@ async function getPublicTimeline(apiBaseUrl: URL): Promise<TimelineResult> {
       return { status: "unavailable" };
     }
 
-    return {
-      status: "ready",
-      timeline: (await response.json()) as TimelineResponseDto,
-    };
+    const timeline = toPublicTimeline((await response.json()) as TimelineResponseDto);
+
+    return { status: "ready", timeline };
   } catch {
     return { status: "unavailable" };
   }
+}
+
+function toPublicTimeline(timeline: TimelineResponseDto): PublicTimeline {
+  return {
+    items: timeline.items.map((item) => ({
+      post: {
+        id: item.post.id,
+        author: item.post.author,
+        publicText: getPublicText(item.post),
+        createdAt: item.post.createdAt,
+      },
+      replies: item.replies.map((reply) => ({
+        id: reply.id,
+        postId: reply.postId,
+        author: reply.author,
+        publicText: getPublicText(reply),
+        createdAt: reply.createdAt,
+      })),
+    })),
+    ...(timeline.nextCursor ? { nextCursor: timeline.nextCursor } : {}),
+  };
+}
+
+function getPublicText(conversion: { publicText?: string; body?: string }) {
+  return conversion.publicText ?? conversion.body ?? "";
 }
 
 export default async function Home() {
@@ -208,7 +258,7 @@ export default async function Home() {
                 </form>
               </div>
 
-              <p className="post-card__body">{item.post.body}</p>
+              <p className="post-card__body">{item.post.publicText}</p>
 
               {item.replies.length > 0 ? (
                 <ul className="reply-list" aria-label="返信">
@@ -223,7 +273,7 @@ export default async function Home() {
                           </button>
                         </form>
                       </div>
-                      <p>{reply.body}</p>
+                      <p>{reply.publicText}</p>
                     </li>
                   ))}
                 </ul>
