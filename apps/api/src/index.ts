@@ -26,6 +26,7 @@ import {
   type LlmAdapterBindings,
   LlmAdapterError,
   type TransformFailureClassification,
+  type TransformTextRequest,
 } from "./llm-adapter";
 
 type Bindings = LlmAdapterBindings & {
@@ -152,6 +153,7 @@ type SafeLogError = {
 type ReplyParentPostRow = {
   id: string;
   thread_id: string;
+  public_text: string;
 };
 
 const LOCAL_WEB_ORIGIN = "http://localhost:3000";
@@ -720,7 +722,8 @@ async function selectReplyParentPost(
   const [row] = await sql<ReplyParentPostRow[]>`
     select
       p.id::text,
-      p.thread_id::text
+      p.thread_id::text,
+      p.public_text
     from public_conversions p
     join threads t on t.id = p.thread_id
     where
@@ -732,6 +735,49 @@ async function selectReplyParentPost(
   `;
 
   return row;
+}
+
+async function buildTransformTextRequest(
+  sql: ReturnType<typeof createSql>,
+  job: TransformJobRow,
+  input: string,
+): Promise<TransformTextRequest> {
+  const request: TransformTextRequest = {
+    kind: job.kind,
+    input,
+    jobId: job.id,
+    remainingCallBudget: 3,
+  };
+
+  if (job.kind !== "reply_77") {
+    return request;
+  }
+
+  if (!job.parent_public_conversion_id) {
+    throw new LlmAdapterError(
+      "provider_unavailable",
+      "Reply transform job is missing its parent post.",
+      true,
+    );
+  }
+
+  const parentPost = await selectReplyParentPost(sql, job.parent_public_conversion_id);
+
+  if (!parentPost) {
+    throw new LlmAdapterError(
+      "provider_unavailable",
+      "Reply transform parent post is no longer publishable.",
+      true,
+    );
+  }
+
+  return {
+    ...request,
+    parentPost: {
+      id: parentPost.id,
+      publicText: parentPost.public_text,
+    },
+  };
 }
 
 async function publishPostTransformJob(
@@ -1015,12 +1061,8 @@ async function runTransformJob(
 
   try {
     const adapter = createLlmAdapter(bindings);
-    const transformed = await adapter.transformText({
-      kind: claimedJob.kind,
-      input,
-      jobId: claimedJob.id,
-      remainingCallBudget: 3,
-    });
+    const request = await buildTransformTextRequest(sql, claimedJob, input);
+    const transformed = await adapter.transformText(request);
     const publishedJob = await publishTransformJob(
       sql,
       claimedJob,
