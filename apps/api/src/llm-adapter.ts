@@ -1,4 +1,14 @@
-import { checkTransformForm, TRANSFORM_FORM_RULES, type TransformJobKind } from "@tsukeai/shared";
+import {
+  checkTransformForm,
+  getTransformPublicErrorCode,
+  getTransformRetryPolicy,
+  getTransformUserAction,
+  TRANSFORM_FORM_RULES,
+  type TransformFailureReason,
+  type TransformJobKind,
+  type TransformPublicErrorCode,
+  type TransformUserAction,
+} from "@tsukeai/shared";
 
 export type LlmAdapterBindings = {
   LLM_API_KEY?: string;
@@ -26,7 +36,8 @@ export type TransformTextResponse = {
   durationMs: number;
 };
 
-export type LlmAdapterErrorCode =
+export type LlmAdapterErrorCode = Extract<
+  TransformFailureReason,
   | "configuration_error"
   | "cost_limit_exceeded"
   | "input_limit_exceeded"
@@ -37,19 +48,20 @@ export type LlmAdapterErrorCode =
   | "provider_unavailable"
   | "provider_rejected"
   | "invalid_provider_response"
-  | "validation_failed";
+  | "validation_failed"
+>;
 
 export type TransformFailureJobState = "failed" | "rejected";
 
-export type TransformFailureUserAction = "retry_later" | "revise_input";
+export type TransformFailureUserAction = TransformUserAction;
 
-export type TransformFailurePublicCode = "transform_failed" | "transform_input_rejected";
+export type TransformFailurePublicCode = TransformPublicErrorCode;
 
 export type TransformFailureClassification = {
   jobState: TransformFailureJobState;
   userAction: TransformFailureUserAction;
   publicCode: TransformFailurePublicCode;
-  httpStatus: 422 | 503;
+  httpStatus: 422 | 429 | 503;
   logCode: LlmAdapterErrorCode;
   retryable: boolean;
 };
@@ -232,14 +244,18 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
 }
 
 export function classifyTransformFailure(error: LlmAdapterError): TransformFailureClassification {
+  const publicCode = getTransformPublicErrorCode(error.code);
+  const userAction = getTransformUserAction(error.code);
+  const retryable = getTransformRetryPolicy(error.code) === "server_retryable";
+
   if (error.code === "prompt_injection_detected") {
     return {
       jobState: "rejected",
-      userAction: "revise_input",
-      publicCode: "transform_input_rejected",
+      userAction,
+      publicCode,
       httpStatus: 422,
       logCode: error.code,
-      retryable: false,
+      retryable,
     };
   }
 
@@ -252,21 +268,21 @@ export function classifyTransformFailure(error: LlmAdapterError): TransformFailu
   ) {
     return {
       jobState: "rejected",
-      userAction: "revise_input",
-      publicCode: "transform_input_rejected",
-      httpStatus: 422,
+      userAction,
+      publicCode,
+      httpStatus: publicCode === "transform_limit_exceeded" ? 429 : 422,
       logCode: error.code,
-      retryable: false,
+      retryable,
     };
   }
 
   return {
     jobState: "failed",
-    userAction: "retry_later",
-    publicCode: "transform_failed",
+    userAction,
+    publicCode,
     httpStatus: 503,
     logCode: error.code,
-    retryable: error.retryable,
+    retryable,
   };
 }
 

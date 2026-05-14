@@ -1,6 +1,7 @@
 import {
-  type ApiErrorCode,
   checkTransformForm,
+  getTransformRetryPolicy,
+  type ApiErrorCode,
   type PostDto,
   type ReplyDto,
   type TimelineItemDto,
@@ -369,7 +370,7 @@ async function sha256Hex(value: string): Promise<string> {
 }
 
 function toRetryPolicy(classification: TransformFailureClassification): TransformRetryPolicy {
-  return classification.retryable ? "server_retryable" : "client_revisable";
+  return getTransformRetryPolicy(classification.logCode);
 }
 
 function toTransformJobDto(row: TransformJobRow): TransformJobDto {
@@ -744,6 +745,19 @@ async function publishPostTransformJob(
   return sql.begin(async (transaction) => {
     const publicConversionId = crypto.randomUUID();
     const threadId = crypto.randomUUID();
+    const [runnableJob] = await transaction<{ id: string }[]>`
+      select id::text
+      from transform_jobs
+      where
+        id = ${job.id}::uuid
+        and state = 'processing'
+        and public_conversion_id is null
+      for update
+    `;
+
+    if (!runnableJob) {
+      return undefined;
+    }
 
     await transaction`
       insert into threads (id)
@@ -782,6 +796,8 @@ async function publishPostTransformJob(
         model = ${model},
         updated_at = now()
       where id = ${job.id}::uuid
+        and state = 'processing'
+        and public_conversion_id is null
       returning
         id::text,
         account_id::text,
@@ -820,6 +836,20 @@ async function publishReplyTransformJob(
   }
 
   return sql.begin(async (transaction) => {
+    const [runnableJob] = await transaction<{ id: string }[]>`
+      select id::text
+      from transform_jobs
+      where
+        id = ${job.id}::uuid
+        and state = 'processing'
+        and public_conversion_id is null
+      for update
+    `;
+
+    if (!runnableJob) {
+      return undefined;
+    }
+
     const [parentPost] = await transaction<ReplyParentPostRow[]>`
       select
         p.id::text,
@@ -872,6 +902,8 @@ async function publishReplyTransformJob(
         model = ${model},
         updated_at = now()
       where id = ${job.id}::uuid
+        and state = 'processing'
+        and public_conversion_id is null
       returning
         id::text,
         account_id::text,
@@ -939,7 +971,10 @@ async function markTransformJobFailed(
       duration_ms = ${durationMs},
       model = ${model ?? null},
       updated_at = now()
-    where id = ${jobId}::uuid
+    where
+      id = ${jobId}::uuid
+      and state = 'processing'
+      and public_conversion_id is null
     returning
       id::text,
       account_id::text,
@@ -961,7 +996,7 @@ async function markTransformJobFailed(
       to_char(updated_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as updated_at
   `;
 
-  return row;
+  return row ?? selectTransformJob(sql, jobId);
 }
 
 async function runTransformJob(
@@ -1084,9 +1119,13 @@ async function waitForTransformJob(
 function responseStatusForTransformJob(
   job: TransformJobRow,
   created: boolean,
-): 200 | 201 | 202 | 422 | 503 {
+): 200 | 201 | 202 | 422 | 429 | 503 {
   if (job.state === "succeeded") {
     return created ? 201 : 200;
+  }
+
+  if (job.error_code === "transform_limit_exceeded") {
+    return 429;
   }
 
   if (job.state === "rejected") {
