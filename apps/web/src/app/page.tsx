@@ -45,8 +45,10 @@ type PublicReply = {
   createdAt: IsoDateTimeString;
 };
 export type WriteActionState = {
-  status: "idle" | "success" | "error";
+  status: "idle" | "pending" | "success" | "error";
   message: string;
+  jobId?: EntityId;
+  target?: WriteTarget;
 };
 type WriteTarget = "post" | "reply";
 type PublishedWriteResponse = {
@@ -243,8 +245,10 @@ function toWriteActionState(
 
   if (response.status === 202 || isActiveTransformJob(body)) {
     return {
-      status: "success",
-      message: "投稿を受け付けました。変換完了後にタイムラインへ表示されます。",
+      status: "pending",
+      message: "変換中です。完了するとタイムラインに反映されます。",
+      ...(isTransformJobResponse(body) ? { jobId: body.job.id } : {}),
+      target,
     };
   }
 
@@ -269,7 +273,7 @@ function isSucceededTransformJob(
   body: PublishedWriteResponse | TransformJobResponseDto | undefined,
   target: WriteTarget,
 ) {
-  if (!body || typeof body !== "object" || !("job" in body)) {
+  if (!isTransformJobResponse(body)) {
     return false;
   }
 
@@ -280,11 +284,17 @@ function isSucceededTransformJob(
 }
 
 function isActiveTransformJob(body: PublishedWriteResponse | TransformJobResponseDto | undefined) {
-  if (!body || typeof body !== "object" || !("job" in body)) {
+  if (!isTransformJobResponse(body)) {
     return false;
   }
 
   return body.job.state === "queued" || body.job.state === "processing";
+}
+
+function isTransformJobResponse(
+  body: PublishedWriteResponse | TransformJobResponseDto | undefined,
+): body is TransformJobResponseDto {
+  return Boolean(body && typeof body === "object" && "job" in body);
 }
 
 function toErrorMessage(error: unknown) {

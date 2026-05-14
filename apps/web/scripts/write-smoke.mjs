@@ -3,6 +3,9 @@ import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
 const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
+const transformJobRouteSource = await readWorkspaceFile(
+  "apps/web/src/app/api/transform-jobs/[id]/route.ts",
+);
 const apiSource = await readWorkspaceFile("apps/api/src/index.ts");
 const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
 const rootPackageJson = JSON.parse(await readWorkspaceFile("package.json"));
@@ -57,10 +60,9 @@ assertIncludes(pageSource, 'revalidatePath("/")');
 assertIncludes(pageSource, 'message: "本文を入力してください。"');
 assertIncludes(pageSource, '"投稿しました。"');
 assertIncludes(pageSource, '"返信しました。"');
-assertIncludes(
-  pageSource,
-  'message: "投稿を受け付けました。変換完了後にタイムラインへ表示されます。"',
-);
+assertIncludes(pageSource, 'message: "変換中です。完了するとタイムラインに反映されます。"');
+assertIncludes(pageSource, 'status: "pending"');
+assertIncludes(pageSource, "jobId: body.job.id");
 
 assertIncludes(pageSource, "<PostComposer action={createPost} />");
 assertIncludes(pageSource, "<ReplyComposer");
@@ -89,7 +91,8 @@ assertIncludes(apiSource, "Published text writes are disabled.");
 
 assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
-assertIncludes(postFormsSource, 'import { useActionState } from "react";');
+assertIncludes(postFormsSource, 'import { useActionState, useEffect, useState } from "react";');
+assertIncludes(postFormsSource, 'import { useRouter } from "next/navigation";');
 assertIncludes(postFormsSource, 'import { useFormStatus } from "react-dom";');
 assertIncludes(
   postFormsSource,
@@ -104,7 +107,12 @@ assertIncludes(postFormsSource, "disabled={pending}");
 assertIncludes(postFormsSource, 'pendingLabel="投稿中..."');
 assertIncludes(postFormsSource, 'pendingLabel="返信中..."');
 assertIncludes(postFormsSource, 'role={state.status === "error" ? "alert" : "status"}');
+assertIncludes(postFormsSource, "useTransformJobFeedback");
+assertIncludes(postFormsSource, "router.refresh()");
+assertIncludes(postFormsSource, "fetch(`/api/transform-jobs/$");
 assertNoLlmDependency(postFormsSource, "apps/web/src/app/post-forms.tsx");
+assertIncludes(transformJobRouteSource, "proxyApiRequest(request, `/api/transform-jobs/$");
+assertNoLlmDependency(transformJobRouteSource, "apps/web/src/app/api/transform-jobs/[id]/route.ts");
 assertNoRuntimeDependency(webPackageJson);
 assertNoLlmScriptDependency(webPackageJson);
 
