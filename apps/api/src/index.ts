@@ -1,7 +1,17 @@
+import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/server";
 import {
+  generateAuthenticationOptions,
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+  verifyRegistrationResponse,
+  type WebAuthnCredential,
+} from "@simplewebauthn/server";
+import {
+  type AccountDto,
+  type ApiErrorCode,
+  type CurrentSessionResponseDto,
   checkTransformForm,
   getTransformRetryPolicy,
-  type ApiErrorCode,
   type PostDto,
   type ReplyDto,
   type TimelineItemDto,
@@ -14,10 +24,14 @@ import {
   type TransformPublicErrorCode,
   type TransformRetryPolicy,
   type TransformUserAction,
+  type WebAuthnAuthenticationOptionsResponseDto,
+  type WebAuthnAuthenticationVerifyResponseDto,
+  type WebAuthnRegistrationOptionsResponseDto,
+  type WebAuthnRegistrationVerifyResponseDto,
 } from "@tsukeai/shared";
 import type { Context } from "hono";
 import { Hono } from "hono";
-import { getCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import postgres from "postgres";
 import {
@@ -32,6 +46,9 @@ import {
 type Bindings = LlmAdapterBindings & {
   API_ALLOWED_ORIGINS?: string;
   HYPERDRIVE: Hyperdrive;
+  PUBLIC_WEB_ORIGIN?: string;
+  RP_ID?: string;
+  RP_NAME?: string;
   SESSION_COOKIE_NAME?: string;
   SESSION_SECRET?: string;
   WRITE_SMOKE_FIXED_PUBLIC_TEXT?: string;
@@ -156,8 +173,39 @@ type ReplyParentPostRow = {
   public_text: string;
 };
 
+type ChallengeRow = {
+  id: string;
+  kind: "registration" | "authentication";
+  challenge: string;
+  webauthn_user_id: string | null;
+  display_name: string | null;
+  handle: string | null;
+};
+
+type CredentialRow = {
+  id: string;
+  account_id: string;
+  account_display_name: string;
+  account_handle: string | null;
+  public_key: Uint8Array | ArrayBuffer | string;
+  counter: number | string;
+  transports: unknown;
+  device_type: string;
+  backed_up: boolean;
+};
+
+type SessionAccountRow = {
+  id: string;
+  display_name: string;
+  handle: string | null;
+};
+
 const LOCAL_WEB_ORIGIN = "http://localhost:3000";
 const DEFAULT_SESSION_COOKIE_NAME = "__Host-tsukeai_session";
+const LOCAL_SESSION_COOKIE_NAME = "tsukeai_session";
+const DEFAULT_RP_NAME = "tsukeai";
+const CHALLENGE_TTL_SECONDS = 300;
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const DEFAULT_TIMELINE_LIMIT = 20;
 const MAX_TIMELINE_LIMIT = 50;
 const MAX_CLIENT_KEY_LENGTH = 128;
@@ -165,7 +213,7 @@ const MAX_TRANSFORM_JOBS_PER_HOUR = 20;
 const TRANSFORM_SYNC_WAIT_MS = 900;
 const PROCESSING_STALE_AFTER_SECONDS = 90;
 const ALLOWED_METHODS = ["GET", "POST", "DELETE", "OPTIONS"];
-const ALLOWED_HEADERS = ["Content-Type", "Authorization"];
+const ALLOWED_HEADERS = ["Content-Type", "Authorization", "Idempotency-Key"];
 const PUBLIC_TIMELINE_CACHE_CONTROL = "no-store";
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -195,6 +243,40 @@ function createSql(connectionString: string) {
     fetch_types: false,
     prepare: false,
   });
+}
+
+function toAccountDto(row: SessionAccountRow | CredentialRow): AccountDto {
+  const handle = "account_handle" in row ? row.account_handle : row.handle;
+
+  return {
+    id: "account_id" in row ? row.account_id : row.id,
+    displayName: "account_display_name" in row ? row.account_display_name : row.display_name,
+    ...(handle ? { handle } : {}),
+  };
+}
+
+function getPublicWebOrigin(c: AppContext): URL {
+  const value = c.env.PUBLIC_WEB_ORIGIN?.trim() || LOCAL_WEB_ORIGIN;
+
+  try {
+    return new URL(value);
+  } catch {
+    throw new Error("PUBLIC_WEB_ORIGIN must be an absolute URL.");
+  }
+}
+
+function getRpId(c: AppContext): string {
+  return c.env.RP_ID?.trim() || getPublicWebOrigin(c).hostname;
+}
+
+function getSessionCookieName(c: AppContext): string {
+  if (c.env.SESSION_COOKIE_NAME?.trim()) {
+    return c.env.SESSION_COOKIE_NAME.trim();
+  }
+
+  return getPublicWebOrigin(c).protocol === "http:"
+    ? LOCAL_SESSION_COOKIE_NAME
+    : DEFAULT_SESSION_COOKIE_NAME;
 }
 
 function allowedOrigins(value: string | undefined): string[] {
@@ -250,6 +332,16 @@ function encodeBase64Url(value: string): string {
   return btoa(value).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
+function encodeBytesBase64Url(value: Uint8Array): string {
+  let binary = "";
+
+  for (const byte of value) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+
 function decodeBase64Url(value: string): string {
   const base64 = value.replaceAll("-", "+").replaceAll("_", "/");
   const paddingLength = (4 - (base64.length % 4)) % 4;
@@ -301,7 +393,26 @@ function signaturesMatch(actual: string, expected: string): boolean {
   return difference === 0;
 }
 
-async function getSessionAccountId(
+async function signSessionId(
+  sessionId: string,
+  secret: string | undefined,
+): Promise<string | undefined> {
+  if (!secret) {
+    return undefined;
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  return toBase64Url(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(sessionId)));
+}
+
+async function getSignedSessionId(
   cookieValue: string | undefined,
   secret: string | undefined,
 ): Promise<string | undefined> {
@@ -315,40 +426,68 @@ async function getSessionAccountId(
     return undefined;
   }
 
-  const accountId = cookieValue.slice(0, separatorIndex);
+  const sessionId = cookieValue.slice(0, separatorIndex);
   const signature = cookieValue.slice(separatorIndex + 1);
 
-  if (!UUID_PATTERN.test(accountId)) {
+  if (!UUID_PATTERN.test(sessionId)) {
     return undefined;
   }
 
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const expectedSignature = toBase64Url(
-    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(accountId)),
-  );
+  const expectedSignature = await signSessionId(sessionId, secret);
 
-  return signaturesMatch(signature, expectedSignature) ? accountId : undefined;
+  return expectedSignature && signaturesMatch(signature, expectedSignature) ? sessionId : undefined;
 }
 
-async function activeAccountExists(
+async function activeSessionAccount(
   sql: ReturnType<typeof createSql>,
-  accountId: string,
-): Promise<boolean> {
-  const [row] = await sql<{ exists: boolean }[]>`
-    select exists (
-      select 1
-      from accounts
-      where id = ${accountId}::uuid and deleted_at is null
-    ) as exists
+  sessionId: string,
+): Promise<AccountDto | undefined> {
+  const [row] = await sql<SessionAccountRow[]>`
+    select
+      a.id::text,
+      a.display_name,
+      a.handle
+    from sessions s
+    join accounts a on a.id = s.account_id
+    where
+      s.id = ${sessionId}::uuid
+      and s.revoked_at is null
+      and s.expires_at > now()
+      and a.deleted_at is null
   `;
 
-  return row?.exists === true;
+  return row ? toAccountDto(row) : undefined;
+}
+
+async function getRequestSessionId(c: AppContext): Promise<string | undefined> {
+  const cookieName = getSessionCookieName(c);
+
+  return getSignedSessionId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+}
+
+async function getRequestSessionAccount(c: AppContext): Promise<AccountDto | undefined> {
+  const contextAccountId = c.get("accountId");
+
+  if (contextAccountId) {
+    return {
+      id: contextAccountId,
+      displayName: "",
+    };
+  }
+
+  const sessionId = await getRequestSessionId(c);
+
+  if (!sessionId) {
+    return undefined;
+  }
+
+  const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+  try {
+    return activeSessionAccount(sql, sessionId);
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
 }
 
 async function getRequestSessionAccountId(c: AppContext): Promise<string | undefined> {
@@ -358,9 +497,643 @@ async function getRequestSessionAccountId(c: AppContext): Promise<string | undef
     return contextAccountId;
   }
 
-  const cookieName = c.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME;
+  const account = await getRequestSessionAccount(c);
 
-  return getSessionAccountId(getCookie(c, cookieName), c.env.SESSION_SECRET);
+  return account?.id;
+}
+
+function normalizeOptionalHandle(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const handle = value.trim().replace(/^@/, "");
+
+  return handle.length > 0 ? handle : undefined;
+}
+
+function normalizeDisplayName(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const displayName = value.trim();
+
+  return displayName.length > 0 && displayName.length <= 80 ? displayName : undefined;
+}
+
+function byteaToUint8Array(value: Uint8Array | ArrayBuffer | string): Uint8Array<ArrayBuffer> {
+  if (value instanceof Uint8Array) {
+    const buffer = new ArrayBuffer(value.byteLength);
+    const bytes = new Uint8Array(buffer);
+
+    bytes.set(value);
+
+    return bytes;
+  }
+
+  if (value instanceof ArrayBuffer) {
+    return new Uint8Array(value);
+  }
+
+  const hex = value.startsWith("\\x") ? value.slice(2) : value;
+  const bytes = new Uint8Array(new ArrayBuffer(hex.length / 2));
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
+  }
+
+  return bytes;
+}
+
+function stringToUint8Array(value: string): Uint8Array<ArrayBuffer> {
+  const encoded = new TextEncoder().encode(value);
+  const bytes = new Uint8Array(new ArrayBuffer(encoded.byteLength));
+
+  bytes.set(encoded);
+
+  return bytes;
+}
+
+function parseTransports(value: unknown): WebAuthnCredential["transports"] {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value.filter(
+    (transport): transport is NonNullable<WebAuthnCredential["transports"]>[number] =>
+      typeof transport === "string",
+  );
+}
+
+async function createSessionCookie(
+  c: AppContext,
+  sql: postgres.Sql | postgres.TransactionSql,
+  accountId: string,
+) {
+  const sessionId = crypto.randomUUID();
+  const signature = await signSessionId(sessionId, c.env.SESSION_SECRET);
+
+  if (!signature) {
+    throw new Error("SESSION_SECRET is required to issue sessions.");
+  }
+
+  await sql`
+    insert into sessions (id, account_id, expires_at)
+    values (${sessionId}::uuid, ${accountId}::uuid, now() + (${SESSION_TTL_SECONDS} || ' seconds')::interval)
+  `;
+
+  const webOrigin = getPublicWebOrigin(c);
+
+  setCookie(c, getSessionCookieName(c), `${sessionId}.${signature}`, {
+    httpOnly: true,
+    secure: webOrigin.protocol !== "http:",
+    sameSite: "Lax",
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  });
+}
+
+function clearSessionCookie(c: AppContext) {
+  const webOrigin = getPublicWebOrigin(c);
+
+  deleteCookie(c, getSessionCookieName(c), {
+    secure: webOrigin.protocol !== "http:",
+    sameSite: "Lax",
+    path: "/",
+  });
+}
+
+async function parseJsonBody(c: AppContext): Promise<Record<string, unknown> | undefined> {
+  try {
+    const body = await c.req.json();
+
+    return body && typeof body === "object" && !Array.isArray(body)
+      ? (body as Record<string, unknown>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function handleCreateRegistrationOptions(c: AppContext) {
+  const body = await parseJsonBody(c);
+  const displayName = normalizeDisplayName(body?.displayName);
+  const handle = normalizeOptionalHandle(body?.handle);
+
+  if (!displayName) {
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message: "Display name is required.",
+        },
+      },
+      400,
+    );
+  }
+
+  const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+  try {
+    if (handle) {
+      const [row] = await sql<{ exists: boolean }[]>`
+        select exists (
+          select 1
+          from accounts
+          where lower(handle) = lower(${handle}) and deleted_at is null
+        ) as exists
+      `;
+
+      if (row?.exists) {
+        return c.json(
+          {
+            error: {
+              code: "conflict" satisfies ApiErrorCode,
+              message: "This handle is already in use.",
+            },
+          },
+          409,
+        );
+      }
+    }
+
+    const challengeId = crypto.randomUUID();
+    const webauthnUserIdBytes = stringToUint8Array(crypto.randomUUID());
+    const webauthnUserId = encodeBytesBase64Url(webauthnUserIdBytes);
+    const options = await generateRegistrationOptions({
+      rpName: c.env.RP_NAME?.trim() || DEFAULT_RP_NAME,
+      rpID: getRpId(c),
+      userName: handle ?? displayName,
+      userID: webauthnUserIdBytes,
+      userDisplayName: displayName,
+      attestationType: "none",
+      authenticatorSelection: {
+        residentKey: "required",
+        userVerification: "preferred",
+      },
+      supportedAlgorithmIDs: [-7, -257],
+    });
+
+    await sql`
+      insert into webauthn_challenges (
+        id,
+        kind,
+        challenge,
+        webauthn_user_id,
+        display_name,
+        handle,
+        expires_at
+      )
+      values (
+        ${challengeId}::uuid,
+        'registration',
+        ${options.challenge},
+        ${webauthnUserId},
+        ${displayName},
+        ${handle ?? null},
+        now() + (${CHALLENGE_TTL_SECONDS} || ' seconds')::interval
+      )
+    `;
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json({
+      challengeId,
+      options,
+    } satisfies WebAuthnRegistrationOptionsResponseDto);
+  } catch (error) {
+    console.error("Registration options failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "service_unavailable" satisfies ApiErrorCode,
+          message: "Registration could not be started.",
+        },
+      },
+      503,
+    );
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+async function handleVerifyRegistration(c: AppContext) {
+  const body = await parseJsonBody(c);
+  const challengeId = body?.challengeId;
+  const credential = body?.credential;
+
+  if (typeof challengeId !== "string" || !UUID_PATTERN.test(challengeId) || !credential) {
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message: "A valid challenge id and credential are required.",
+        },
+      },
+      400,
+    );
+  }
+
+  const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+  try {
+    const [challenge] = await sql<ChallengeRow[]>`
+      select id::text, kind, challenge, webauthn_user_id, display_name, handle
+      from webauthn_challenges
+      where
+        id = ${challengeId}::uuid
+        and kind = 'registration'
+        and consumed_at is null
+        and expires_at > now()
+    `;
+
+    if (!challenge?.display_name || !challenge.webauthn_user_id) {
+      return c.json(
+        {
+          error: {
+            code: "bad_request" satisfies ApiErrorCode,
+            message: "Registration challenge is invalid or expired.",
+          },
+        },
+        400,
+      );
+    }
+
+    const verification = await verifyRegistrationResponse({
+      response: credential as RegistrationResponseJSON,
+      expectedChallenge: challenge.challenge,
+      expectedOrigin: getPublicWebOrigin(c).origin,
+      expectedRPID: getRpId(c),
+      requireUserVerification: false,
+      supportedAlgorithmIDs: [-7, -257],
+    });
+
+    if (!verification.verified) {
+      return c.json(
+        {
+          error: {
+            code: "bad_request" satisfies ApiErrorCode,
+            message: "Registration credential could not be verified.",
+          },
+        },
+        400,
+      );
+    }
+
+    const result = await sql.begin(async (transaction) => {
+      if (challenge.handle) {
+        const [handleRow] = await transaction<{ exists: boolean }[]>`
+          select exists (
+            select 1
+            from accounts
+            where lower(handle) = lower(${challenge.handle}) and deleted_at is null
+          ) as exists
+        `;
+
+        if (handleRow?.exists) {
+          return undefined;
+        }
+      }
+
+      const accountId = crypto.randomUUID();
+      const {
+        credential: verifiedCredential,
+        credentialDeviceType,
+        credentialBackedUp,
+      } = verification.registrationInfo;
+
+      const [account] = await transaction<SessionAccountRow[]>`
+        insert into accounts (id, display_name, handle)
+        values (${accountId}::uuid, ${challenge.display_name}, ${challenge.handle})
+        returning id::text, display_name, handle
+      `;
+
+      await transaction`
+        insert into webauthn_credentials (
+          id,
+          account_id,
+          webauthn_user_id,
+          public_key,
+          counter,
+          transports,
+          device_type,
+          backed_up
+        )
+        values (
+          ${verifiedCredential.id},
+          ${accountId}::uuid,
+          ${challenge.webauthn_user_id},
+          ${verifiedCredential.publicKey},
+          ${verifiedCredential.counter},
+          ${JSON.stringify(verifiedCredential.transports ?? [])}::jsonb,
+          ${credentialDeviceType},
+          ${credentialBackedUp}
+        )
+      `;
+
+      await transaction`
+        update webauthn_challenges
+        set consumed_at = now()
+        where id = ${challengeId}::uuid
+      `;
+
+      await createSessionCookie(c, transaction, accountId);
+
+      return account ? toAccountDto(account) : undefined;
+    });
+
+    if (!result) {
+      return c.json(
+        {
+          error: {
+            code: "conflict" satisfies ApiErrorCode,
+            message: "This handle is already in use.",
+          },
+        },
+        409,
+      );
+    }
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json({
+      verified: true,
+      account: result,
+    } satisfies WebAuthnRegistrationVerifyResponseDto);
+  } catch (error) {
+    console.error("Registration verification failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message: "Registration credential could not be verified.",
+        },
+      },
+      400,
+    );
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+async function handleCreateAuthenticationOptions(c: AppContext) {
+  const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+  try {
+    const challengeId = crypto.randomUUID();
+    const options = await generateAuthenticationOptions({
+      rpID: getRpId(c),
+      userVerification: "preferred",
+    });
+
+    await sql`
+      insert into webauthn_challenges (id, kind, challenge, expires_at)
+      values (
+        ${challengeId}::uuid,
+        'authentication',
+        ${options.challenge},
+        now() + (${CHALLENGE_TTL_SECONDS} || ' seconds')::interval
+      )
+    `;
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json({
+      challengeId,
+      options,
+    } satisfies WebAuthnAuthenticationOptionsResponseDto);
+  } catch (error) {
+    console.error("Authentication options failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "service_unavailable" satisfies ApiErrorCode,
+          message: "Login could not be started.",
+        },
+      },
+      503,
+    );
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+async function handleVerifyAuthentication(c: AppContext) {
+  const body = await parseJsonBody(c);
+  const challengeId = body?.challengeId;
+  const credential = body?.credential;
+  const credentialId =
+    credential && typeof credential === "object" && "id" in credential
+      ? (credential as { id?: unknown }).id
+      : undefined;
+
+  if (
+    typeof challengeId !== "string" ||
+    !UUID_PATTERN.test(challengeId) ||
+    typeof credentialId !== "string"
+  ) {
+    return c.json(
+      {
+        error: {
+          code: "bad_request" satisfies ApiErrorCode,
+          message: "A valid challenge id and credential are required.",
+        },
+      },
+      400,
+    );
+  }
+
+  const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+  try {
+    const [challenge] = await sql<ChallengeRow[]>`
+      select id::text, kind, challenge, webauthn_user_id, display_name, handle
+      from webauthn_challenges
+      where
+        id = ${challengeId}::uuid
+        and kind = 'authentication'
+        and consumed_at is null
+        and expires_at > now()
+    `;
+
+    if (!challenge) {
+      return c.json(
+        {
+          error: {
+            code: "bad_request" satisfies ApiErrorCode,
+            message: "Login challenge is invalid or expired.",
+          },
+        },
+        400,
+      );
+    }
+
+    const [storedCredential] = await sql<CredentialRow[]>`
+      select
+        wc.id,
+        wc.account_id::text,
+        a.display_name as account_display_name,
+        a.handle as account_handle,
+        wc.public_key,
+        wc.counter,
+        wc.transports,
+        wc.device_type,
+        wc.backed_up
+      from webauthn_credentials wc
+      join accounts a on a.id = wc.account_id
+      where wc.id = ${credentialId} and a.deleted_at is null
+    `;
+
+    if (!storedCredential) {
+      return c.json(
+        {
+          error: {
+            code: "unauthorized" satisfies ApiErrorCode,
+            message: "Login credential was not found.",
+          },
+        },
+        401,
+      );
+    }
+
+    const verification = await verifyAuthenticationResponse({
+      response: credential as AuthenticationResponseJSON,
+      expectedChallenge: challenge.challenge,
+      expectedOrigin: getPublicWebOrigin(c).origin,
+      expectedRPID: getRpId(c),
+      requireUserVerification: false,
+      credential: {
+        id: storedCredential.id,
+        publicKey: byteaToUint8Array(storedCredential.public_key),
+        counter: Number(storedCredential.counter),
+        transports: parseTransports(storedCredential.transports),
+      },
+    });
+
+    if (!verification.verified) {
+      return c.json(
+        {
+          error: {
+            code: "unauthorized" satisfies ApiErrorCode,
+            message: "Login credential could not be verified.",
+          },
+        },
+        401,
+      );
+    }
+
+    await sql.begin(async (transaction) => {
+      await transaction`
+        update webauthn_credentials
+        set
+          counter = ${verification.authenticationInfo.newCounter},
+          updated_at = now()
+        where id = ${storedCredential.id}
+      `;
+
+      await transaction`
+        update webauthn_challenges
+        set consumed_at = now()
+        where id = ${challengeId}::uuid
+      `;
+
+      await createSessionCookie(c, transaction, storedCredential.account_id);
+    });
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json({
+      verified: true,
+      account: toAccountDto(storedCredential),
+    } satisfies WebAuthnAuthenticationVerifyResponseDto);
+  } catch (error) {
+    console.error("Authentication verification failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "unauthorized" satisfies ApiErrorCode,
+          message: "Login credential could not be verified.",
+        },
+      },
+      401,
+    );
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
+}
+
+async function handleCurrentSession(c: AppContext) {
+  try {
+    const account = await getRequestSessionAccount(c);
+    const response: CurrentSessionResponseDto = account
+      ? {
+          authenticated: true,
+          account,
+        }
+      : {
+          authenticated: false,
+        };
+
+    c.header("Cache-Control", "no-store");
+
+    return c.json(response);
+  } catch (error) {
+    console.error("Current session lookup failed", toSafeLogError(error));
+
+    return c.json(
+      {
+        error: {
+          code: "service_unavailable" satisfies ApiErrorCode,
+          message: "Session is temporarily unavailable.",
+        },
+      },
+      503,
+    );
+  }
+}
+
+async function handleDeleteCurrentSession(c: AppContext) {
+  const sessionId = await getRequestSessionId(c);
+
+  if (sessionId) {
+    const sql = createSql(c.env.HYPERDRIVE.connectionString);
+
+    try {
+      await sql`
+        update sessions
+        set revoked_at = now()
+        where id = ${sessionId}::uuid and revoked_at is null
+      `;
+    } catch (error) {
+      console.error("Session revocation failed", toSafeLogError(error));
+
+      return c.json(
+        {
+          error: {
+            code: "service_unavailable" satisfies ApiErrorCode,
+            message: "Session could not be closed.",
+          },
+        },
+        503,
+      );
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  }
+
+  clearSessionCookie(c);
+  c.header("Cache-Control", "no-store");
+
+  return c.json({ authenticated: false } satisfies CurrentSessionResponseDto);
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -983,12 +1756,7 @@ async function publishTransformJob(
   attempts: number,
   durationMs: number,
 ): Promise<TransformJobRow | undefined> {
-  const acceptedPublicText = assertPublishableTransformText(
-    job.kind,
-    publicText,
-    attempts,
-    model,
-  );
+  const acceptedPublicText = assertPublishableTransformText(job.kind, publicText, attempts, model);
 
   if (job.kind === "reply_77") {
     return publishReplyTransformJob(sql, job, acceptedPublicText, model, attempts, durationMs);
@@ -1745,9 +2513,9 @@ app.use("*", async (c, next) => {
     return next();
   }
 
-  const accountId = await getRequestSessionAccountId(c);
+  const sessionId = await getRequestSessionId(c);
 
-  if (!accountId) {
+  if (!sessionId) {
     return c.json(
       {
         error: {
@@ -1764,8 +2532,10 @@ app.use("*", async (c, next) => {
   try {
     sql = createSql(c.env.HYPERDRIVE.connectionString);
 
-    if (await activeAccountExists(sql, accountId)) {
-      c.set("accountId", accountId);
+    const account = await activeSessionAccount(sql, sessionId);
+
+    if (account) {
+      c.set("accountId", account.id);
 
       return next();
     }
@@ -1854,6 +2624,30 @@ app.get("/api/db/health", async (c) => {
       console.error("Failed to close database health check client", toSafeLogError(error));
     }
   }
+});
+
+app.post("/api/auth/registration/options", (c) => {
+  return handleCreateRegistrationOptions(c);
+});
+
+app.post("/api/auth/registration/verify", (c) => {
+  return handleVerifyRegistration(c);
+});
+
+app.post("/api/auth/authentication/options", (c) => {
+  return handleCreateAuthenticationOptions(c);
+});
+
+app.post("/api/auth/authentication/verify", (c) => {
+  return handleVerifyAuthentication(c);
+});
+
+app.get("/api/sessions/current", (c) => {
+  return handleCurrentSession(c);
+});
+
+app.delete("/api/sessions/current", (c) => {
+  return handleDeleteCurrentSession(c);
 });
 
 app.post("/api/transform-jobs", (c) => {

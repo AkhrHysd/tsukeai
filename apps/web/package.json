@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.9",
+    "@simplewebauthn/browser": "^13.3.0",
     "@tsukeai/shared": "workspace:*",
     "next": "^15.0.0",
     "react": "^19.0.0",

@@ -12,6 +12,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@simplewebauthn/server": "^13.3.0",
     "@tsukeai/shared": "workspace:*",
     "hono": "^4.7.0",
     "postgres": "^3.4.5"

@@ -36,6 +36,7 @@ assertIncludes(pageSource, "EntityId");
 assertIncludes(pageSource, "IsoDateTimeString");
 assertIncludes(pageSource, "TimelineResponseDto");
 assertIncludes(pageSource, 'import { getApiBaseUrl } from "../lib/api-base-url";');
+assertIncludes(pageSource, 'import { getCurrentSession } from "../lib/current-session";');
 assertIncludes(pageSource, 'export const dynamic = "force-dynamic";');
 assertIncludes(pageSource, 'new URL("/api/timeline?limit=20", apiBaseUrl)');
 assertIncludes(pageSource, 'Accept: "application/json"');
@@ -58,6 +59,7 @@ assertIncludes(pageSource, "{reply.author.displayName}");
 assertIncludes(pageSource, "{reply.publicText}");
 assertIncludes(pageSource, "function toPublicTimeline");
 assertIncludes(pageSource, "conversion.publicText ?? conversion.body ??");
+assertIncludes(pageSource, "投稿・返信・削除にはログインが必要です。");
 
 assertIncludes(apiBaseUrlSource, 'const DEFAULT_API_BASE_URL = "http://localhost:8787";');
 assertIncludes(apiBaseUrlSource, "process.env.API_BASE_URL");
@@ -117,6 +119,12 @@ async function assertReadSmokeRendersTimeline() {
   const requests = [];
   const apiServer = createServer((request, response) => {
     requests.push(request.url);
+
+    if (request.method === "GET" && request.url === "/api/sessions/current") {
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ authenticated: false }));
+      return;
+    }
 
     if (request.method !== "GET" || request.url !== "/api/timeline?limit=20") {
       response.writeHead(404, { "Content-Type": "application/json" });
@@ -205,7 +213,11 @@ async function assertReadSmokeRendersTimeline() {
     assertIncludes(html, "よるがあけゆく");
     assert(!html.includes("タイムラインを読み込めませんでした。"));
     assert(!html.includes("まだ公開句はありません。"));
-    assert.deepEqual(requests, ["/api/timeline?limit=20"]);
+    assert.deepEqual(requests.sort(), [
+      "/api/sessions/current",
+      "/api/sessions/current",
+      "/api/timeline?limit=20",
+    ]);
   } finally {
     if (next) {
       next.kill("SIGTERM");

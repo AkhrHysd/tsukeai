@@ -119,11 +119,14 @@ pnpm dev
 |---|---|---|---|
 | `HYPERDRIVE` | yes | Hyperdrive バインディング（wrangler.toml で設定） | — |
 | `SESSION_SECRET` | yes | セッション Cookie の HMAC 署名鍵 | — |
+| `PUBLIC_WEB_ORIGIN` | — | WebAuthn の expected origin | `http://localhost:3000` |
+| `RP_ID` | — | WebAuthn RP ID（未指定時は `PUBLIC_WEB_ORIGIN` の hostname） | — |
+| `RP_NAME` | — | WebAuthn RP 表示名 | `tsukeai` |
 | `LLM_API_KEY` | yes† | OpenAI 互換 API キー | — |
 | `LLM_BASE_URL` | yes† | チャット完了 API の絶対 URL（`http` / `https` のみ。コードに既定値はない） | — |
 | `LLM_MODEL` | yes† | そのエンドポイント向けのモデル ID（コードに既定値はない） | — |
 | `API_ALLOWED_ORIGINS` | — | CORS 許可オリジン（カンマ区切り） | `http://localhost:3000` |
-| `SESSION_COOKIE_NAME` | — | セッション Cookie 名 | `__Host-tsukeai_session` |
+| `SESSION_COOKIE_NAME` | — | セッション Cookie 名。本番 HTTPS は `__Host-tsukeai_session`、local HTTP は `tsukeai_session` を使う | origin に応じて自動 |
 | `LLM_TIMEOUT_MS` | — | LLM リクエストタイムアウト (ms) | `8000` |
 | `LLM_MAX_INPUT_CHARS` | — | 入力文字数上限 | `1000` |
 | `LLM_MAX_OUTPUT_TOKENS` | — | 出力トークン上限 | `96` |

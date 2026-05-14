@@ -228,9 +228,7 @@ export function getTransformRetryPolicy(reason: TransformFailureReason): Transfo
 }
 
 export function getTransformUserAction(reason: TransformFailureReason): TransformUserAction {
-  return getTransformRetryPolicy(reason) === "server_retryable"
-    ? "retry_later"
-    : "revise_input";
+  return getTransformRetryPolicy(reason) === "server_retryable" ? "retry_later" : "revise_input";
 }
 
 export function getTransformPublicErrorCode(
@@ -313,10 +311,8 @@ export type BoundaryTransformRetryPolicy = TransformRetryPolicy;
 export type BoundaryTransformUserAction = TransformUserAction;
 export type BoundaryTransformPublicErrorCode = TransformPublicErrorCode;
 export type BoundaryTransformFailureReason = TransformFailureReason;
-export type BoundaryTransformServerRetryableFailureReason =
-  TransformServerRetryableFailureReason;
-export type BoundaryTransformClientRevisableFailureReason =
-  TransformClientRevisableFailureReason;
+export type BoundaryTransformServerRetryableFailureReason = TransformServerRetryableFailureReason;
+export type BoundaryTransformClientRevisableFailureReason = TransformClientRevisableFailureReason;
 export type BoundaryTransformJobErrorDto = TransformJobErrorDto;
 export type BoundaryTransformJobObservationDto = TransformJobObservationDto;
 export type BoundaryTransformJobDto = TransformJobDto;
@@ -453,6 +449,54 @@ export type AuthorDto = {
   handle?: string;
 };
 
+export type AccountDto = AuthorDto;
+
+export type CurrentSessionResponseDto =
+  | {
+      authenticated: true;
+      account: AccountDto;
+    }
+  | {
+      authenticated: false;
+    };
+
+export type WebAuthnRegistrationOptionsRequestDto = {
+  displayName: string;
+  handle?: string;
+};
+
+export type WebAuthnRegistrationOptionsResponseDto = {
+  challengeId: EntityId;
+  options: unknown;
+};
+
+export type WebAuthnRegistrationVerifyRequestDto = {
+  challengeId: EntityId;
+  credential: unknown;
+};
+
+export type WebAuthnRegistrationVerifyResponseDto = {
+  verified: true;
+  account: AccountDto;
+};
+
+export type WebAuthnAuthenticationOptionsRequestDto = Record<string, never>;
+
+export type WebAuthnAuthenticationOptionsResponseDto = {
+  challengeId: EntityId;
+  options: unknown;
+};
+
+export type WebAuthnAuthenticationVerifyRequestDto = {
+  challengeId: EntityId;
+  credential: unknown;
+};
+
+export type WebAuthnAuthenticationVerifyResponseDto = {
+  verified: true;
+  account: AccountDto;
+};
+
 export type PublicConversionTextDto =
   | {
       publicText: PublicTankaText;
@@ -507,6 +551,19 @@ export type BoundaryIsoDateTimeString = IsoDateTimeString;
 export type BoundaryTankaText = TankaText;
 export type BoundaryPublicTankaText = PublicTankaText;
 export type BoundaryAuthorDto = AuthorDto;
+export type BoundaryAccountDto = AccountDto;
+export type BoundaryCurrentSessionResponseDto = CurrentSessionResponseDto;
+export type BoundaryWebAuthnRegistrationOptionsRequestDto = WebAuthnRegistrationOptionsRequestDto;
+export type BoundaryWebAuthnRegistrationOptionsResponseDto = WebAuthnRegistrationOptionsResponseDto;
+export type BoundaryWebAuthnRegistrationVerifyRequestDto = WebAuthnRegistrationVerifyRequestDto;
+export type BoundaryWebAuthnRegistrationVerifyResponseDto = WebAuthnRegistrationVerifyResponseDto;
+export type BoundaryWebAuthnAuthenticationOptionsRequestDto =
+  WebAuthnAuthenticationOptionsRequestDto;
+export type BoundaryWebAuthnAuthenticationOptionsResponseDto =
+  WebAuthnAuthenticationOptionsResponseDto;
+export type BoundaryWebAuthnAuthenticationVerifyRequestDto = WebAuthnAuthenticationVerifyRequestDto;
+export type BoundaryWebAuthnAuthenticationVerifyResponseDto =
+  WebAuthnAuthenticationVerifyResponseDto;
 export type BoundaryPublicConversionTextDto = PublicConversionTextDto;
 export type BoundaryPostDto = PostDto;
 export type BoundaryReplyDto = ReplyDto;

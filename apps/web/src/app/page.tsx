@@ -1,12 +1,8 @@
-import type {
-  AuthorDto,
-  EntityId,
-  IsoDateTimeString,
-  TimelineResponseDto,
-} from "@tsukeai/shared";
+import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
+import { getCurrentSession } from "../lib/current-session";
 
 export const dynamic = "force-dynamic";
 
@@ -206,7 +202,11 @@ function getPublicText(conversion: { publicText?: string; body?: string }) {
 
 export default async function Home() {
   const apiBaseUrl = getApiBaseUrl();
-  const timelineResult = await getPublicTimeline(apiBaseUrl);
+  const [timelineResult, session] = await Promise.all([
+    getPublicTimeline(apiBaseUrl),
+    getCurrentSession(),
+  ]);
+  const currentAccount = session.authenticated ? session.account : undefined;
 
   return (
     <section className="timeline-page" aria-labelledby="page-title">
@@ -217,17 +217,23 @@ export default async function Home() {
         <p className="lead">変換済みの公開句だけをサーバーで取得して表示します。</p>
       </header>
 
-      <form className="composer" action={createPost} aria-label="投稿">
-        <label htmlFor="post-body">投稿する</label>
-        <textarea
-          id="post-body"
-          name="body"
-          rows={3}
-          required
-          placeholder="五七五に変換したい内容"
-        />
-        <button type="submit">投稿</button>
-      </form>
+      {currentAccount ? (
+        <form className="composer" action={createPost} aria-label="投稿">
+          <label htmlFor="post-body">投稿する</label>
+          <textarea
+            id="post-body"
+            name="body"
+            rows={3}
+            required
+            placeholder="五七五に変換したい内容"
+          />
+          <button type="submit">投稿</button>
+        </form>
+      ) : (
+        <p className="timeline-status" role="status">
+          投稿・返信・削除にはログインが必要です。
+        </p>
+      )}
 
       {timelineResult.status === "unavailable" ? (
         <p className="timeline-status" role="status">
@@ -251,11 +257,13 @@ export default async function Home() {
                     timeZone: "Asia/Tokyo",
                   }).format(new Date(item.post.createdAt))}
                 </time>
-                <form action={deletePublicConversion.bind(null, item.post.id)}>
-                  <button className="link-button" type="submit">
-                    削除
-                  </button>
-                </form>
+                {currentAccount?.id === item.post.author.id ? (
+                  <form action={deletePublicConversion.bind(null, item.post.id)}>
+                    <button className="link-button" type="submit">
+                      削除
+                    </button>
+                  </form>
+                ) : null}
               </div>
 
               <p className="post-card__body">{item.post.publicText}</p>
@@ -267,11 +275,13 @@ export default async function Home() {
                       <div className="reply__header">
                         <strong>{reply.author.displayName}</strong>
                         {reply.author.handle ? <span>@{reply.author.handle}</span> : null}
-                        <form action={deletePublicConversion.bind(null, reply.id)}>
-                          <button className="link-button" type="submit">
-                            削除
-                          </button>
-                        </form>
+                        {currentAccount?.id === reply.author.id ? (
+                          <form action={deletePublicConversion.bind(null, reply.id)}>
+                            <button className="link-button" type="submit">
+                              削除
+                            </button>
+                          </form>
+                        ) : null}
                       </div>
                       <p>{reply.publicText}</p>
                     </li>
@@ -279,22 +289,24 @@ export default async function Home() {
                 </ul>
               ) : null}
 
-              <form
-                className="reply-form"
-                action={createReply.bind(null, item.post.id)}
-                aria-label="返信"
-              >
-                <label htmlFor={`reply-body-${item.post.id}`}>返信する</label>
-                <div>
-                  <input
-                    id={`reply-body-${item.post.id}`}
-                    name="body"
-                    required
-                    placeholder="七七に変換したい内容"
-                  />
-                  <button type="submit">返信</button>
-                </div>
-              </form>
+              {currentAccount ? (
+                <form
+                  className="reply-form"
+                  action={createReply.bind(null, item.post.id)}
+                  aria-label="返信"
+                >
+                  <label htmlFor={`reply-body-${item.post.id}`}>返信する</label>
+                  <div>
+                    <input
+                      id={`reply-body-${item.post.id}`}
+                      name="body"
+                      required
+                      placeholder="七七に変換したい内容"
+                    />
+                    <button type="submit">返信</button>
+                  </div>
+                </form>
+              ) : null}
             </li>
           ))}
         </ul>

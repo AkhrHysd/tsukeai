@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { getCurrentSession } from "../lib/current-session";
+import { AuthControls } from "./auth-controls";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,11 +9,13 @@ export const metadata: Metadata = {
   description: "短歌の句を読み合い、LLM で形を整えるコミュニケーション",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const session = await getCurrentSession();
+
   return (
     <html lang="ja">
       <body>
@@ -27,8 +31,8 @@ export default function RootLayout({
               <nav className="site-nav" aria-label="主要ナビゲーション">
                 <a href="/">タイムライン</a>
                 <a href="/">投稿</a>
-                <a href="/">ログイン</a>
               </nav>
+              <AuthControls initialSession={session} />
             </div>
           </header>
           <main className="main-content">{children}</main>
