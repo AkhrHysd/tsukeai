@@ -38,3 +38,5 @@ playwright-report/
 
 # Orchestrator worktrees
 .worktrees/
+
+tsconfig.tsbuildinfo
