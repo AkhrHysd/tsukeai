@@ -1,7 +1,7 @@
 import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import Link from "next/link";
 import { getApiBaseUrl } from "../lib/api-base-url";
 import { getCurrentSession } from "../lib/current-session";
 import { ReplyThreadWrapper } from "./reply-thread-wrapper";
@@ -136,6 +136,14 @@ function getPublicText(conversion: { publicText?: string; body?: string }) {
   return conversion.publicText ?? conversion.body ?? "";
 }
 
+function formatTimelineTime(value: IsoDateTimeString) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Tokyo",
+  }).format(new Date(value));
+}
+
 export default async function Home() {
   const apiBaseUrl = getApiBaseUrl();
   const [timelineResult, session] = await Promise.all([
@@ -147,7 +155,9 @@ export default async function Home() {
   return (
     <section className="timeline-page" aria-labelledby="page-title">
       <TimelineRefreshOnReturn />
-      <h1 id="page-title" className="sr-only">tsukeai</h1>
+      <h1 id="page-title" className="sr-only">
+        tsukeai
+      </h1>
 
       {!currentAccount ? (
         <p className="timeline-status" role="status">
@@ -170,28 +180,31 @@ export default async function Home() {
               <p className="post-item__body">{item.post.publicText}</p>
               <div className="post-item__meta">
                 <span className="post-item__author">{item.post.author.displayName}</span>
-                <time className="post-item__time" dateTime={item.post.createdAt}>
-                  {new Intl.DateTimeFormat("ja-JP", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    timeZone: "Asia/Tokyo",
-                  }).format(new Date(item.post.createdAt))}
-                </time>
-                {currentAccount?.id === item.post.author.id ? (
-                  <form action={deletePublicConversion.bind(null, item.post.id)}>
-                    <button className="link-button" type="submit">
-                      削除
-                    </button>
-                  </form>
-                ) : null}
-              </div>
-
-              <div className="post-item__actions">
-                {currentAccount ? (
-                  <Link href={`/posts/${item.post.id}/reply`} className="reply-link">
-                    返歌する
-                  </Link>
-                ) : null}
+                <details className="context-menu">
+                  <summary className="context-menu__trigger" aria-label="投稿メニュー">
+                    <span aria-hidden="true">...</span>
+                  </summary>
+                  <div className="context-menu__panel">
+                    <time className="context-menu__info" dateTime={item.post.createdAt}>
+                      {formatTimelineTime(item.post.createdAt)}
+                    </time>
+                    {currentAccount ? (
+                      <Link href={`/posts/${item.post.id}/reply`} className="context-menu__item">
+                        返歌する
+                      </Link>
+                    ) : null}
+                    {currentAccount?.id === item.post.author.id ? (
+                      <form action={deletePublicConversion.bind(null, item.post.id)}>
+                        <button
+                          className="context-menu__item context-menu__item--danger"
+                          type="submit"
+                        >
+                          削除
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </details>
               </div>
 
               <ReplyThreadWrapper

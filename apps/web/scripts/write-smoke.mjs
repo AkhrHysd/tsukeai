@@ -50,7 +50,7 @@ assertIncludes(pageSource, 'revalidatePath("/")');
 
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
 assertIncludes(pageSource, "deletePublicConversion");
-assertIncludes(pageSource, 'className="link-button" type="submit"');
+assertIncludes(pageSource, 'className="context-menu__item context-menu__item--danger"');
 assertIncludes(pageSource, "削除");
 
 assertIncludes(composePageSource, "<PostComposer");

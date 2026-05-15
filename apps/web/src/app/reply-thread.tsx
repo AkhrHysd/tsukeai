@@ -16,33 +16,18 @@ type ReplyThreadProps = {
   onDelete: (id: EntityId) => void;
 };
 
-function ReplyBody({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const half = Math.ceil(text.length / 2);
-  const preview = text.slice(0, half);
-  const rest = text.slice(half);
-  const needsTruncation = rest.length > 0;
+function formatReplyTime(value: IsoDateTimeString) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Tokyo",
+  }).format(new Date(value));
+}
 
+function ReplyBody({ text }: { text: string }) {
   return (
     <div className="reply-body">
-      <p>
-        {preview}
-        {needsTruncation && !expanded ? (
-          <>
-            <span aria-hidden="true">…</span>
-            <button
-              type="button"
-              className="reply-expand"
-              onClick={() => setExpanded(true)}
-              aria-label="続きを表示"
-            >
-              続き
-            </button>
-          </>
-        ) : (
-          rest
-        )}
-      </p>
+      <p>{text}</p>
     </div>
   );
 }
@@ -65,32 +50,31 @@ export function ReplyThread({ replies, onDelete }: ReplyThreadProps) {
             <ReplyBody text={reply.publicText} />
             <div className="reply__meta">
               <span className="reply__author">{reply.author.displayName}</span>
-              <time className="reply__time" dateTime={reply.createdAt}>
-                {new Intl.DateTimeFormat("ja-JP", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                  timeZone: "Asia/Tokyo",
-                }).format(new Date(reply.createdAt))}
-              </time>
-              {reply.canDelete ? (
-                <button
-                  type="button"
-                  className="link-button reply__delete"
-                  onClick={() => onDelete(reply.id)}
-                >
-                  削除
-                </button>
-              ) : null}
+              <details className="context-menu context-menu--reply">
+                <summary className="context-menu__trigger" aria-label="返歌メニュー">
+                  <span aria-hidden="true">...</span>
+                </summary>
+                <div className="context-menu__panel">
+                  <time className="context-menu__info" dateTime={reply.createdAt}>
+                    {formatReplyTime(reply.createdAt)}
+                  </time>
+                  {reply.canDelete ? (
+                    <button
+                      type="button"
+                      className="context-menu__item context-menu__item--danger"
+                      onClick={() => onDelete(reply.id)}
+                    >
+                      削除
+                    </button>
+                  ) : null}
+                </div>
+              </details>
             </div>
           </li>
         ))}
       </ul>
       {hasMore ? (
-        <button
-          type="button"
-          className="reply-more"
-          onClick={() => setVisibleCount((n) => n + 1)}
-        >
+        <button type="button" className="reply-more" onClick={() => setVisibleCount((n) => n + 1)}>
           返信をもっと見る（あと {replies.length - visibleCount} 件）
         </button>
       ) : null}
