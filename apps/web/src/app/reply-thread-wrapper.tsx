@@ -8,6 +8,7 @@ type ReplyItem = {
   id: EntityId;
   author: { id: EntityId; displayName: string; handle?: string };
   publicText: string;
+  readingText?: string;
   createdAt: IsoDateTimeString;
   canDelete: boolean;
 };

@@ -242,6 +242,48 @@ a {
   color: var(--foreground);
 }
 
+.poem-tooltip {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  cursor: help;
+}
+
+.poem-tooltip[data-reading=""],
+.poem-tooltip:not([data-reading]) {
+  cursor: inherit;
+}
+
+.poem-tooltip[data-reading]:not([data-reading=""])::after {
+  content: attr(data-reading);
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  bottom: calc(100% + 8px);
+  max-width: min(280px, 80vw);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: 0 10px 26px rgba(25, 28, 33, 0.16);
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.poem-tooltip[data-reading]:not([data-reading=""]):hover::after,
+.poem-tooltip[data-reading]:not([data-reading=""]):focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .reply__meta {
   display: flex;
   align-items: baseline;

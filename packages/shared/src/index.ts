@@ -600,11 +600,13 @@ export type WebAuthnAuthenticationVerifyResponseDto = {
 export type PublicConversionTextDto =
   | {
       publicText: PublicTankaText;
+      readingText?: PublicTankaText;
       body?: never;
     }
   | {
       publicText?: never;
       body: PublicTankaText;
+      readingText?: PublicTankaText;
     };
 
 export type PostDto = PublicConversionTextDto & {

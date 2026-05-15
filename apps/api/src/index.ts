@@ -89,6 +89,7 @@ type TimelineRow = {
   post_author_display_name: string;
   post_author_handle: string | null;
   post_body: string;
+  post_reading_body: string | null;
   post_created_at: string;
   post_published_at: string;
   reply_id: string | null;
@@ -96,6 +97,7 @@ type TimelineRow = {
   reply_author_display_name: string | null;
   reply_author_handle: string | null;
   reply_body: string | null;
+  reply_reading_body: string | null;
   reply_created_at: string | null;
   has_next: boolean;
 };
@@ -112,6 +114,7 @@ type PublishedPostRow = {
   author_display_name: string;
   author_handle: string | null;
   body: string;
+  reading_body: string | null;
   created_at: string;
 };
 
@@ -1279,6 +1282,7 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
             ...(row.post_author_handle ? { handle: row.post_author_handle } : {}),
           },
           body: row.post_body,
+          ...(row.post_reading_body ? { readingText: row.post_reading_body } : {}),
           createdAt: row.post_created_at,
         },
         replies: [],
@@ -1306,6 +1310,7 @@ function toTimelineResponse(rows: TimelineRow[]): TimelineResponseDto {
           ...(row.reply_author_handle ? { handle: row.reply_author_handle } : {}),
         },
         body: row.reply_body,
+        ...(row.reply_reading_body ? { readingText: row.reply_reading_body } : {}),
         createdAt: row.reply_created_at,
       };
 
@@ -1331,6 +1336,7 @@ function toPostDto(row: PublishedPostRow): PostDto {
       ...(row.author_handle ? { handle: row.author_handle } : {}),
     },
     body: row.body,
+    ...(row.reading_body ? { readingText: row.reading_body } : {}),
     createdAt: row.created_at,
   };
 }
@@ -1345,6 +1351,7 @@ function toReplyDto(row: PublishedReplyRow): ReplyDto {
       ...(row.author_handle ? { handle: row.author_handle } : {}),
     },
     body: row.body,
+    ...(row.reading_body ? { readingText: row.reading_body } : {}),
     createdAt: row.created_at,
   };
 }
@@ -1620,6 +1627,7 @@ async function publishPostTransformJob(
   sql: ReturnType<typeof createSql>,
   job: TransformJobRow,
   publicText: string,
+  readingText: string,
   model: string,
   attempts: number,
   durationMs: number,
@@ -1654,6 +1662,7 @@ async function publishPostTransformJob(
         parent_public_conversion_id,
         kind,
         public_text,
+        reading_text,
         source_sha256
       )
       values (
@@ -1663,6 +1672,7 @@ async function publishPostTransformJob(
         null,
         'post',
         ${publicText},
+        ${readingText},
         ${job.input_sha256}
       )
     `;
@@ -1709,6 +1719,7 @@ async function publishReplyTransformJob(
   sql: ReturnType<typeof createSql>,
   job: TransformJobRow,
   publicText: string,
+  readingText: string,
   model: string,
   attempts: number,
   durationMs: number,
@@ -1760,6 +1771,7 @@ async function publishReplyTransformJob(
         parent_public_conversion_id,
         kind,
         public_text,
+        reading_text,
         source_sha256
       )
       values (
@@ -1769,6 +1781,7 @@ async function publishReplyTransformJob(
         ${parentPost.id}::uuid,
         'reply',
         ${publicText},
+        ${readingText},
         ${job.input_sha256}
       )
     `;
@@ -1815,17 +1828,38 @@ async function publishTransformJob(
   sql: ReturnType<typeof createSql>,
   job: TransformJobRow,
   publicText: string,
+  readingText: string,
   model: string,
   attempts: number,
   durationMs: number,
 ): Promise<TransformJobRow | undefined> {
   const acceptedPublicText = assertPublishableTransformText(job.kind, publicText, attempts, model);
+  const acceptedReadingText = checkTransformForm(
+    job.kind,
+    toHiraganaReadingText(readingText),
+  ).normalizedText;
 
   if (job.kind === "reply_77") {
-    return publishReplyTransformJob(sql, job, acceptedPublicText, model, attempts, durationMs);
+    return publishReplyTransformJob(
+      sql,
+      job,
+      acceptedPublicText,
+      acceptedReadingText,
+      model,
+      attempts,
+      durationMs,
+    );
   }
 
-  return publishPostTransformJob(sql, job, acceptedPublicText, model, attempts, durationMs);
+  return publishPostTransformJob(
+    sql,
+    job,
+    acceptedPublicText,
+    acceptedReadingText,
+    model,
+    attempts,
+    durationMs,
+  );
 }
 
 async function markTransformJobFailed(
@@ -1915,6 +1949,7 @@ async function runTransformJob(
       sql,
       claimedJob,
       publicText,
+      transformed.text,
       transformed.model,
       transformed.attempts,
       transformed.durationMs,
@@ -2163,6 +2198,18 @@ function assertPublishableTransformText(
   return formCheck.normalizedText;
 }
 
+function toHiraganaReadingText(text: string): string {
+  return Array.from(text, (char) => {
+    const codePoint = char.codePointAt(0);
+
+    if (codePoint !== undefined && codePoint >= 0x30a1 && codePoint <= 0x30f6) {
+      return String.fromCodePoint(codePoint - 0x60);
+    }
+
+    return char;
+  }).join("");
+}
+
 async function publishPublicTextPost(
   sql: ReturnType<typeof createSql>,
   accountId: string,
@@ -2186,6 +2233,7 @@ async function publishPublicTextPost(
         parent_public_conversion_id,
         kind,
         public_text,
+        reading_text,
         source_sha256
       )
       values (
@@ -2195,6 +2243,7 @@ async function publishPublicTextPost(
         null,
         'post',
         ${input.publicText},
+        null,
         ${sourceHash}
       )
       returning
@@ -2211,6 +2260,7 @@ async function publishPublicTextPost(
           where id = ${accountId}::uuid and deleted_at is null
         ) as author_handle,
         public_text as body,
+        reading_text as reading_body,
         to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as created_at
     `;
 
@@ -2265,6 +2315,7 @@ async function publishPublicTextReply(
         parent_public_conversion_id,
         kind,
         public_text,
+        reading_text,
         source_sha256
       )
       values (
@@ -2274,6 +2325,7 @@ async function publishPublicTextReply(
         ${parentPost.id}::uuid,
         'reply',
         ${input.publicText},
+        null,
         ${sourceHash}
       )
       returning
@@ -2291,6 +2343,7 @@ async function publishPublicTextReply(
           where id = ${accountId}::uuid and deleted_at is null
         ) as author_handle,
         public_text as body,
+        reading_text as reading_body,
         to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as created_at
     `;
 
@@ -2868,6 +2921,7 @@ app.get("/api/timeline", async (c) => {
           pa.display_name as post_author_display_name,
           pa.handle as post_author_handle,
           p.public_text as post_body,
+          p.reading_text as post_reading_body,
           to_char(
             p.created_at at time zone 'utc',
             'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
@@ -2916,6 +2970,7 @@ app.get("/api/timeline", async (c) => {
           ra.display_name as reply_author_display_name,
           ra.handle as reply_author_handle,
           r.public_text as reply_body,
+          r.reading_text as reply_reading_body,
           to_char(
             r.created_at at time zone 'utc',
             'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
@@ -2936,6 +2991,7 @@ app.get("/api/timeline", async (c) => {
         pp.post_author_display_name,
         pp.post_author_handle,
         pp.post_body,
+        pp.post_reading_body,
         pp.post_created_at,
         pp.post_published_at,
         pr.reply_id,
@@ -2943,6 +2999,7 @@ app.get("/api/timeline", async (c) => {
         pr.reply_author_display_name,
         pr.reply_author_handle,
         pr.reply_body,
+        pr.reply_reading_body,
         pr.reply_created_at,
         ps.has_next
       from page_posts pp

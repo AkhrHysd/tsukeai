@@ -20,6 +20,9 @@ database URL kept outside the repository; the Worker still reads through the
 - `transform_jobs`: transform state, idempotency scope, public result link,
   sanitized failure classification, and observation metadata.
 
+`0004_public_conversion_reading_text.sql` adds the optional `reading_text`
+column used to expose the kana reading for transformed public poems.
+
 ## Apply Minimal Entities
 
 From the repository root:

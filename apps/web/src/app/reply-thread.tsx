@@ -7,6 +7,7 @@ type ReplyItem = {
   id: EntityId;
   author: { id: EntityId; displayName: string; handle?: string };
   publicText: string;
+  readingText?: string;
   createdAt: IsoDateTimeString;
   canDelete: boolean;
 };
@@ -24,10 +25,12 @@ function formatReplyTime(value: IsoDateTimeString) {
   }).format(new Date(value));
 }
 
-function ReplyBody({ text }: { text: string }) {
+function ReplyBody({ text, readingText }: { text: string; readingText?: string }) {
   return (
     <div className="reply-body">
-      <p>{text}</p>
+      <p className="poem-tooltip" data-reading={readingText} title={readingText}>
+        {text}
+      </p>
     </div>
   );
 }
@@ -47,7 +50,7 @@ export function ReplyThread({ replies, onDelete }: ReplyThreadProps) {
       <ul className="reply-list" aria-label="返信">
         {visible.map((reply) => (
           <li className="reply" key={reply.id}>
-            <ReplyBody text={reply.publicText} />
+            <ReplyBody text={reply.publicText} readingText={reply.readingText} />
             <div className="reply__meta">
               <span className="reply__author">{reply.author.displayName}</span>
               <details className="context-menu context-menu--reply">
