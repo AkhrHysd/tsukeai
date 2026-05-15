@@ -44,6 +44,7 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
     variant === "sheet" ? router : undefined,
     onSuccess,
   );
+  const formDisabled = busy || feedbackState.status === "pending";
 
   async function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,13 +67,13 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
         name="body"
         rows={8}
         required
-        disabled={busy}
+        disabled={formDisabled}
         placeholder="五七五に変換したい内容"
       />
-      <button type="submit" disabled={busy}>
-        {busy ? "投稿中..." : "投稿"}
+      <button type="submit" disabled={formDisabled}>
+        {busy ? "投稿中..." : feedbackState.status === "pending" ? "変換中..." : "投稿"}
       </button>
-      <WriteMessage state={feedbackState} busy={busy} onRetry={retryPost} />
+      <WriteMessage state={feedbackState} busy={formDisabled} onRetry={retryPost} />
     </form>
   );
 }
@@ -94,6 +95,7 @@ export function ReplyComposer({
     variant === "sheet" ? router : undefined,
     onSuccess,
   );
+  const formDisabled = busy || feedbackState.status === "pending";
   const inputId = `reply-body-${postId}`;
 
   async function submitReply(event: FormEvent<HTMLFormElement>) {
@@ -131,13 +133,13 @@ export function ReplyComposer({
         name="body"
         rows={6}
         required
-        disabled={busy}
+        disabled={formDisabled}
         placeholder="七七に変換したい内容"
       />
-      <button type="submit" disabled={busy}>
-        {busy ? "返信中..." : "返信"}
+      <button type="submit" disabled={formDisabled}>
+        {busy ? "返信中..." : feedbackState.status === "pending" ? "変換中..." : "返信"}
       </button>
-      <WriteMessage state={feedbackState} busy={busy} onRetry={retryReply} />
+      <WriteMessage state={feedbackState} busy={formDisabled} onRetry={retryReply} />
     </form>
   );
 }

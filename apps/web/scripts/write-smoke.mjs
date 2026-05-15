@@ -92,9 +92,16 @@ assertIncludes(
   '<form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">',
 );
 assertIncludes(postFormsSource, 'name="body"');
-assertIncludes(postFormsSource, "disabled={busy}");
-assertIncludes(postFormsSource, 'busy ? "投稿中..." : "投稿"');
-assertIncludes(postFormsSource, 'busy ? "返信中..." : "返信"');
+assertIncludes(postFormsSource, 'const formDisabled = busy || feedbackState.status === "pending";');
+assertIncludes(postFormsSource, "disabled={formDisabled}");
+assertIncludes(
+  postFormsSource,
+  'busy ? "投稿中..." : feedbackState.status === "pending" ? "変換中..." : "投稿"',
+);
+assertIncludes(
+  postFormsSource,
+  'busy ? "返信中..." : feedbackState.status === "pending" ? "変換中..." : "返信"',
+);
 assertIncludes(postFormsSource, 'role={state.status === "error" ? "alert" : "status"}');
 assertIncludes(postFormsSource, "requestWrite(path, kind, target, new FormData(form))");
 assertIncludes(postFormsSource, "fetch(`/api/transform-jobs/$");
