@@ -370,6 +370,13 @@ a {
   opacity: 0.68;
 }
 
+.write-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
 .write-message {
   margin: 0;
   font-size: 14px;
@@ -383,6 +390,28 @@ a {
 
 .write-message--error {
   color: #9b2c2c;
+}
+
+.write-retry {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+  background: var(--panel);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.write-retry:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.write-retry:disabled {
+  cursor: wait;
+  opacity: 0.68;
 }
 
 /* ── Sheet page ── */

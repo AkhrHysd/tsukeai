@@ -12,6 +12,7 @@ type WriteActionState = {
   message: string;
   jobId?: EntityId;
   target?: WriteTarget;
+  canRetry?: boolean;
 };
 type PublishedWriteResponse = {
   post?: unknown;
@@ -22,8 +23,8 @@ type ApiResponse<T> = {
   body: T | undefined;
 };
 type ApiErrorBody = {
-  error?: { message?: unknown };
-  job?: { error?: { message?: unknown } };
+  error?: { message?: unknown; userAction?: unknown; retryPolicy?: unknown };
+  job?: { error?: { message?: unknown; userAction?: unknown; retryPolicy?: unknown } };
 };
 
 const initialWriteActionState: WriteActionState = {
@@ -48,6 +49,14 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
     await submitWrite(event.currentTarget, "/api/posts", "post_575", "post", setState, setBusy);
   }
 
+  async function retryPost() {
+    if (!formRef.current) {
+      return;
+    }
+
+    await submitWrite(formRef.current, "/api/posts", "post_575", "post", setState, setBusy);
+  }
+
   return (
     <form ref={formRef} className="composer" onSubmit={submitPost} aria-label="投稿">
       <label htmlFor="post-body">五七五に変換したい内容を入力</label>
@@ -62,7 +71,7 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
       <button type="submit" disabled={busy}>
         {busy ? "投稿中..." : "投稿"}
       </button>
-      <WriteMessage state={feedbackState} />
+      <WriteMessage state={feedbackState} busy={busy} onRetry={retryPost} />
     </form>
   );
 }
@@ -98,6 +107,21 @@ export function ReplyComposer({
     );
   }
 
+  async function retryReply() {
+    if (!formRef.current) {
+      return;
+    }
+
+    await submitWrite(
+      formRef.current,
+      `/api/posts/${postId}/replies`,
+      "reply_77",
+      "reply",
+      setState,
+      setBusy,
+    );
+  }
+
   return (
     <form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">
       <label htmlFor={inputId}>七七に変換したい内容を入力</label>
@@ -112,7 +136,7 @@ export function ReplyComposer({
       <button type="submit" disabled={busy}>
         {busy ? "返信中..." : "返信"}
       </button>
-      <WriteMessage state={feedbackState} />
+      <WriteMessage state={feedbackState} busy={busy} onRetry={retryReply} />
     </form>
   );
 }
@@ -145,6 +169,7 @@ async function submitWrite(
     setState({
       status: "error",
       message: toErrorMessage(error),
+      canRetry: isRetryableWriteError(error),
     });
   } finally {
     delete form.dataset.busy;
@@ -206,7 +231,10 @@ async function requestApi<T>(path: string, init: RequestInit): Promise<ApiRespon
       // Keep the status-only message when the API does not return JSON.
     }
 
-    throw new Error(message);
+    throw new ApiRequestError(
+      message,
+      isRetryableApiErrorBody(parseJsonResponse<ApiErrorBody>(responseText)),
+    );
   }
 
   return {
@@ -295,18 +323,33 @@ function isTransformJobResponse(
   return Boolean(body && typeof body === "object" && "job" in body);
 }
 
-function WriteMessage({ state }: { state: WriteActionState }) {
+function WriteMessage({
+  state,
+  busy,
+  onRetry,
+}: {
+  state: WriteActionState;
+  busy: boolean;
+  onRetry: () => void;
+}) {
   if (state.status === "idle" || !state.message) {
     return null;
   }
 
   return (
-    <p
-      className={`write-message write-message--${state.status}`}
-      role={state.status === "error" ? "alert" : "status"}
-    >
-      {state.message}
-    </p>
+    <div className={`write-feedback write-feedback--${state.status}`}>
+      <p
+        className={`write-message write-message--${state.status}`}
+        role={state.status === "error" ? "alert" : "status"}
+      >
+        {state.message}
+      </p>
+      {state.status === "error" && state.canRetry ? (
+        <button className="write-retry" type="button" disabled={busy} onClick={onRetry}>
+          再試行
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -377,6 +420,7 @@ function useTransformJobFeedback(
             message:
               body.job.error?.message ??
               "変換に失敗しました。内容を見直してもう一度お試しください。",
+            canRetry: body.job.error?.userAction === "retry_later",
           });
           return;
         }
@@ -385,6 +429,7 @@ function useTransformJobFeedback(
           setFeedbackState({
             status: "error",
             message: "変換が完了しませんでした。時間をおいて再度お試しください。",
+            canRetry: true,
           });
           return;
         }
@@ -399,6 +444,7 @@ function useTransformJobFeedback(
           setFeedbackState({
             status: "error",
             message: "変換状態を確認できませんでした。時間をおいて再度お試しください。",
+            canRetry: true,
           });
           return;
         }
@@ -423,4 +469,24 @@ function useTransformJobFeedback(
 
 function toErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "投稿に失敗しました。";
+}
+
+class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
+function isRetryableWriteError(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.retryable;
+}
+
+function isRetryableApiErrorBody(body: ApiErrorBody | undefined): boolean {
+  const error = body?.job?.error ?? body?.error;
+
+  return error?.userAction === "retry_later" || error?.retryPolicy === "server_retryable";
 }

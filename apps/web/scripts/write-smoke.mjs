@@ -3,9 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
 const composePageSource = await readWorkspaceFile("apps/web/src/app/compose/page.tsx");
-const replyPageSource = await readWorkspaceFile(
-  "apps/web/src/app/posts/[postId]/reply/page.tsx",
-);
+const replyPageSource = await readWorkspaceFile("apps/web/src/app/posts/[postId]/reply/page.tsx");
 const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
 const postsRouteSource = await readWorkspaceFile("apps/web/src/app/api/posts/route.ts");
 const repliesRouteSource = await readWorkspaceFile(
@@ -80,15 +78,18 @@ assertIncludes(apiSource, "job.account_id !== account.id");
 
 assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
-assertIncludes(postFormsSource, 'import { type FormEvent, useEffect, useState } from "react";');
+assertIncludes(
+  postFormsSource,
+  'import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";',
+);
 assertIncludes(postFormsSource, 'import { useRouter } from "next/navigation";');
 assertIncludes(
   postFormsSource,
-  '<form className="composer" onSubmit={submitPost} aria-label="投稿">',
+  '<form ref={formRef} className="composer" onSubmit={submitPost} aria-label="投稿">',
 );
 assertIncludes(
   postFormsSource,
-  '<form className="composer" onSubmit={submitReply} aria-label="返信">',
+  '<form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">',
 );
 assertIncludes(postFormsSource, 'name="body"');
 assertIncludes(postFormsSource, "disabled={busy}");
@@ -106,6 +107,9 @@ assertIncludes(postFormsSource, '"返信しました。"');
 assertIncludes(postFormsSource, 'message: "変換中です。完了するとタイムラインに反映されます。"');
 assertIncludes(postFormsSource, 'status: "pending"');
 assertIncludes(postFormsSource, "jobId: body.job.id");
+assertIncludes(postFormsSource, 'canRetry: body.job.error?.userAction === "retry_later"');
+assertIncludes(postFormsSource, 'className="write-retry"');
+assertIncludes(postFormsSource, "再試行");
 assertIncludes(postFormsSource, "useTransformJobFeedback");
 assertIncludes(postFormsSource, "router.refresh()");
 assertNoLlmDependency(postFormsSource, "apps/web/src/app/post-forms.tsx");

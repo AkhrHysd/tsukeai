@@ -1939,10 +1939,13 @@ async function runTransformJob(
 
     console.error("Transform job failed", {
       jobId: claimedJob.id,
+      kind: claimedJob.kind,
       inputHash: claimedJob.input_sha256,
       reason: classification.logCode,
       retryable: classification.retryable,
       attempts: adapterError.attempts,
+      durationMs: Date.now() - startedAt,
+      model: adapterError.model,
       error: toSafeLogError(adapterError),
     });
 

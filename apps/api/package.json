@@ -9,6 +9,7 @@
     "cf:deploy": "node scripts/wrangler-hyperdrive.mjs deploy",
     "lint": "pnpm --workspace-root exec biome check .",
     "migrate:up": "node scripts/migrate.mjs",
+    "test": "node --experimental-strip-types --test src/llm-adapter.test.ts",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {

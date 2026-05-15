@@ -84,15 +84,24 @@ export type TransformFailureClassification = {
 };
 
 export class LlmAdapterError extends Error {
+  readonly code: LlmAdapterErrorCode;
+  readonly retryable: boolean;
+  readonly attempts: number;
+  readonly model?: string;
+
   constructor(
-    readonly code: LlmAdapterErrorCode,
+    code: LlmAdapterErrorCode,
     message: string,
-    readonly retryable: boolean,
-    readonly attempts = 0,
-    readonly model?: string,
+    retryable: boolean,
+    attempts = 0,
+    model?: string,
   ) {
     super(message);
     this.name = "LlmAdapterError";
+    this.code = code;
+    this.retryable = retryable;
+    this.attempts = attempts;
+    this.model = model;
   }
 }
 
@@ -132,7 +141,7 @@ const MAX_OUTPUT_TOKENS = 256;
 const MIN_INPUT_CHARS = 1;
 const MAX_INPUT_CHARS = 4_000;
 const MIN_RETRIES = 0;
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 5;
 const PROMPT_INJECTION_PATTERNS = [
   /\bignore (?:all )?(?:previous|prior|above) (?:instructions|messages|prompt)\b/i,
   /\b(?:system|developer) (?:prompt|message|instructions?)\b/i,
@@ -238,21 +247,23 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
 
   return {
     async transformText(request: TransformTextRequest): Promise<TransformTextResponse> {
-      assertRequestWithinLimits(request, config);
+      const normalizedRequest = normalizeTransformTextRequest(request);
+
+      assertRequestWithinLimits(normalizedRequest, config);
 
       const startedAt = Date.now();
       let lastError: LlmAdapterError | undefined;
       let lastFormCheck: ReturnType<typeof checkTransformForm> | undefined;
       const maxAttempts = Math.min(
         config.maxAttempts,
-        request.remainingCallBudget ?? config.maxAttempts,
+        normalizedRequest.remainingCallBudget ?? config.maxAttempts,
       );
 
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
-          const raw = await requestCompletion(request, config, attempt, lastFormCheck);
-          const normalized = normalizeProviderOutput(request.kind, raw);
-          const formCheck = checkTransformForm(request.kind, normalized);
+          const raw = await requestCompletion(normalizedRequest, config, attempt, lastFormCheck);
+          const normalized = normalizeProviderOutput(normalizedRequest.kind, raw);
+          const formCheck = checkTransformForm(normalizedRequest.kind, normalized);
 
           if (formCheck.accepted) {
             return {
@@ -274,7 +285,7 @@ export function createLlmAdapter(bindings: LlmAdapterBindings) {
 
           throw new LlmAdapterError(
             "validation_failed",
-            `LLM provider response did not satisfy the required tanka form. kind=${request.kind}`,
+            `LLM provider response did not satisfy the required tanka form. kind=${normalizedRequest.kind}`,
             false,
             attempt,
             config.model,
@@ -542,6 +553,21 @@ function assertRequestWithinLimits(request: TransformTextRequest, config: LlmAda
   }
 }
 
+function normalizeTransformTextRequest(request: TransformTextRequest): TransformTextRequest {
+  return {
+    ...request,
+    input: normalizeLlmInput(request.input),
+    ...(request.parentPost
+      ? {
+          parentPost: {
+            ...request.parentPost,
+            publicText: normalizeLlmInput(request.parentPost.publicText),
+          },
+        }
+      : {}),
+  };
+}
+
 async function requestCompletion(
   request: TransformTextRequest,
   config: LlmAdapterConfig,
@@ -619,10 +645,12 @@ function buildMessages(
       ? []
       : ([
           "",
-          "Validation feedback:",
+          "Repair task:",
+          "Repair the previous output instead of starting over if possible.",
           `previous_normalized_output: ${JSON.stringify(lastFormCheck.normalizedText)}`,
           `expected_mora_counts: ${requiredMoraCounts}`,
           `actual_mora_counts: ${lastFormCheck.segments.map((s) => s.moraCount).join("-")}`,
+          `validation_errors: ${JSON.stringify(lastFormCheck.errors.map((error) => error.reason))}`,
           "Fix the output so that every line matches the expected mora count exactly.",
         ] as const);
 
@@ -771,6 +799,14 @@ function buildKanjiMessages(request: KanjiDisplayRequest, attempt: number): Chat
   ];
 }
 
+export function normalizeProviderOutputForTest(kind: TransformKind, text: string): string {
+  return normalizeProviderOutput(kind, text);
+}
+
+export function normalizeLlmInputForTest(input: string): string {
+  return normalizeLlmInput(input);
+}
+
 function normalizeProviderOutput(kind: TransformKind, text: string): string {
   const expectedLines = kind === "post_575" ? 3 : 2;
 
@@ -778,8 +814,9 @@ function normalizeProviderOutput(kind: TransformKind, text: string): string {
     .normalize("NFC")
     .replaceAll("\r\n", "\n")
     .split("\n")
-    .map((line) => line.trim())
+    .map(normalizeProviderOutputLine)
     .filter((line) => line.length > 0)
+    .filter((line) => JAPANESE_LINE_CONTENT_PATTERN.test(line))
     .slice(0, expectedLines)
     // Remove intra-line spaces (ASCII + Japanese full-width) that frequently
     // appear in model outputs and break mora counting.
@@ -789,11 +826,48 @@ function normalizeProviderOutput(kind: TransformKind, text: string): string {
 }
 
 function normalizeSourceText(input: string): string {
+  return normalizeLlmInput(input);
+}
+
+function normalizeLlmInput(input: string): string {
   return input
-    .normalize("NFC")
-    .replaceAll(/\p{Cc}/gu, (character) =>
-      character === "\n" || character === "\t" ? character : " ",
-    );
+    .normalize("NFKC")
+    .replaceAll(/\p{Cc}/gu, (character) => (character === "\n" || character === "\t" ? " " : " "))
+    .replaceAll(/\s+/gu, " ")
+    .trim();
+}
+
+const SURROUNDING_QUOTE_PAIRS = [
+  ["「", "」"],
+  ["『", "』"],
+  ["“", "”"],
+  ["‘", "’"],
+  ['"', '"'],
+  ["'", "'"],
+] as const;
+const LEADING_LIST_MARKER_PATTERN =
+  /^(?:[-*•・、。]+|\d+[.)．、:：-]+|[一二三四五六七八九十]+[.)．、:：-]+)\s*/u;
+const TRAILING_LABEL_PATTERN = /\s*(?:\[[^\]]+\]|\([^)]*\)|（[^）]*）)\s*$/u;
+const JAPANESE_LINE_CONTENT_PATTERN = /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]/u;
+
+function normalizeProviderOutputLine(line: string): string {
+  let normalized = line.trim().replace(LEADING_LIST_MARKER_PATTERN, "").trim();
+  normalized = stripSurroundingQuotes(normalized).trim();
+  normalized = normalized.replace(TRAILING_LABEL_PATTERN, "").trim();
+
+  return stripSurroundingQuotes(normalized).trim();
+}
+
+function stripSurroundingQuotes(input: string): string {
+  let output = input;
+
+  for (const [open, close] of SURROUNDING_QUOTE_PAIRS) {
+    if (output.startsWith(open) && output.endsWith(close) && output.length > open.length) {
+      output = output.slice(open.length, -close.length);
+    }
+  }
+
+  return output;
 }
 
 function looksLikePromptInjection(input: string): boolean {
