@@ -102,6 +102,24 @@ export const TRANSFORM_FORM_RULES = {
   reply_77: [7, 7],
 } as const satisfies Record<TransformJobKind, readonly number[]>;
 
+// 案A: 初句・結句のみ ±1（字余り）を許容。中七は「中鈍病」の観点から厳守。
+// 現代短歌・俳句の慣習に準拠し、感情の高ぶりを表現する字余りを初句・結句に限って認める。
+const TRANSFORM_FORM_TOLERANCES_A = {
+  post_575: [1, 0, 1],
+  reply_77: [1, 1],
+} as const satisfies Record<TransformJobKind, readonly number[]>;
+
+// 案B: 全句 ±1 を許容。成功率を最大化したい場合に切り替える。
+// 中七の字余りも通過するため、詩的品質よりも到達率を優先する場合に使用。
+// biome-ignore lint/correctness/noUnusedVariables: intentionally kept as an alternative plan; swap with TOLERANCES_A above to activate
+const TRANSFORM_FORM_TOLERANCES_B = {
+  post_575: [1, 1, 1],
+  reply_77: [1, 1],
+} as const satisfies Record<TransformJobKind, readonly number[]>;
+
+// 使用する許容幅プランをここで切り替える（A=詩的整合性優先 / B=成功率優先）
+export const TRANSFORM_FORM_TOLERANCES = TRANSFORM_FORM_TOLERANCES_A;
+
 export type TransformFormCheckReason =
   | "blank"
   | "contains_uncheckable_characters"
@@ -112,6 +130,7 @@ export type TransformFormCheckSegment = {
   text: string;
   moraCount: number;
   expectedMoraCount: number;
+  tolerance: number;
 };
 
 export type TransformFormCheckError = {
@@ -375,6 +394,7 @@ export function checkTransformForm(
 ): TransformFormCheckResult {
   const normalizedText = normalizeTankaText(text);
   const expectedMoraCounts = TRANSFORM_FORM_RULES[kind];
+  const tolerances = TRANSFORM_FORM_TOLERANCES[kind];
   const errors: TransformFormCheckError[] = [];
 
   if (normalizedText.length === 0) {
@@ -395,6 +415,7 @@ export function checkTransformForm(
     text: segment,
     moraCount: countJapaneseMora(segment),
     expectedMoraCount: expectedMoraCounts[index] ?? 0,
+    tolerance: tolerances[index] ?? 0,
   }));
 
   if (segments.length !== expectedMoraCounts.length) {
@@ -406,11 +427,16 @@ export function checkTransformForm(
 
   for (const [index, expectedMoraCount] of expectedMoraCounts.entries()) {
     const segment = segments[index];
+    const tolerance = tolerances[index] ?? 0;
 
-    if (!segment || segment.moraCount !== expectedMoraCount) {
+    if (!segment || Math.abs(segment.moraCount - expectedMoraCount) > tolerance) {
+      const rangeLabel =
+        tolerance === 0
+          ? `exactly ${expectedMoraCount}`
+          : `${expectedMoraCount - tolerance}–${expectedMoraCount + tolerance}`;
       errors.push({
         reason: "mora_count_mismatch",
-        message: `Segment ${index + 1} must have ${expectedMoraCount} mora.`,
+        message: `Segment ${index + 1} must have ${rangeLabel} mora.`,
       });
     }
   }
