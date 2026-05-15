@@ -35,9 +35,9 @@ describe("LLM adapter normalization", () => {
     const userMessage = providerBody.messages.find((message) => message.role === "user");
 
     assert.match(userMessage?.content ?? "", /source_text_json: "春 の 空 123"/);
-    assert.match(userMessage?.content ?? "", /Line 1: exactly 5 mora/);
+    assert.match(userMessage?.content ?? "", /Line 1: 4–6 \(ideally 5\) mora/);
     assert.match(userMessage?.content ?? "", /Line 2: exactly 7 mora/);
-    assert.match(userMessage?.content ?? "", /Line 3: exactly 5 mora/);
+    assert.match(userMessage?.content ?? "", /Line 3: 4–6 \(ideally 5\) mora/);
     assert.equal(providerBody.temperature, 0);
   });
 
@@ -71,6 +71,42 @@ describe("LLM adapter normalization", () => {
     assert.match(prompts[1] ?? "", /validation_errors:/);
     assert.match(prompts[1] ?? "", /Change only the words needed/);
     assert.deepEqual(temperatures, [0, 0.2]);
+  });
+
+  it("builds reply prompts around the parent 5-7-5 without asking for a full tanka", async () => {
+    let providerBody:
+      | { messages: Array<{ role: string; content: string }>; temperature: number }
+      | undefined;
+    globalThis.fetch = (async (_input, init) => {
+      providerBody = JSON.parse(String(init?.body));
+
+      return jsonResponse({
+        choices: [{ message: { content: "ゆめはさめず\nあけゆくそらかな" } }],
+      });
+    }) as typeof fetch;
+
+    const result = await createLlmAdapter(testBindings()).transformText({
+      kind: "reply_77",
+      input: "まだ夢の余韻がある",
+      jobId: "job-reply-1",
+      parentPost: {
+        id: "post-1",
+        publicText: "朝日射す\n心静かに\n春を待つ",
+      },
+    });
+
+    assert.equal(result.text, "ゆめはさめず\nあけゆくそらかな");
+    assert.ok(providerBody);
+    const systemMessage = providerBody.messages.find((message) => message.role === "system");
+    const userMessage = providerBody.messages.find((message) => message.role === "user");
+
+    assert.match(systemMessage?.content ?? "", /7-7 with allowed variation/);
+    assert.match(userMessage?.content ?? "", /Line 1: 6–8 \(ideally 7\) mora/);
+    assert.match(userMessage?.content ?? "", /Line 2: 6–8 \(ideally 7\) mora/);
+    assert.match(userMessage?.content ?? "", /DO NOT repeat or rewrite it/);
+    assert.match(userMessage?.content ?? "", /ONLY the missing 7-7 lower phrase/);
+    assert.match(userMessage?.content ?? "", /discard the first three lines/);
+    assert.doesNotMatch(userMessage?.content ?? "", /Line 3:/);
   });
 
   it("cleans common provider output noise before validation", () => {

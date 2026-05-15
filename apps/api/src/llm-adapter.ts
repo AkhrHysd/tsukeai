@@ -280,6 +280,9 @@ const SYSTEM_PROMPT = [
     "7-7 canonical (7+7):",
     "かぜふくさとに [7: か-ぜ-ふ-く-さ-と-に]",
     "ほしみえてくる [7: ほ-し-み-え-て-く-る]",
+    "7-7 with allowed variation (6+8 — valid when contract allows tolerance on both reply lines):",
+    "ゆめはさめず [6: ゆ-め-は-さ-め-ず] ← shorter phrase is valid within the 7±1 contract",
+    "あけゆくそらかな [8: あ-け-ゆ-く-そ-ら-か-な] ← jiari is valid within the 7±1 contract",
   ].join("\n"),
 ].join(" ");
 
@@ -729,6 +732,22 @@ function buildMessages(
     request.kind === "reply_77" && request.parentPost
       ? JSON.stringify(normalizeSourceText(request.parentPost.publicText))
       : undefined;
+  const kindSpecificInstructions =
+    request.kind === "reply_77"
+      ? ([
+          "",
+          "7-7 reply-specific requirements:",
+          "The parent post is already the 5-7-5 upper phrase; DO NOT repeat or rewrite it.",
+          "Return ONLY the missing 7-7 lower phrase as exactly two newline-separated lines.",
+          "Each reply line may be 6–8 mora, but aim for 7 mora first.",
+          "If you accidentally draft a full 5-7-5-7-7 tanka, discard the first three lines and answer with only the final two reply lines.",
+        ] as const)
+      : ([
+          "",
+          "5-7-5 post-specific requirements:",
+          "Return ONLY the 5-7-5 upper phrase as exactly three newline-separated lines.",
+          "Never use jiari on line 2; keep the middle phrase exactly 7 mora.",
+        ] as const);
 
   const segmentFeedback =
     attempt <= 1 || !lastFormCheck
@@ -781,6 +800,8 @@ function buildMessages(
         "Required final line contract:",
         lineInstructions,
         "Before answering, silently verify that the final answer satisfies this contract.",
+        ...kindSpecificInstructions,
+        "Final answer checklist: line count, mora count, kana-only characters, no labels.",
         [
           "Prefer plain hiragana phrases with no punctuation.",
           "When fidelity conflicts with exact mora count, choose exact mora count.",
