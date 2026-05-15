@@ -3,6 +3,7 @@
 import type { EntityId, TransformJobResponseDto } from "@tsukeai/shared";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { markTimelineRefreshNeeded } from "./timeline-refresh-on-return";
 
 type TransformKind = "post_575" | "reply_77";
 type WriteTarget = "post" | "reply";
@@ -363,6 +364,7 @@ function useTransformJobFeedback(
   const router = useRouter();
   const [feedbackState, setFeedbackState] = useState(actionState);
   const onSuccessRef = useRef(onSuccess);
+  const handledImmediateSuccessRef = useRef(false);
 
   useEffect(() => {
     onSuccessRef.current = onSuccess;
@@ -371,6 +373,27 @@ function useTransformJobFeedback(
   useEffect(() => {
     setFeedbackState(actionState);
   }, [actionState]);
+
+  useEffect(() => {
+    if (actionState.status !== "success") {
+      handledImmediateSuccessRef.current = false;
+      return;
+    }
+
+    if (handledImmediateSuccessRef.current) {
+      return;
+    }
+
+    handledImmediateSuccessRef.current = true;
+    onSuccessRef.current?.();
+
+    if (sheetRouter) {
+      markTimelineRefreshNeeded();
+      sheetRouter.back();
+    } else {
+      router.refresh();
+    }
+  }, [actionState.status, router, sheetRouter]);
 
   useEffect(() => {
     if (actionState.status !== "pending" || !actionState.jobId) {
@@ -407,6 +430,7 @@ function useTransformJobFeedback(
             message: actionState.target === "reply" ? "返信しました。" : "投稿しました。",
           });
           if (sheetRouter) {
+            markTimelineRefreshNeeded();
             sheetRouter.back();
           } else {
             router.refresh();

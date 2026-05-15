@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getApiBaseUrl } from "../lib/api-base-url";
 import { getCurrentSession } from "../lib/current-session";
 import { ReplyThreadWrapper } from "./reply-thread-wrapper";
+import { TimelineRefreshOnReturn } from "./timeline-refresh-on-return";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +146,7 @@ export default async function Home() {
 
   return (
     <section className="timeline-page" aria-labelledby="page-title">
+      <TimelineRefreshOnReturn />
       <h1 id="page-title" className="sr-only">tsukeai</h1>
 
       {!currentAccount ? (
