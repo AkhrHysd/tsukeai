@@ -1901,6 +1901,7 @@ async function runTransformJob(
         kind: claimedJob.kind,
         kanaText: transformed.text,
         jobId: claimedJob.id,
+        sourceText: input,
       });
       publicText = kanjiResult.text;
     } catch (kanjiError) {

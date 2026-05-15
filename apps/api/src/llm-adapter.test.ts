@@ -109,6 +109,35 @@ describe("LLM adapter normalization", () => {
     assert.doesNotMatch(userMessage?.content ?? "", /Line 3:/);
   });
 
+  it("passes original source orthography to kanji display conversion", async () => {
+    let providerBody: { messages: Array<{ role: string; content: string }> } | undefined;
+    globalThis.fetch = (async (_input, init) => {
+      providerBody = JSON.parse(String(init?.body));
+
+      return jsonResponse({
+        choices: [{ message: { content: "花をみる\n夢にかえる\n春の風" } }],
+      });
+    }) as typeof fetch;
+
+    const result = await createLlmAdapter(testBindings()).kanjiDisplayText({
+      kind: "post_575",
+      kanaText: "はなをみる\nゆめにかえる\nはるのかぜ",
+      sourceText: "花を見るより　ゆめにかえる",
+      jobId: "job-kanji-1",
+    });
+
+    assert.equal(result.text, "花をみる\n夢にかえる\n春の風");
+    assert.ok(providerBody);
+    const systemMessage = providerBody.messages.find((message) => message.role === "system");
+    const userMessage = providerBody.messages.find((message) => message.role === "user");
+
+    assert.match(systemMessage?.content ?? "", /preserve the user's original orthography/);
+    assert.match(systemMessage?.content ?? "", /keep that word in hiragana/);
+    assert.match(userMessage?.content ?? "", /source_text_json: "花を見るより ゆめにかえる"/);
+    assert.match(userMessage?.content ?? "", /orthography preference reference/);
+    assert.match(userMessage?.content ?? "", /kanji\/kana\/okurigana choices/);
+  });
+
   it("cleans common provider output noise before validation", () => {
     const normalized = normalizeProviderOutputForTest(
       "post_575",
