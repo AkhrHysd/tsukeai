@@ -5,6 +5,9 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
+    },
     "check": {
       "dependsOn": ["^check"],
       "outputs": []
@@ -15,6 +18,10 @@
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
+    },
+    "vrt": {
+      "dependsOn": ["build-storybook"],
+      "outputs": ["test-results/vrt/**"]
     }
   }
 }

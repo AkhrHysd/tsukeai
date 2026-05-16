@@ -44,6 +44,11 @@ a {
   border: 0;
 }
 
+.storybook-surface {
+  width: min(760px, calc(100vw - 48px));
+  padding: 24px;
+}
+
 /* ── App Shell ── */
 
 .app-shell {

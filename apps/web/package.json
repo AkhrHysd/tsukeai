@@ -14,9 +14,13 @@
     "mock:logged-out": "MOCK_AUTHENTICATED=0 node scripts/mock-api-server.mjs",
     "smoke:read": "node scripts/read-smoke.mjs",
     "smoke:write": "node scripts/write-smoke.mjs",
+    "storybook": "STORYBOOK=true storybook dev",
+    "build-storybook": "STORYBOOK=true storybook build",
     "start": "next start",
     "test": "WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:read && WRITE_SMOKE_FIXED_PUBLIC_TEXT=1 pnpm run smoke:write",
-    "typecheck": "tsc --project tsconfig.json --noEmit"
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "vrt": "playwright test --config playwright.config.ts",
+    "vrt:update": "playwright test --config playwright.config.ts --update-snapshots"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.9",
@@ -27,9 +31,13 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@storybook/addon-a11y": "^10.4.0",
+    "@storybook/nextjs-vite": "^10.4.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "storybook": "^10.4.0",
     "typescript": "^5.8.0",
     "wrangler": "^4.10.0"
   }

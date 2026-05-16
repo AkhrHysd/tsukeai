@@ -131,7 +131,6 @@ const server = createServer(async (req, res) => {
   // POST /api/posts
   if (method === "POST" && path === "/api/posts") {
     await readBody(req);
-    const jobId = `mock-job-${Date.now()}`;
     return json(res, 201, {
       post: {
         id: `mock-post-${Date.now()}`,

@@ -36,8 +36,14 @@ describe("LLM adapter normalization", () => {
     const userMessage = providerBody.messages.find((message) => message.role === "user");
 
     assert.match(systemMessage?.content ?? "", /grounded in the source text/);
-    assert.match(systemMessage?.content ?? "", /Do NOT add a season, weather, sky, wind, flower, moon/);
-    assert.match(systemMessage?.content ?? "", /only when it follows from the source text or parent post context/);
+    assert.match(
+      systemMessage?.content ?? "",
+      /Do NOT add a season, weather, sky, wind, flower, moon/,
+    );
+    assert.match(
+      systemMessage?.content ?? "",
+      /only when it follows from the source text or parent post context/,
+    );
     assert.match(userMessage?.content ?? "", /source_text_json: "春 の 空 123"/);
     assert.match(userMessage?.content ?? "", /Line 1: 4–6 \(ideally 5\) mora/);
     assert.match(userMessage?.content ?? "", /Line 2: exactly 7 mora/);

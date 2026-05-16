@@ -2,13 +2,13 @@
 
 import type { EntityId, TransformJobResponseDto } from "@tsukeai/shared";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, type Ref, useCallback, useEffect, useRef, useState } from "react";
 import { markTimelineRefreshNeeded } from "./timeline-refresh-on-return";
 
 type TransformKind = "post_575" | "reply_77";
 type WriteTarget = "post" | "reply";
 type ComposerVariant = "inline" | "sheet";
-type WriteActionState = {
+export type WriteActionState = {
   status: "idle" | "pending" | "success" | "error";
   message: string;
   jobId?: EntityId;
@@ -60,21 +60,21 @@ export function PostComposer({ variant = "inline" }: { variant?: ComposerVariant
   }
 
   return (
-    <form ref={formRef} className="composer" onSubmit={submitPost} aria-label="投稿">
-      <label htmlFor="post-body">五七五に変換したい内容を入力</label>
-      <textarea
-        id="post-body"
-        name="body"
-        rows={8}
-        required
-        disabled={formDisabled}
-        placeholder="五七五に変換したい内容"
-      />
-      <button type="submit" disabled={formDisabled}>
-        {busy ? "投稿中..." : feedbackState.status === "pending" ? "変換中..." : "投稿"}
-      </button>
-      <WriteMessage state={feedbackState} busy={formDisabled} onRetry={retryPost} />
-    </form>
+    <ComposerForm
+      ref={formRef}
+      ariaLabel="投稿"
+      label="五七五に変換したい内容を入力"
+      inputId="post-body"
+      rows={8}
+      placeholder="五七五に変換したい内容"
+      submitLabel="投稿"
+      busyLabel="投稿中..."
+      busy={busy}
+      disabled={formDisabled}
+      state={feedbackState}
+      onSubmit={submitPost}
+      onRetry={retryPost}
+    />
   );
 }
 
@@ -126,20 +126,68 @@ export function ReplyComposer({
   }
 
   return (
-    <form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">
-      <label htmlFor={inputId}>七七に変換したい内容を入力</label>
+    <ComposerForm
+      ref={formRef}
+      ariaLabel="返信"
+      label="七七に変換したい内容を入力"
+      inputId={inputId}
+      rows={6}
+      placeholder="七七に変換したい内容"
+      submitLabel="返信"
+      busyLabel="返信中..."
+      busy={busy}
+      disabled={formDisabled}
+      state={feedbackState}
+      onSubmit={submitReply}
+      onRetry={retryReply}
+    />
+  );
+}
+
+export function ComposerForm({
+  ref,
+  ariaLabel,
+  label,
+  inputId,
+  rows,
+  placeholder,
+  submitLabel,
+  busyLabel,
+  busy,
+  disabled,
+  state,
+  onSubmit,
+  onRetry,
+}: {
+  ref?: Ref<HTMLFormElement>;
+  ariaLabel: string;
+  label: string;
+  inputId: string;
+  rows: number;
+  placeholder: string;
+  submitLabel: string;
+  busyLabel: string;
+  busy: boolean;
+  disabled: boolean;
+  state: WriteActionState;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onRetry: () => void;
+}) {
+  return (
+    <form ref={ref} className="composer" onSubmit={onSubmit} aria-label={ariaLabel}>
+      <label htmlFor={inputId}>{label}</label>
       <textarea
         id={inputId}
         name="body"
-        rows={6}
+        rows={rows}
         required
-        disabled={formDisabled}
-        placeholder="七七に変換したい内容"
+        disabled={disabled}
+        placeholder={placeholder}
       />
-      <button type="submit" disabled={formDisabled}>
-        {busy ? "返信中..." : feedbackState.status === "pending" ? "変換中..." : "返信"}
+      <button type="submit" disabled={disabled}>
+        {busy ? busyLabel : state.status === "pending" ? "変換中..." : submitLabel}
       </button>
-      <WriteMessage state={feedbackState} busy={formDisabled} onRetry={retryReply} />
+      <WriteMessage state={state} busy={disabled} onRetry={onRetry} />
     </form>
   );
 }

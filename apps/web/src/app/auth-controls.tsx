@@ -12,7 +12,7 @@ import type {
   WebAuthnRegistrationOptionsResponseDto,
 } from "@tsukeai/shared";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useId, useState } from "react";
 
 type AuthControlsProps = {
   initialSession: CurrentSessionResponseDto;
@@ -23,6 +23,20 @@ type LoginAuthControlsProps = {
 };
 
 type AuthMode = "register" | "login";
+type AuthViewState = {
+  account?: AccountDto;
+  busy: boolean;
+  displayName: string;
+  handle: string;
+  message?: string;
+  supported: boolean;
+  setDisplayName: (displayName: string) => void;
+  setHandle: (handle: string) => void;
+  setMessage: (message: string | undefined) => void;
+  login: () => void;
+  logout: () => void;
+  submitRegistration: (event: FormEvent<HTMLFormElement>) => void;
+};
 
 export function AuthControls({ initialSession }: AuthControlsProps) {
   const router = useRouter();
@@ -36,6 +50,45 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
     },
   });
 
+  return (
+    <AuthControlsView
+      auth={auth}
+      mode={mode}
+      panelOpen={panelOpen}
+      onModeChange={setMode}
+      onPanelOpenChange={setPanelOpen}
+    />
+  );
+}
+
+export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
+  const router = useRouter();
+  const [mode, setMode] = useState<AuthMode>("login");
+  const auth = usePasskeyAuth({
+    initialSession,
+    refreshOnMount: false,
+    onAuthenticated: () => {
+      router.replace("/");
+      router.refresh();
+    },
+  });
+
+  return <LoginAuthControlsView auth={auth} mode={mode} onModeChange={setMode} />;
+}
+
+export function AuthControlsView({
+  auth,
+  mode,
+  panelOpen,
+  onModeChange,
+  onPanelOpenChange,
+}: {
+  auth: AuthViewState;
+  mode: AuthMode;
+  panelOpen: boolean;
+  onModeChange: (mode: AuthMode) => void;
+  onPanelOpenChange: (updater: (open: boolean) => boolean) => void;
+}) {
   if (auth.account) {
     return (
       <div className="auth-controls">
@@ -52,8 +105,8 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
       <button
         type="button"
         onClick={() => {
-          setMode("login");
-          setPanelOpen((open) => (mode === "login" ? !open : true));
+          onModeChange("login");
+          onPanelOpenChange((open) => (mode === "login" ? !open : true));
           auth.setMessage(undefined);
         }}
       >
@@ -62,8 +115,8 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
       <button
         type="button"
         onClick={() => {
-          setMode("register");
-          setPanelOpen((open) => (mode === "register" ? !open : true));
+          onModeChange("register");
+          onPanelOpenChange((open) => (mode === "register" ? !open : true));
           auth.setMessage(undefined);
         }}
       >
@@ -80,30 +133,7 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
               </button>
             </div>
           ) : (
-            <form className="auth-panel__body" onSubmit={auth.submitRegistration}>
-              <label>
-                表示名
-                <input
-                  name="displayName"
-                  value={auth.displayName}
-                  onChange={(event) => auth.setDisplayName(event.target.value)}
-                  required
-                  maxLength={80}
-                />
-              </label>
-              <label>
-                ハンドル
-                <input
-                  name="handle"
-                  value={auth.handle}
-                  onChange={(event) => auth.setHandle(event.target.value)}
-                  placeholder="任意"
-                />
-              </label>
-              <button type="submit" disabled={auth.busy}>
-                パスキーを登録
-              </button>
-            </form>
+            <RegistrationFields auth={auth} className="auth-panel__body" />
           )}
           {auth.message ? <p className="auth-panel__message">{auth.message}</p> : null}
         </div>
@@ -112,17 +142,16 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
   );
 }
 
-export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
-  const router = useRouter();
-  const [mode, setMode] = useState<AuthMode>("login");
-  const auth = usePasskeyAuth({
-    initialSession,
-    refreshOnMount: false,
-    onAuthenticated: () => {
-      router.replace("/");
-      router.refresh();
-    },
-  });
+export function LoginAuthControlsView({
+  auth,
+  mode,
+  onModeChange,
+}: {
+  auth: AuthViewState;
+  mode: AuthMode;
+  onModeChange: (mode: AuthMode) => void;
+}) {
+  const groupId = useId();
 
   return (
     <div className="login-auth">
@@ -131,11 +160,11 @@ export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
         <label className="login-auth__tab">
           <input
             type="radio"
-            name="authMode"
+            name={`${groupId}-authMode`}
             value="login"
             checked={mode === "login"}
             onChange={() => {
-              setMode("login");
+              onModeChange("login");
               auth.setMessage(undefined);
             }}
           />
@@ -144,11 +173,11 @@ export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
         <label className="login-auth__tab">
           <input
             type="radio"
-            name="authMode"
+            name={`${groupId}-authMode`}
             value="register"
             checked={mode === "register"}
             onChange={() => {
-              setMode("register");
+              onModeChange("register");
               auth.setMessage(undefined);
             }}
           />
@@ -172,30 +201,11 @@ export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
           </button>
         </div>
       ) : (
-        <form className="login-auth__body" onSubmit={auth.submitRegistration}>
-          <label>
-            表示名
-            <input
-              name="displayName"
-              value={auth.displayName}
-              onChange={(event) => auth.setDisplayName(event.target.value)}
-              required
-              maxLength={80}
-            />
-          </label>
-          <label>
-            ハンドル
-            <input
-              name="handle"
-              value={auth.handle}
-              onChange={(event) => auth.setHandle(event.target.value)}
-              placeholder="任意"
-            />
-          </label>
-          <button className="login-auth__primary" type="submit" disabled={auth.busy}>
-            パスキーを登録
-          </button>
-        </form>
+        <RegistrationFields
+          auth={auth}
+          className="login-auth__body"
+          primaryClassName="login-auth__primary"
+        />
       )}
 
       {auth.message ? (
@@ -204,6 +214,43 @@ export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function RegistrationFields({
+  auth,
+  className,
+  primaryClassName,
+}: {
+  auth: AuthViewState;
+  className: string;
+  primaryClassName?: string;
+}) {
+  return (
+    <form className={className} onSubmit={auth.submitRegistration}>
+      <label>
+        表示名
+        <input
+          name="displayName"
+          value={auth.displayName}
+          onChange={(event) => auth.setDisplayName(event.target.value)}
+          required
+          maxLength={80}
+        />
+      </label>
+      <label>
+        ハンドル
+        <input
+          name="handle"
+          value={auth.handle}
+          onChange={(event) => auth.setHandle(event.target.value)}
+          placeholder="任意"
+        />
+      </label>
+      <button className={primaryClassName} type="submit" disabled={auth.busy}>
+        パスキーを登録
+      </button>
+    </form>
   );
 }
 

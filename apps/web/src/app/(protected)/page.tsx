@@ -1,11 +1,11 @@
 import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from "@tsukeai/shared";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "../../lib/api-base-url";
 import { getCurrentSession } from "../../lib/current-session";
 import { ReplyThreadWrapper } from "../reply-thread-wrapper";
+import { TimelineItemView } from "../timeline-item";
 import { TimelineRefreshOnReturn } from "../timeline-refresh-on-return";
 
 export const dynamic = "force-dynamic";
@@ -141,14 +141,6 @@ function getPublicText(conversion: { publicText?: string; body?: string }) {
   return conversion.publicText ?? conversion.body ?? "";
 }
 
-function formatTimelineTime(value: IsoDateTimeString) {
-  return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Tokyo",
-  }).format(new Date(value));
-}
-
 export default async function Home() {
   const apiBaseUrl = getApiBaseUrl();
   const session = await getCurrentSession();
@@ -178,55 +170,35 @@ export default async function Home() {
       ) : (
         <ul className="timeline-list" aria-label="公開タイムライン">
           {timelineResult.timeline.items.map((item) => (
-            <li className="post-item" key={item.post.id}>
-              <p
-                className="post-item__body poem-tooltip"
-                data-reading={item.post.readingText}
-                title={item.post.readingText}
-              >
-                {item.post.publicText}
-              </p>
-              <div className="post-item__meta">
-                <span className="post-item__author">{item.post.author.displayName}</span>
-                <details className="context-menu">
-                  <summary className="context-menu__trigger" aria-label="投稿メニュー">
-                    <span aria-hidden="true">...</span>
-                  </summary>
-                  <div className="context-menu__panel">
-                    <time className="context-menu__info" dateTime={item.post.createdAt}>
-                      {formatTimelineTime(item.post.createdAt)}
-                    </time>
-                    {currentAccount ? (
-                      <Link href={`/posts/${item.post.id}/reply`} className="context-menu__item">
-                        返歌する
-                      </Link>
-                    ) : null}
-                    {currentAccount?.id === item.post.author.id ? (
+            <TimelineItemView
+              key={item.post.id}
+              post={item.post}
+              replyHref={currentAccount ? `/posts/${item.post.id}/reply` : undefined}
+              renderDeleteControl={
+                currentAccount?.id === item.post.author.id
+                  ? (className) => (
                       <form action={deletePublicConversion.bind(null, item.post.id)}>
-                        <button
-                          className="context-menu__item context-menu__item--danger"
-                          type="submit"
-                        >
+                        <button className={className} type="submit">
                           削除
                         </button>
                       </form>
-                    ) : null}
-                  </div>
-                </details>
-              </div>
-
-              <ReplyThreadWrapper
-                replies={item.replies.map((r) => ({
-                  id: r.id,
-                  author: r.author,
-                  publicText: r.publicText,
-                  readingText: r.readingText,
-                  createdAt: r.createdAt,
-                  canDelete: currentAccount?.id === r.author.id,
-                }))}
-                deleteAction={deletePublicConversion}
-              />
-            </li>
+                    )
+                  : undefined
+              }
+              replyThread={
+                <ReplyThreadWrapper
+                  replies={item.replies.map((r) => ({
+                    id: r.id,
+                    author: r.author,
+                    publicText: r.publicText,
+                    readingText: r.readingText,
+                    createdAt: r.createdAt,
+                    canDelete: currentAccount?.id === r.author.id,
+                  }))}
+                  deleteAction={deletePublicConversion}
+                />
+              }
+            />
           ))}
         </ul>
       )}

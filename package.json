@@ -15,7 +15,7 @@
     "check:deps": "node scripts/check-workspace-dependency-direction.mjs",
     "format": "biome format --write .",
     "lint": "biome lint .",
-    "check": "pnpm run biome && pnpm run check:deps && turbo run check",
+    "check": "pnpm run biome && pnpm run check:deps && turbo run check --filter='!tsukeai'",
     "test": "pnpm --filter @tsukeai/web test"
   },
   "devDependencies": {

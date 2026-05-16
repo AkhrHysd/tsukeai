@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const pageSource = await readWorkspaceFile("apps/web/src/app/(protected)/page.tsx");
+const timelineItemSource = await readWorkspaceFile("apps/web/src/app/timeline-item.tsx");
 const composePageSource = await readWorkspaceFile("apps/web/src/app/(protected)/compose/page.tsx");
 const replyPageSource = await readWorkspaceFile(
   "apps/web/src/app/(protected)/posts/[postId]/reply/page.tsx",
@@ -52,7 +53,7 @@ assertIncludes(pageSource, 'revalidatePath("/")');
 
 assertIncludes(pageSource, "action={deletePublicConversion.bind(null, item.post.id)}");
 assertIncludes(pageSource, "deletePublicConversion");
-assertIncludes(pageSource, 'className="context-menu__item context-menu__item--danger"');
+assertIncludes(timelineItemSource, "context-menu__item context-menu__item--danger");
 assertIncludes(pageSource, "削除");
 
 assertIncludes(composePageSource, "<PostComposer");
@@ -82,28 +83,19 @@ assertNoLlmDependency(pageSource, "apps/web/src/app/(protected)/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
 assertIncludes(
   postFormsSource,
-  'import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";',
+  'import { type FormEvent, type Ref, useCallback, useEffect, useRef, useState } from "react";',
 );
 assertIncludes(postFormsSource, 'import { useRouter } from "next/navigation";');
-assertIncludes(
-  postFormsSource,
-  '<form ref={formRef} className="composer" onSubmit={submitPost} aria-label="投稿">',
-);
-assertIncludes(
-  postFormsSource,
-  '<form ref={formRef} className="composer" onSubmit={submitReply} aria-label="返信">',
-);
+assertIncludes(postFormsSource, "<ComposerForm");
+assertIncludes(postFormsSource, 'ariaLabel="投稿"');
+assertIncludes(postFormsSource, 'ariaLabel="返信"');
+assertIncludes(postFormsSource, '<form ref={ref} className="composer" onSubmit={onSubmit}');
 assertIncludes(postFormsSource, 'name="body"');
 assertIncludes(postFormsSource, 'const formDisabled = busy || feedbackState.status === "pending";');
 assertIncludes(postFormsSource, "disabled={formDisabled}");
-assertIncludes(
-  postFormsSource,
-  'busy ? "投稿中..." : feedbackState.status === "pending" ? "変換中..." : "投稿"',
-);
-assertIncludes(
-  postFormsSource,
-  'busy ? "返信中..." : feedbackState.status === "pending" ? "変換中..." : "返信"',
-);
+assertIncludes(postFormsSource, 'busyLabel="投稿中..."');
+assertIncludes(postFormsSource, 'busyLabel="返信中..."');
+assertIncludes(postFormsSource, 'state.status === "pending" ? "変換中..." : submitLabel');
 assertIncludes(postFormsSource, 'role={state.status === "error" ? "alert" : "status"}');
 assertIncludes(postFormsSource, "requestWrite(path, kind, target, new FormData(form))");
 assertIncludes(postFormsSource, "fetch(`/api/transform-jobs/$");
