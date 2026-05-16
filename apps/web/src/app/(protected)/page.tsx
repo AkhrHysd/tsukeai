@@ -2,10 +2,11 @@ import type { AuthorDto, EntityId, IsoDateTimeString, TimelineResponseDto } from
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { getApiBaseUrl } from "../lib/api-base-url";
-import { getCurrentSession } from "../lib/current-session";
-import { ReplyThreadWrapper } from "./reply-thread-wrapper";
-import { TimelineRefreshOnReturn } from "./timeline-refresh-on-return";
+import { redirect } from "next/navigation";
+import { getApiBaseUrl } from "../../lib/api-base-url";
+import { getCurrentSession } from "../../lib/current-session";
+import { ReplyThreadWrapper } from "../reply-thread-wrapper";
+import { TimelineRefreshOnReturn } from "../timeline-refresh-on-return";
 
 export const dynamic = "force-dynamic";
 
@@ -150,10 +151,13 @@ function formatTimelineTime(value: IsoDateTimeString) {
 
 export default async function Home() {
   const apiBaseUrl = getApiBaseUrl();
-  const [timelineResult, session] = await Promise.all([
-    getPublicTimeline(apiBaseUrl),
-    getCurrentSession(),
-  ]);
+  const session = await getCurrentSession();
+
+  if (!session.authenticated) {
+    redirect("/login");
+  }
+
+  const timelineResult = await getPublicTimeline(apiBaseUrl);
   const currentAccount = session.authenticated ? session.account : undefined;
 
   return (
@@ -162,12 +166,6 @@ export default async function Home() {
       <h1 id="page-title" className="sr-only">
         tsukeai
       </h1>
-
-      {!currentAccount ? (
-        <p className="timeline-status" role="status">
-          投稿・返信・削除にはログインが必要です。
-        </p>
-      ) : null}
 
       {timelineResult.status === "unavailable" ? (
         <p className="timeline-status" role="status">

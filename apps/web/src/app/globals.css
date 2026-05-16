@@ -81,11 +81,6 @@ a {
   border-top: 1px solid var(--line);
 }
 
-.site-footer .auth-controls {
-  width: min(480px, 100%);
-  margin: 0 auto;
-}
-
 /* ── Auth Controls ── */
 
 .auth-controls {
@@ -156,6 +151,134 @@ a {
 
 .auth-panel__message {
   margin: 12px 0 0;
+  color: #9b2c2c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.site-footer .auth-controls {
+  width: min(480px, 100%);
+  margin: 0 auto;
+}
+
+/* ── Login page ── */
+
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.login-page__inner {
+  width: min(360px, 100%);
+  display: grid;
+  gap: 24px;
+}
+
+.login-page__title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.login-auth {
+  display: grid;
+  gap: 16px;
+}
+
+.login-auth__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(30, 37, 34, 0.04);
+}
+
+.login-auth__primary {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--panel);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.login-auth__primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+.login-auth__tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 38px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-auth__tab input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.login-auth__tab:has(input:checked) {
+  background: var(--panel);
+  color: var(--foreground);
+  box-shadow: 0 1px 4px rgba(30, 37, 34, 0.08);
+}
+
+.login-auth__tab:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.login-auth__body {
+  display: grid;
+  gap: 12px;
+}
+
+.login-auth label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.login-auth input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--panel);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.login-auth button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.login-auth__message {
+  margin: 0;
   color: #9b2c2c;
   font-size: 13px;
   line-height: 1.5;

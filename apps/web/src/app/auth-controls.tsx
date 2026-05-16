@@ -18,15 +18,208 @@ type AuthControlsProps = {
   initialSession: CurrentSessionResponseDto;
 };
 
+type LoginAuthControlsProps = {
+  initialSession: CurrentSessionResponseDto;
+};
+
 type AuthMode = "register" | "login";
 
 export function AuthControls({ initialSession }: AuthControlsProps) {
   const router = useRouter();
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const auth = usePasskeyAuth({
+    initialSession,
+    onAuthenticated: () => {
+      setPanelOpen(false);
+      router.refresh();
+    },
+  });
+
+  if (auth.account) {
+    return (
+      <div className="auth-controls">
+        <span className="auth-controls__account">{auth.account.displayName}</span>
+        <button type="button" onClick={auth.logout} disabled={auth.busy}>
+          ログアウト
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="auth-controls">
+      <button
+        type="button"
+        onClick={() => {
+          setMode("login");
+          setPanelOpen((open) => (mode === "login" ? !open : true));
+          auth.setMessage(undefined);
+        }}
+      >
+        ログイン
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setMode("register");
+          setPanelOpen((open) => (mode === "register" ? !open : true));
+          auth.setMessage(undefined);
+        }}
+      >
+        アカウント作成
+      </button>
+      {panelOpen ? (
+        <div className="auth-panel">
+          {!auth.supported ? (
+            <p role="status">このブラウザではパスキーを利用できません。</p>
+          ) : mode === "login" ? (
+            <div className="auth-panel__body">
+              <button type="button" onClick={auth.login} disabled={auth.busy}>
+                パスキーでログイン
+              </button>
+            </div>
+          ) : (
+            <form className="auth-panel__body" onSubmit={auth.submitRegistration}>
+              <label>
+                表示名
+                <input
+                  name="displayName"
+                  value={auth.displayName}
+                  onChange={(event) => auth.setDisplayName(event.target.value)}
+                  required
+                  maxLength={80}
+                />
+              </label>
+              <label>
+                ハンドル
+                <input
+                  name="handle"
+                  value={auth.handle}
+                  onChange={(event) => auth.setHandle(event.target.value)}
+                  placeholder="任意"
+                />
+              </label>
+              <button type="submit" disabled={auth.busy}>
+                パスキーを登録
+              </button>
+            </form>
+          )}
+          {auth.message ? <p className="auth-panel__message">{auth.message}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function LoginAuthControls({ initialSession }: LoginAuthControlsProps) {
+  const router = useRouter();
+  const [mode, setMode] = useState<AuthMode>("login");
+  const auth = usePasskeyAuth({
+    initialSession,
+    refreshOnMount: false,
+    onAuthenticated: () => {
+      router.replace("/");
+      router.refresh();
+    },
+  });
+
+  return (
+    <div className="login-auth">
+      <fieldset className="login-auth__tabs">
+        <legend className="sr-only">認証方法</legend>
+        <label className="login-auth__tab">
+          <input
+            type="radio"
+            name="authMode"
+            value="login"
+            checked={mode === "login"}
+            onChange={() => {
+              setMode("login");
+              auth.setMessage(undefined);
+            }}
+          />
+          <span>ログイン</span>
+        </label>
+        <label className="login-auth__tab">
+          <input
+            type="radio"
+            name="authMode"
+            value="register"
+            checked={mode === "register"}
+            onChange={() => {
+              setMode("register");
+              auth.setMessage(undefined);
+            }}
+          />
+          <span>アカウント作成</span>
+        </label>
+      </fieldset>
+
+      {!auth.supported ? (
+        <p className="login-auth__message" role="status">
+          このブラウザではパスキーを利用できません。
+        </p>
+      ) : mode === "login" ? (
+        <div className="login-auth__body">
+          <button
+            className="login-auth__primary"
+            type="button"
+            onClick={auth.login}
+            disabled={auth.busy}
+          >
+            パスキーでログイン
+          </button>
+        </div>
+      ) : (
+        <form className="login-auth__body" onSubmit={auth.submitRegistration}>
+          <label>
+            表示名
+            <input
+              name="displayName"
+              value={auth.displayName}
+              onChange={(event) => auth.setDisplayName(event.target.value)}
+              required
+              maxLength={80}
+            />
+          </label>
+          <label>
+            ハンドル
+            <input
+              name="handle"
+              value={auth.handle}
+              onChange={(event) => auth.setHandle(event.target.value)}
+              placeholder="任意"
+            />
+          </label>
+          <button className="login-auth__primary" type="submit" disabled={auth.busy}>
+            パスキーを登録
+          </button>
+        </form>
+      )}
+
+      {auth.message ? (
+        <p className="login-auth__message" role="alert">
+          {auth.message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function usePasskeyAuth({
+  initialSession,
+  onAuthenticated,
+  refreshOnMount = true,
+}: {
+  initialSession: CurrentSessionResponseDto;
+  onAuthenticated?: (account: AccountDto) => void;
+  refreshOnMount?: boolean;
+}) {
+  const router = useRouter();
   const [account, setAccount] = useState<AccountDto | undefined>(
     initialSession.authenticated ? initialSession.account : undefined,
   );
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [panelOpen, setPanelOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,6 +231,10 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
   }, []);
 
   useEffect(() => {
+    if (!refreshOnMount) {
+      return;
+    }
+
     let cancelled = false;
 
     async function refreshSession() {
@@ -68,7 +265,7 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshOnMount]);
 
   async function submitRegistration(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,10 +299,9 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
       );
 
       setAccount(verification.account);
-      setPanelOpen(false);
       setDisplayName("");
       setHandle("");
-      router.refresh();
+      onAuthenticated?.(verification.account);
     } catch (error) {
       setMessage(toMessage(error));
     } finally {
@@ -140,8 +336,7 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
       );
 
       setAccount(verification.account);
-      setPanelOpen(false);
-      router.refresh();
+      onAuthenticated?.(verification.account);
     } catch (error) {
       setMessage(toMessage(error));
     } finally {
@@ -162,7 +357,6 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
         },
       });
       setAccount(undefined);
-      setPanelOpen(false);
       router.refresh();
     } catch (error) {
       setMessage(toMessage(error));
@@ -171,80 +365,20 @@ export function AuthControls({ initialSession }: AuthControlsProps) {
     }
   }
 
-  if (account) {
-    return (
-      <div className="auth-controls">
-        <span className="auth-controls__account">{account.displayName}</span>
-        <button type="button" onClick={logout} disabled={busy}>
-          ログアウト
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="auth-controls">
-      <button
-        type="button"
-        onClick={() => {
-          setMode("login");
-          setPanelOpen((open) => (mode === "login" ? !open : true));
-          setMessage(undefined);
-        }}
-      >
-        ログイン
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setMode("register");
-          setPanelOpen((open) => (mode === "register" ? !open : true));
-          setMessage(undefined);
-        }}
-      >
-        アカウント作成
-      </button>
-      {panelOpen ? (
-        <div className="auth-panel">
-          {!supported ? (
-            <p role="status">このブラウザではパスキーを利用できません。</p>
-          ) : mode === "login" ? (
-            <div className="auth-panel__body">
-              <button type="button" onClick={login} disabled={busy}>
-                パスキーでログイン
-              </button>
-            </div>
-          ) : (
-            <form className="auth-panel__body" onSubmit={submitRegistration}>
-              <label>
-                表示名
-                <input
-                  name="displayName"
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  required
-                  maxLength={80}
-                />
-              </label>
-              <label>
-                ハンドル
-                <input
-                  name="handle"
-                  value={handle}
-                  onChange={(event) => setHandle(event.target.value)}
-                  placeholder="任意"
-                />
-              </label>
-              <button type="submit" disabled={busy}>
-                パスキーを登録
-              </button>
-            </form>
-          )}
-          {message ? <p className="auth-panel__message">{message}</p> : null}
-        </div>
-      ) : null}
-    </div>
-  );
+  return {
+    account,
+    busy,
+    displayName,
+    handle,
+    login,
+    logout,
+    message,
+    setDisplayName,
+    setHandle,
+    setMessage,
+    submitRegistration,
+    supported,
+  };
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {

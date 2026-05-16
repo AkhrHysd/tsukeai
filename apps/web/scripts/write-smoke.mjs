@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
-const composePageSource = await readWorkspaceFile("apps/web/src/app/compose/page.tsx");
-const replyPageSource = await readWorkspaceFile("apps/web/src/app/posts/[postId]/reply/page.tsx");
+const pageSource = await readWorkspaceFile("apps/web/src/app/(protected)/page.tsx");
+const composePageSource = await readWorkspaceFile("apps/web/src/app/(protected)/compose/page.tsx");
+const replyPageSource = await readWorkspaceFile(
+  "apps/web/src/app/(protected)/posts/[postId]/reply/page.tsx",
+);
 const postFormsSource = await readWorkspaceFile("apps/web/src/app/post-forms.tsx");
 const postsRouteSource = await readWorkspaceFile("apps/web/src/app/api/posts/route.ts");
 const repliesRouteSource = await readWorkspaceFile(
@@ -76,7 +78,7 @@ assertIncludes(apiSource, "Published text writes are disabled.");
 assertIncludes(apiSource, "const account = await getRequestSessionAccountWithSql(c, sql);");
 assertIncludes(apiSource, "job.account_id !== account.id");
 
-assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
+assertNoLlmDependency(pageSource, "apps/web/src/app/(protected)/page.tsx");
 assertIncludes(postFormsSource, '"use client";');
 assertIncludes(
   postFormsSource,

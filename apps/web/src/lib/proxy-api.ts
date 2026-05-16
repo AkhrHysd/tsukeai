@@ -4,6 +4,19 @@ import { getApiBaseUrl } from "./api-base-url";
 export async function proxyApiRequest(request: NextRequest, path: string): Promise<NextResponse> {
   const apiBaseUrl = getApiBaseUrl();
   const url = new URL(path, apiBaseUrl);
+
+  if (url.origin === request.nextUrl.origin) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "invalid_api_base_url",
+          message: "API_BASE_URL must point to the API server, not the web app.",
+        },
+      },
+      { status: 503 },
+    );
+  }
+
   const proxyHeaders = new Headers();
   const contentType = request.headers.get("content-type");
   const cookie = request.headers.get("cookie");

@@ -11,6 +11,7 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "mock": "node scripts/mock-api-server.mjs",
+    "mock:logged-out": "MOCK_AUTHENTICATED=0 node scripts/mock-api-server.mjs",
     "smoke:read": "node scripts/read-smoke.mjs",
     "smoke:write": "node scripts/write-smoke.mjs",
     "start": "next start",

@@ -2,6 +2,7 @@
  * Local mock API server for development.
  *
  * Start with: node scripts/mock-api-server.mjs
+ * Use MOCK_AUTHENTICATED=0 to force the logged-out state.
  * Then set API_BASE_URL=http://localhost:3001 in .env.local and run pnpm dev.
  *
  * Handles the same endpoints the real API exposes, returning static fixture data.
@@ -11,6 +12,7 @@
 import { createServer } from "node:http";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 3001);
+const authenticated = process.env.MOCK_AUTHENTICATED !== "0";
 
 const MOCK_ACCOUNT = {
   id: "mock-dev-user",
@@ -109,7 +111,11 @@ const server = createServer(async (req, res) => {
 
   // GET /api/sessions/current
   if (method === "GET" && path === "/api/sessions/current") {
-    return json(res, 200, { authenticated: true, account: MOCK_ACCOUNT });
+    return json(
+      res,
+      200,
+      authenticated ? { authenticated: true, account: MOCK_ACCOUNT } : { authenticated: false },
+    );
   }
 
   // DELETE /api/sessions/current (logout — keep authenticated for simplicity)
@@ -174,5 +180,6 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`Mock API server listening on http://localhost:${PORT}`);
-  console.log("Set API_BASE_URL=http://localhost:" + PORT + " in .env.local, then run pnpm dev");
+  console.log(`Mock session: ${authenticated ? "authenticated" : "logged out"}`);
+  console.log(`Set API_BASE_URL=http://localhost:${PORT} in .env.local, then run pnpm dev`);
 });

@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { getCurrentSession } from "../lib/current-session";
-import { AppShellActions } from "./app-shell-actions";
-import { AuthControls } from "./auth-controls";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,19 +14,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const session = await getCurrentSession();
-
   return (
     <html lang="ja">
-      <body>
-        <div className="app-shell">
-          <AppShellActions initialSession={session} />
-          <main className="main-content">{children}</main>
-          <footer className="site-footer">
-            <AuthControls initialSession={session} />
-          </footer>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

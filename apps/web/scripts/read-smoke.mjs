@@ -5,7 +5,10 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import net from "node:net";
 
-const pageSource = await readWorkspaceFile("apps/web/src/app/page.tsx");
+const pageSource = await readWorkspaceFile("apps/web/src/app/(protected)/page.tsx");
+const protectedLayoutSource = await readWorkspaceFile("apps/web/src/app/(protected)/layout.tsx");
+const loginPageSource = await readWorkspaceFile("apps/web/src/app/login/page.tsx");
+const authControlsSource = await readWorkspaceFile("apps/web/src/app/auth-controls.tsx");
 const replyThreadSource = await readWorkspaceFile("apps/web/src/app/reply-thread.tsx");
 const apiBaseUrlSource = await readWorkspaceFile("apps/web/src/lib/api-base-url.ts");
 const webPackageJson = JSON.parse(await readWorkspaceFile("apps/web/package.json"));
@@ -36,8 +39,8 @@ assertIncludes(pageSource, "AuthorDto");
 assertIncludes(pageSource, "EntityId");
 assertIncludes(pageSource, "IsoDateTimeString");
 assertIncludes(pageSource, "TimelineResponseDto");
-assertIncludes(pageSource, 'import { getApiBaseUrl } from "../lib/api-base-url";');
-assertIncludes(pageSource, 'import { getCurrentSession } from "../lib/current-session";');
+assertIncludes(pageSource, 'import { getApiBaseUrl } from "../../lib/api-base-url";');
+assertIncludes(pageSource, 'import { getCurrentSession } from "../../lib/current-session";');
 assertIncludes(pageSource, 'export const dynamic = "force-dynamic";');
 assertIncludes(pageSource, 'new URL("/api/timeline?limit=20", apiBaseUrl)');
 assertIncludes(pageSource, 'Accept: "application/json"');
@@ -57,20 +60,27 @@ assertIncludes(pageSource, "{item.post.author.displayName}");
 assertIncludes(pageSource, "{item.post.publicText}");
 assertIncludes(pageSource, "function toPublicTimeline");
 assertIncludes(pageSource, "conversion.publicText ?? conversion.body ??");
-assertIncludes(pageSource, "投稿・返信・削除にはログインが必要です。");
 assertIncludes(replyThreadSource, 'aria-label="返信"');
 assertIncludes(replyThreadSource, "{reply.author.displayName}");
 assertIncludes(replyThreadSource, "reply.publicText");
+assertIncludes(protectedLayoutSource, 'redirect("/login")');
+assertIncludes(protectedLayoutSource, "<AppShellActions");
+assertIncludes(protectedLayoutSource, "<AuthControls");
+assertIncludes(loginPageSource, 'redirect("/")');
+assertIncludes(loginPageSource, "<LoginAuthControls");
+assertIncludes(authControlsSource, "export function LoginAuthControls");
+assertIncludes(authControlsSource, 'router.replace("/")');
 
 assertIncludes(apiBaseUrlSource, 'const DEFAULT_API_BASE_URL = "http://localhost:8787";');
 assertIncludes(apiBaseUrlSource, "process.env.API_BASE_URL");
 assertIncludes(apiBaseUrlSource, "return new URL(value);");
 
-assertNoLlmDependency(pageSource, "apps/web/src/app/page.tsx");
+assertNoLlmDependency(pageSource, "apps/web/src/app/(protected)/page.tsx");
 assertNoLlmDependency(apiBaseUrlSource, "apps/web/src/lib/api-base-url.ts");
 assertNoRuntimeDependency(webPackageJson);
 
 await assertReadSmokeRendersTimeline();
+await assertReadSmokeRedirectsUnauthed();
 
 console.log("Read smoke passed.");
 
@@ -123,7 +133,12 @@ async function assertReadSmokeRendersTimeline() {
 
     if (request.method === "GET" && request.url === "/api/sessions/current") {
       response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ authenticated: false }));
+      response.end(
+        JSON.stringify({
+          authenticated: true,
+          account: { id: "account-read-smoke", displayName: "読み取り太郎" },
+        }),
+      );
       return;
     }
 
@@ -230,6 +245,86 @@ async function assertReadSmokeRendersTimeline() {
   }
 }
 
+async function assertReadSmokeRedirectsUnauthed() {
+  const requests = [];
+  const apiServer = createServer((request, response) => {
+    requests.push(request.url);
+
+    if (request.method === "GET" && request.url === "/api/sessions/current") {
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ authenticated: false }));
+      return;
+    }
+
+    response.writeHead(404, { "Content-Type": "application/json" });
+    response.end(JSON.stringify({ error: { code: "not_found", message: "Not found." } }));
+  });
+  try {
+    apiServer.listen(0, "127.0.0.1");
+    await once(apiServer, "listening");
+  } catch (error) {
+    if (isListenPermissionError(error)) {
+      console.warn("Skipping unauthenticated redirect smoke because local listen is unavailable.");
+      return;
+    }
+
+    throw error;
+  }
+
+  let next;
+
+  try {
+    const apiAddress = apiServer.address();
+    assert(apiAddress && typeof apiAddress === "object");
+    const nextPort = await getAvailablePort();
+    next = spawn(
+      "pnpm",
+      ["exec", "next", "dev", "--hostname", "127.0.0.1", "--port", String(nextPort)],
+      {
+        cwd: new URL("..", import.meta.url),
+        env: {
+          ...process.env,
+          API_BASE_URL: `http://127.0.0.1:${apiAddress.port}`,
+          NEXT_TELEMETRY_DISABLED: "1",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    const output = [];
+
+    next.stdout.on("data", (chunk) => output.push(chunk.toString()));
+    next.stderr.on("data", (chunk) => output.push(chunk.toString()));
+
+    const response = await fetchUntilRedirect(`http://127.0.0.1:${nextPort}/`, output);
+    const location = response.headers.get("location");
+
+    assert(
+      [307, 308].includes(response.status),
+      `Expected redirect status, got ${response.status}`,
+    );
+    assert(location?.endsWith("/login"), `Expected redirect to /login, got ${location}`);
+    assert(
+      requests.includes("/api/sessions/current"),
+      "Expected at least one /api/sessions/current request",
+    );
+    assert(
+      !requests.includes("/api/timeline?limit=20"),
+      "Unauthenticated / must not fetch the timeline before redirecting",
+    );
+
+    const html = await fetchUntilReady(`http://127.0.0.1:${nextPort}/login`, output);
+    assertIncludes(html, "ログイン");
+    assertIncludes(html, "アカウント作成");
+  } finally {
+    if (next) {
+      next.kill("SIGTERM");
+      await waitForExit(next);
+    }
+    apiServer.close();
+    await once(apiServer, "close");
+  }
+}
+
 async function fetchUntilReady(url, output) {
   const startedAt = Date.now();
   let lastError;
@@ -257,6 +352,35 @@ async function fetchUntilReady(url, output) {
 
   throw new Error(
     `Next read smoke did not become ready. ${lastError?.message ?? "No response."}\n${output.join("")}`,
+  );
+}
+
+async function fetchUntilRedirect(url, output) {
+  const startedAt = Date.now();
+  let lastError;
+
+  while (Date.now() - startedAt < 30_000) {
+    if (process.env.CI && output.some((line) => line.includes("Failed to start"))) {
+      break;
+    }
+
+    try {
+      const response = await fetch(url, { redirect: "manual" });
+
+      if ([307, 308].includes(response.status)) {
+        return response;
+      }
+
+      lastError = new Error(`Next returned ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error(
+    `Next redirect smoke did not become ready. ${lastError?.message ?? "No response."}\n${output.join("")}`,
   );
 }
 

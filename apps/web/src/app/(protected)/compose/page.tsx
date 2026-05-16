@@ -1,0 +1,16 @@
+import { PostComposer } from "../../post-forms";
+import { SheetCloseButton } from "../../sheet-close-button";
+
+export default async function ComposePage() {
+  return (
+    <div className="sheet-page">
+      <div className="sheet-page__inner">
+        <div className="sheet-page__toolbar">
+          <SheetCloseButton />
+        </div>
+        <h1 className="sheet-page__title">歌を詠む</h1>
+        <PostComposer variant="sheet" />
+      </div>
+    </div>
+  );
+}
