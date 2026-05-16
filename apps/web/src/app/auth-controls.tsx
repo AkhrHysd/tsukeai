@@ -404,6 +404,7 @@ function usePasskeyAuth({
         },
       });
       setAccount(undefined);
+      router.replace("/login");
       router.refresh();
     } catch (error) {
       setMessage(toMessage(error));
