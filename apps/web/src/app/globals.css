@@ -385,17 +385,13 @@ a {
   cursor: help;
 }
 
-.poem-tooltip[data-reading=""],
-.poem-tooltip:not([data-reading]) {
+.poem-tooltip[data-has-reading="false"] {
   cursor: inherit;
 }
 
-.poem-tooltip[data-reading]:not([data-reading=""])::after {
-  content: attr(data-reading);
-  position: absolute;
-  z-index: 20;
-  left: 0;
-  bottom: calc(100% + 8px);
+.poem-tooltip__bubble {
+  position: fixed;
+  z-index: 40;
   max-width: min(280px, 80vw);
   padding: 8px 10px;
   border: 1px solid var(--line);
@@ -406,18 +402,7 @@ a {
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-line;
-  opacity: 0;
   pointer-events: none;
-  transform: translateY(4px);
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
-}
-
-.poem-tooltip[data-reading]:not([data-reading=""]):hover::after,
-.poem-tooltip[data-reading]:not([data-reading=""]):focus-visible::after {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .reply__meta {
@@ -452,6 +437,16 @@ a {
   justify-self: end;
 }
 
+.context-menu__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .context-menu__trigger {
   display: grid;
   place-items: center;
@@ -478,7 +473,7 @@ a {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: 10;
+  z-index: 30;
   display: grid;
   min-width: 148px;
   padding: 6px;
@@ -486,6 +481,19 @@ a {
   border-radius: 8px;
   background: var(--panel);
   box-shadow: 0 8px 24px rgba(30, 37, 34, 0.1);
+}
+
+.context-menu__timestamp {
+  display: grid;
+  gap: 2px;
+  padding: 6px 10px 8px;
+}
+
+.context-menu__label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .context-menu__info,
@@ -507,6 +515,10 @@ a {
 .context-menu__info {
   color: var(--muted);
   cursor: default;
+}
+
+.context-menu__timestamp .context-menu__info {
+  padding: 0;
 }
 
 .context-menu__item {

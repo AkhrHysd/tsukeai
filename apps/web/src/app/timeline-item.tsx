@@ -1,6 +1,8 @@
 import type { AuthorDto, EntityId, IsoDateTimeString } from "@tsukeai/shared";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ContextMenu } from "./context-menu";
+import { PoemReadingTooltip } from "./poem-reading-tooltip";
 
 export type TimelinePostView = {
   id: EntityId;
@@ -32,31 +34,26 @@ export function TimelineItemView({
 }) {
   return (
     <li className="post-item">
-      <p
-        className="post-item__body poem-tooltip"
-        data-reading={post.readingText}
-        title={post.readingText}
-      >
-        {post.publicText}
-      </p>
+      <PoemReadingTooltip
+        className="post-item__body"
+        readingText={post.readingText}
+        text={post.publicText}
+      />
       <div className="post-item__meta">
         <span className="post-item__author">{post.author.displayName}</span>
-        <details className="context-menu">
-          <summary className="context-menu__trigger" aria-label="投稿メニュー">
-            <span aria-hidden="true">...</span>
-          </summary>
-          <div className="context-menu__panel">
-            <time className="context-menu__info" dateTime={post.createdAt}>
-              {formatTimelineTime(post.createdAt)}
-            </time>
-            {replyHref ? (
-              <Link href={replyHref} className="context-menu__item">
-                返歌する
-              </Link>
-            ) : null}
-            {renderDeleteControl?.("context-menu__item context-menu__item--danger")}
-          </div>
-        </details>
+        <ContextMenu
+          dateTime={post.createdAt}
+          formattedTime={formatTimelineTime(post.createdAt)}
+          timestampLabel="投稿日時"
+          triggerLabel="投稿メニュー"
+        >
+          {replyHref ? (
+            <Link href={replyHref} className="context-menu__item">
+              返歌する
+            </Link>
+          ) : null}
+          {renderDeleteControl?.("context-menu__item context-menu__item--danger")}
+        </ContextMenu>
       </div>
 
       {replyThread}

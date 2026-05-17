@@ -2,6 +2,8 @@
 
 import type { EntityId, IsoDateTimeString } from "@tsukeai/shared";
 import { useState } from "react";
+import { ContextMenu } from "./context-menu";
+import { PoemReadingTooltip } from "./poem-reading-tooltip";
 
 type ReplyItem = {
   id: EntityId;
@@ -28,9 +30,7 @@ function formatReplyTime(value: IsoDateTimeString) {
 function ReplyBody({ text, readingText }: { text: string; readingText?: string }) {
   return (
     <div className="reply-body">
-      <p className="poem-tooltip" data-reading={readingText} title={readingText}>
-        {text}
-      </p>
+      <PoemReadingTooltip readingText={readingText} text={text} />
     </div>
   );
 }
@@ -53,25 +53,22 @@ export function ReplyThread({ replies, onDelete }: ReplyThreadProps) {
             <ReplyBody text={reply.publicText} readingText={reply.readingText} />
             <div className="reply__meta">
               <span className="reply__author">{reply.author.displayName}</span>
-              <details className="context-menu context-menu--reply">
-                <summary className="context-menu__trigger" aria-label="返歌メニュー">
-                  <span aria-hidden="true">...</span>
-                </summary>
-                <div className="context-menu__panel">
-                  <time className="context-menu__info" dateTime={reply.createdAt}>
-                    {formatReplyTime(reply.createdAt)}
-                  </time>
-                  {reply.canDelete ? (
-                    <button
-                      type="button"
-                      className="context-menu__item context-menu__item--danger"
-                      onClick={() => onDelete(reply.id)}
-                    >
-                      削除
-                    </button>
-                  ) : null}
-                </div>
-              </details>
+              <ContextMenu
+                dateTime={reply.createdAt}
+                formattedTime={formatReplyTime(reply.createdAt)}
+                timestampLabel="返歌日時"
+                triggerLabel="返歌メニュー"
+              >
+                {reply.canDelete ? (
+                  <button
+                    type="button"
+                    className="context-menu__item context-menu__item--danger"
+                    onClick={() => onDelete(reply.id)}
+                  >
+                    削除
+                  </button>
+                ) : null}
+              </ContextMenu>
             </div>
           </li>
         ))}
