@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "tsukeai",
-  description: "短歌の句を読み合い、LLM で形を整えるコミュニケーション",
+  description: "あらゆる言葉を、AIが詠み替える。まじめすぎない言葉のSNS。",
 };
 
 export const dynamic = "force-dynamic";

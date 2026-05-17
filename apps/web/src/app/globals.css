@@ -188,6 +188,14 @@ a {
   text-align: center;
 }
 
+.login-page__description {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+  text-align: center;
+}
+
 .login-auth {
   display: grid;
   gap: 16px;
